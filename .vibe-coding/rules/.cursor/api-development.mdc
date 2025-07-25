@@ -1,0 +1,475 @@
+---
+description: API development rules for handlers, routes, and HTTP-specific code
+globs: ["**/handler/**/*.go", "**/server/**/*.go", "**/middleware/**/*.go"]
+alwaysApply: false
+---
+
+# API Development Rules for Vibe Coding Starter Go API
+
+When working on API-related code (handlers, routes, middleware), follow these specific guidelines for HTTP layer development.
+
+## API Design Principles
+
+### RESTful API Standards
+- Use standard HTTP methods appropriately:
+  - GET: Retrieve resources (idempotent, safe)
+  - POST: Create new resources
+  - PUT: Update entire resources (idempotent)
+  - PATCH: Partial updates
+  - DELETE: Remove resources (idempotent)
+
+### URL Structure
+```
+/api/v1/users                    # Collection operations
+/api/v1/users/{id}              # Individual resource operations
+/api/v1/users/{id}/articles     # Nested resource operations
+/api/v1/articles?author_id={id} # Query parameters for filtering
+```
+
+### HTTP Status Codes
+- 200 OK: Successful GET, PUT, PATCH
+- 201 Created: Successful POST
+- 204 No Content: Successful DELETE
+- 400 Bad Request: Invalid request data
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Insufficient permissions
+- 404 Not Found: Resource not found
+- 409 Conflict: Resource conflict (e.g., duplicate)
+- 422 Unprocessable Entity: Validation errors
+- 429 Too Many Requests: Rate limit exceeded
+- 500 Internal Server Error: Server errors
+
+## Response Format Standards
+
+### Unified Response Structure
+```go
+type Response struct {
+    Code    int         `json:"code"`
+    Message string      `json:"message"`
+    Data    interface{} `json:"data,omitempty"`
+    Meta    *Meta       `json:"meta,omitempty"`
+}
+
+type Meta struct {
+    Page       int   `json:"page,omitempty"`
+    PageSize   int   `json:"page_size,omitempty"`
+    Total      int64 `json:"total,omitempty"`
+    TotalPages int   `json:"total_pages,omitempty"`
+}
+```
+
+### Success Response Examples
+```json
+// Single resource
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "id": 1,
+        "username": "john_doe",
+        "email": "john@example.com"
+    }
+}
+
+// Collection with pagination
+{
+    "code": 200,
+    "message": "success",
+    "data": [
+        {"id": 1, "title": "Article 1"},
+        {"id": 2, "title": "Article 2"}
+    ],
+    "meta": {
+        "page": 1,
+        "page_size": 10,
+        "total": 25,
+        "total_pages": 3
+    }
+}
+```
+
+### Error Response Format
+```json
+{
+    "code": 400,
+    "message": "validation failed",
+    "data": {
+        "errors": [
+            {
+                "field": "email",
+                "message": "invalid email format"
+            },
+            {
+                "field": "password",
+                "message": "password must be at least 6 characters"
+            }
+        ]
+    }
+}
+```
+
+## Handler Implementation Patterns
+
+### Standard Handler Structure
+```go
+type UserHandler struct {
+    service service.UserService
+    logger  logger.Logger
+}
+
+func NewUserHandler(service service.UserService, logger logger.Logger) *UserHandler {
+    return &UserHandler{
+        service: service,
+        logger:  logger,
+    }
+}
+
+func (h *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
+    users := router.Group("/users")
+    {
+        users.POST("/register", h.Register)
+        users.POST("/login", h.Login)
+        users.GET("/profile", h.GetProfile)
+        users.PUT("/profile", h.UpdateProfile)
+        users.PUT("/password", h.ChangePassword)
+    }
+}
+```
+
+### Handler Method Pattern
+```go
+// @Summary Create user
+// @Description Create a new user account
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "User registration data"
+// @Success 201 {object} Response{data=User} "User created successfully"
+// @Failure 400 {object} Response "Invalid request data"
+// @Failure 409 {object} Response "User already exists"
+// @Router /api/v1/users/register [post]
+func (h *UserHandler) Register(c *gin.Context) {
+    // 1. Bind and validate request
+    var req RegisterRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        h.logger.Error("Failed to bind request", "error", err)
+        c.JSON(http.StatusBadRequest, gin.H{
+            "code":    http.StatusBadRequest,
+            "message": "invalid request format",
+            "data":    gin.H{"error": err.Error()},
+        })
+        return
+    }
+
+    // 2. Call service layer
+    user, err := h.service.Register(c.Request.Context(), &req)
+    if err != nil {
+        h.handleError(c, err)
+        return
+    }
+
+    // 3. Return success response
+    c.JSON(http.StatusCreated, gin.H{
+        "code":    http.StatusCreated,
+        "message": "user registered successfully",
+        "data":    user,
+    })
+}
+```
+
+### Error Handling in Handlers
+```go
+func (h *UserHandler) handleError(c *gin.Context, err error) {
+    h.logger.Error("Handler error", "error", err, "path", c.Request.URL.Path)
+
+    switch {
+    case errors.Is(err, service.ErrUserNotFound):
+        c.JSON(http.StatusNotFound, gin.H{
+            "code":    http.StatusNotFound,
+            "message": "user not found",
+        })
+    case errors.Is(err, service.ErrUserExists):
+        c.JSON(http.StatusConflict, gin.H{
+            "code":    http.StatusConflict,
+            "message": "user already exists",
+        })
+    case errors.Is(err, service.ErrInvalidCredentials):
+        c.JSON(http.StatusUnauthorized, gin.H{
+            "code":    http.StatusUnauthorized,
+            "message": "invalid credentials",
+        })
+    case errors.Is(err, service.ErrValidationFailed):
+        c.JSON(http.StatusUnprocessableEntity, gin.H{
+            "code":    http.StatusUnprocessableEntity,
+            "message": "validation failed",
+            "data":    gin.H{"error": err.Error()},
+        })
+    default:
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "code":    http.StatusInternalServerError,
+            "message": "internal server error",
+        })
+    }
+}
+```
+
+## Request/Response Models
+
+### Request Validation
+```go
+type RegisterRequest struct {
+    Username string `json:"username" validate:"required,min=3,max=50" example:"john_doe"`
+    Email    string `json:"email" validate:"required,email" example:"john@example.com"`
+    Password string `json:"password" validate:"required,min=6" example:"password123"`
+    Nickname string `json:"nickname" validate:"max=50" example:"John Doe"`
+}
+
+type LoginRequest struct {
+    Username string `json:"username" validate:"required" example:"john_doe"`
+    Password string `json:"password" validate:"required" example:"password123"`
+}
+
+type UpdateProfileRequest struct {
+    Nickname string `json:"nickname" validate:"max=50" example:"John Doe"`
+    Avatar   string `json:"avatar" validate:"url" example:"https://example.com/avatar.jpg"`
+}
+```
+
+### Response Models
+```go
+type LoginResponse struct {
+    Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+    User  *User  `json:"user"`
+}
+
+type User struct {
+    ID        uint      `json:"id" example:"1"`
+    Username  string    `json:"username" example:"john_doe"`
+    Email     string    `json:"email" example:"john@example.com"`
+    Nickname  string    `json:"nickname" example:"John Doe"`
+    Avatar    string    `json:"avatar" example:"https://example.com/avatar.jpg"`
+    Role      string    `json:"role" example:"user"`
+    CreatedAt time.Time `json:"created_at" example:"2024-01-01T00:00:00Z"`
+    UpdatedAt time.Time `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+}
+```
+
+## Middleware Patterns
+
+### Authentication Middleware
+```go
+func (m *Middleware) RequireAuth() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        token := extractToken(c)
+        if token == "" {
+            c.JSON(http.StatusUnauthorized, gin.H{
+                "code":    http.StatusUnauthorized,
+                "message": "authentication required",
+            })
+            c.Abort()
+            return
+        }
+
+        claims, err := m.auth.ValidateToken(token)
+        if err != nil {
+            c.JSON(http.StatusUnauthorized, gin.H{
+                "code":    http.StatusUnauthorized,
+                "message": "invalid token",
+            })
+            c.Abort()
+            return
+        }
+
+        c.Set("user_id", claims.UserID)
+        c.Set("user_role", claims.Role)
+        c.Next()
+    }
+}
+```
+
+### Rate Limiting Middleware
+```go
+func (m *Middleware) RateLimit(requests int, window time.Duration) gin.HandlerFunc {
+    limiter := rate.NewLimiter(rate.Every(window/time.Duration(requests)), requests)
+    
+    return func(c *gin.Context) {
+        if !limiter.Allow() {
+            c.JSON(http.StatusTooManyRequests, gin.H{
+                "code":    http.StatusTooManyRequests,
+                "message": "rate limit exceeded",
+                "data":    gin.H{"retry_after": int(window.Seconds())},
+            })
+            c.Abort()
+            return
+        }
+        c.Next()
+    }
+}
+```
+
+### CORS Middleware
+```go
+func (m *Middleware) CORS() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Header("Access-Control-Allow-Origin", m.config.CORS.AllowOrigins)
+        c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        c.Header("Access-Control-Allow-Credentials", "true")
+
+        if c.Request.Method == "OPTIONS" {
+            c.AbortWithStatus(http.StatusNoContent)
+            return
+        }
+
+        c.Next()
+    }
+}
+```
+
+## Route Organization
+
+### Route Registration Pattern
+```go
+func (s *Server) setupRoutes(engine *gin.Engine) {
+    // Health check routes
+    health := engine.Group("/")
+    health.Use(s.middleware.HealthCheckAPI()...)
+    s.healthHandler.RegisterRoutes(engine)
+
+    // API routes
+    api := engine.Group("/api")
+    api.Use(s.middleware.SetupAPIMiddleware()...)
+    {
+        v1 := api.Group("/v1")
+        {
+            // Public routes
+            public := v1.Group("")
+            public.Use(s.middleware.PublicAPI()...)
+            {
+                users := public.Group("/users")
+                users.POST("/register", s.userHandler.Register)
+                users.POST("/login", s.userHandler.Login)
+
+                articles := public.Group("/articles")
+                articles.GET("", s.articleHandler.List)
+                articles.GET("/:id", s.articleHandler.GetByID)
+            }
+
+            // Protected routes
+            protected := v1.Group("")
+            protected.Use(s.middleware.ProtectedAPI()...)
+            {
+                s.userHandler.RegisterRoutes(protected)
+                s.articleHandler.RegisterProtectedRoutes(protected)
+                s.fileHandler.RegisterRoutes(protected)
+            }
+        }
+    }
+}
+```
+
+## Pagination Implementation
+
+### Pagination Parameters
+```go
+type PaginationParams struct {
+    Page     int `form:"page" validate:"min=1" example:"1"`
+    PageSize int `form:"page_size" validate:"min=1,max=100" example:"10"`
+}
+
+func (p *PaginationParams) GetOffset() int {
+    return (p.Page - 1) * p.PageSize
+}
+
+func (p *PaginationParams) GetLimit() int {
+    return p.PageSize
+}
+```
+
+### Pagination Response
+```go
+func (h *ArticleHandler) List(c *gin.Context) {
+    var params PaginationParams
+    if err := c.ShouldBindQuery(&params); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{
+            "code":    http.StatusBadRequest,
+            "message": "invalid pagination parameters",
+        })
+        return
+    }
+
+    // Set defaults
+    if params.Page == 0 {
+        params.Page = 1
+    }
+    if params.PageSize == 0 {
+        params.PageSize = 10
+    }
+
+    articles, total, err := h.service.List(c.Request.Context(), repository.ListOptions{
+        Offset: params.GetOffset(),
+        Limit:  params.GetLimit(),
+    })
+    if err != nil {
+        h.handleError(c, err)
+        return
+    }
+
+    totalPages := int(math.Ceil(float64(total) / float64(params.PageSize)))
+
+    c.JSON(http.StatusOK, gin.H{
+        "code":    http.StatusOK,
+        "message": "success",
+        "data":    articles,
+        "meta": gin.H{
+            "page":        params.Page,
+            "page_size":   params.PageSize,
+            "total":       total,
+            "total_pages": totalPages,
+        },
+    })
+}
+```
+
+## Swagger Documentation
+
+### Complete Swagger Example
+```go
+// @Summary List articles
+// @Description Get a paginated list of articles
+// @Tags articles
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1) minimum(1)
+// @Param page_size query int false "Page size" default(10) minimum(1) maximum(100)
+// @Param status query string false "Article status" Enums(draft, published)
+// @Success 200 {object} Response{data=[]Article,meta=Meta} "Articles retrieved successfully"
+// @Failure 400 {object} Response "Invalid parameters"
+// @Failure 500 {object} Response "Internal server error"
+// @Router /api/v1/articles [get]
+func (h *ArticleHandler) List(c *gin.Context) {
+    // Implementation
+}
+```
+
+## Security Best Practices
+
+### Input Sanitization
+- Always validate and sanitize user inputs
+- Use struct tags for validation
+- Implement custom validators for complex rules
+- Escape HTML content to prevent XSS
+
+### Authentication & Authorization
+- Validate JWT tokens on protected routes
+- Implement role-based access control
+- Use secure token storage practices
+- Implement token refresh mechanisms
+
+### Rate Limiting
+- Implement per-IP rate limiting
+- Use different limits for different endpoints
+- Implement user-based rate limiting for authenticated routes
+- Return appropriate retry-after headers
+
+Remember: Always prioritize security, performance, and maintainability when developing API endpoints. Follow RESTful principles and maintain consistent response formats across all endpoints.

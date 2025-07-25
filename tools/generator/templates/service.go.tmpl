@@ -1,0 +1,256 @@
+package service
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/your-org/vibe-coding-starter/internal/model"
+	"github.com/your-org/vibe-coding-starter/internal/repository"
+	"github.com/your-org/vibe-coding-starter/pkg/logger"
+{{if .WithCache}}
+	"github.com/your-org/vibe-coding-starter/pkg/cache"
+{{end}}
+)
+
+// {{.Name}}Service {{.Name}}服务接口
+type {{.Name}}Service interface {
+	Create(ctx context.Context, req *Create{{.Model}}Request) (*model.{{.Model}}, error)
+	GetByID(ctx context.Context, id uint) (*model.{{.Model}}, error)
+	Update(ctx context.Context, id uint, req *Update{{.Model}}Request) (*model.{{.Model}}, error)
+	Delete(ctx context.Context, id uint) error
+	List(ctx context.Context, opts *List{{.Model}}Options) ([]*model.{{.Model}}, int64, error)
+}
+
+// {{.NameCamel}}Service {{.Name}}服务实现
+type {{.NameCamel}}Service struct {
+	repo   repository.{{.Model}}Repository
+	logger logger.Logger
+{{if .WithCache}}
+	cache  cache.Cache
+{{end}}
+}
+
+// New{{.Name}}Service 创建{{.Name}}服务
+func New{{.Name}}Service(
+	repo repository.{{.Model}}Repository,
+	logger logger.Logger,
+{{if .WithCache}}
+	cache cache.Cache,
+{{end}}
+) {{.Name}}Service {
+	return &{{.NameCamel}}Service{
+		repo:   repo,
+		logger: logger,
+{{if .WithCache}}
+		cache:  cache,
+{{end}}
+	}
+}
+
+// Create{{.Model}}Request 创建{{.Model}}请求
+type Create{{.Model}}Request struct {
+	Name        string `json:"name" validate:"required,min=1,max=255"`
+	Description string `json:"description" validate:"max=1000"`
+}
+
+// Update{{.Model}}Request 更新{{.Model}}请求
+type Update{{.Model}}Request struct {
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
+}
+
+// List{{.Model}}Options 列表查询选项
+type List{{.Model}}Options struct {
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"page_size"`
+	Sort     string                 `json:"sort"`
+	Order    string                 `json:"order"`
+	Filters  map[string]interface{} `json:"filters"`
+	Search   string                 `json:"search"`
+}
+
+// Create 创建{{.Model}}
+func (s *{{.NameCamel}}Service) Create(ctx context.Context, req *Create{{.Model}}Request) (*model.{{.Model}}, error) {
+	// 验证请求
+	if err := s.validateCreateRequest(req); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	// 创建模型
+	entity := &model.{{.Model}}{
+		Name:        req.Name,
+		Description: req.Description,
+	}
+
+	// 保存到数据库
+	if err := s.repo.Create(ctx, entity); err != nil {
+		s.logger.Error("Failed to create {{.ModelLower}}", "error", err)
+		return nil, fmt.Errorf("failed to create {{.ModelLower}}: %w", err)
+	}
+
+{{if .WithCache}}
+	// 清除相关缓存
+	s.clearCache(ctx, entity.ID)
+{{end}}
+
+	s.logger.Info("{{.Model}} created successfully", "id", entity.ID, "name", entity.Name)
+	return entity, nil
+}
+
+// GetByID 根据ID获取{{.Model}}
+func (s *{{.NameCamel}}Service) GetByID(ctx context.Context, id uint) (*model.{{.Model}}, error) {
+{{if .WithCache}}
+	// 尝试从缓存获取
+	cacheKey := fmt.Sprintf("{{.ModelSnake}}:%d", id)
+	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+		var entity model.{{.Model}}
+		if err := json.Unmarshal([]byte(cached), &entity); err == nil {
+			return &entity, nil
+		}
+	}
+{{end}}
+
+	// 从数据库获取
+	entity, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get {{.ModelLower}}: %w", err)
+	}
+
+{{if .WithCache}}
+	// 缓存结果
+	if data, err := json.Marshal(entity); err == nil {
+		s.cache.Set(ctx, cacheKey, string(data), time.Hour)
+	}
+{{end}}
+
+	return entity, nil
+}
+
+// Update 更新{{.Model}}
+func (s *{{.NameCamel}}Service) Update(ctx context.Context, id uint, req *Update{{.Model}}Request) (*model.{{.Model}}, error) {
+	// 验证请求
+	if err := s.validateUpdateRequest(req); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	// 获取现有实体
+	entity, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get {{.ModelLower}}: %w", err)
+	}
+
+	// 更新字段
+	if req.Name != nil {
+		entity.Name = *req.Name
+	}
+	if req.Description != nil {
+		entity.Description = *req.Description
+	}
+
+	// 保存更新
+	if err := s.repo.Update(ctx, entity); err != nil {
+		s.logger.Error("Failed to update {{.ModelLower}}", "id", id, "error", err)
+		return nil, fmt.Errorf("failed to update {{.ModelLower}}: %w", err)
+	}
+
+{{if .WithCache}}
+	// 清除缓存
+	s.clearCache(ctx, id)
+{{end}}
+
+	s.logger.Info("{{.Model}} updated successfully", "id", id)
+	return entity, nil
+}
+
+// Delete 删除{{.Model}}
+func (s *{{.NameCamel}}Service) Delete(ctx context.Context, id uint) error {
+	// 检查实体是否存在
+	if _, err := s.repo.GetByID(ctx, id); err != nil {
+		return fmt.Errorf("failed to get {{.ModelLower}}: %w", err)
+	}
+
+	// 删除实体
+	if err := s.repo.Delete(ctx, id); err != nil {
+		s.logger.Error("Failed to delete {{.ModelLower}}", "id", id, "error", err)
+		return fmt.Errorf("failed to delete {{.ModelLower}}: %w", err)
+	}
+
+{{if .WithCache}}
+	// 清除缓存
+	s.clearCache(ctx, id)
+{{end}}
+
+	s.logger.Info("{{.Model}} deleted successfully", "id", id)
+	return nil
+}
+
+// List 获取{{.Model}}列表
+func (s *{{.NameCamel}}Service) List(ctx context.Context, opts *List{{.Model}}Options) ([]*model.{{.Model}}, int64, error) {
+	// 设置默认值
+	if opts.Page <= 0 {
+		opts.Page = 1
+	}
+	if opts.PageSize <= 0 {
+		opts.PageSize = 20
+	}
+	if opts.PageSize > 100 {
+		opts.PageSize = 100
+	}
+
+	// 转换为仓储选项
+	repoOpts := repository.ListOptions{
+		Page:     opts.Page,
+		PageSize: opts.PageSize,
+		Sort:     opts.Sort,
+		Order:    opts.Order,
+		Filters:  opts.Filters,
+		Search:   opts.Search,
+	}
+
+	// 获取列表
+	entities, total, err := s.repo.List(ctx, repoOpts)
+	if err != nil {
+		s.logger.Error("Failed to list {{.ModelPlural}}", "error", err)
+		return nil, 0, fmt.Errorf("failed to list {{.ModelPlural}}: %w", err)
+	}
+
+	return entities, total, nil
+}
+
+// validateCreateRequest 验证创建请求
+func (s *{{.NameCamel}}Service) validateCreateRequest(req *Create{{.Model}}Request) error {
+	if req.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(req.Name) > 255 {
+		return fmt.Errorf("name too long")
+	}
+	if len(req.Description) > 1000 {
+		return fmt.Errorf("description too long")
+	}
+	return nil
+}
+
+// validateUpdateRequest 验证更新请求
+func (s *{{.NameCamel}}Service) validateUpdateRequest(req *Update{{.Model}}Request) error {
+	if req.Name != nil {
+		if *req.Name == "" {
+			return fmt.Errorf("name cannot be empty")
+		}
+		if len(*req.Name) > 255 {
+			return fmt.Errorf("name too long")
+		}
+	}
+	if req.Description != nil && len(*req.Description) > 1000 {
+		return fmt.Errorf("description too long")
+	}
+	return nil
+}
+
+{{if .WithCache}}
+// clearCache 清除相关缓存
+func (s *{{.NameCamel}}Service) clearCache(ctx context.Context, id uint) {
+	cacheKey := fmt.Sprintf("{{.ModelSnake}}:%d", id)
+	s.cache.Delete(ctx, cacheKey)
+}
+{{end}}

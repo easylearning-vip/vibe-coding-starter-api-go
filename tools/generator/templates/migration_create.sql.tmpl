@@ -1,0 +1,15 @@
+-- Migration: {{.Name}}
+-- Created: {{.Timestamp}}
+-- Description: Create {{.Table}} table
+
+CREATE TABLE IF NOT EXISTS {{.TableName}} (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Indexes
+    UNIQUE KEY uk_{{.TableName}}_name (name),
+    KEY idx_{{.TableName}}_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

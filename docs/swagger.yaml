@@ -1,0 +1,1593 @@
+basePath: /api/v1
+definitions:
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  handler.HealthResponse:
+    properties:
+      services:
+        additionalProperties:
+          $ref: '#/definitions/handler.ServiceInfo'
+        type: object
+      status:
+        type: string
+      timestamp:
+        type: string
+      version:
+        type: string
+    type: object
+  handler.ListResponse:
+    properties:
+      data: {}
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handler.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  handler.ServiceInfo:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  handler.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Article:
+    properties:
+      author:
+        $ref: '#/definitions/model.User'
+      author_id:
+        type: integer
+      category:
+        $ref: '#/definitions/model.Category'
+      category_id:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/model.Comment'
+        type: array
+      content:
+        type: string
+      cover_image:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      like_count:
+        type: integer
+      published_at:
+        type: string
+      slug:
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        type: string
+      summary:
+        maxLength: 500
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/model.Tag'
+        type: array
+      title:
+        maxLength: 200
+        type: string
+      updated_at:
+        type: string
+      view_count:
+        type: integer
+    required:
+    - author_id
+    - content
+    - title
+    type: object
+  model.Category:
+    properties:
+      articles:
+        items:
+          $ref: '#/definitions/model.Article'
+        type: array
+      color:
+        type: string
+      created_at:
+        type: string
+      description:
+        maxLength: 200
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        maxLength: 50
+        type: string
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    required:
+    - name
+    type: object
+  model.Comment:
+    properties:
+      article:
+        $ref: '#/definitions/model.Article'
+      article_id:
+        type: integer
+      author:
+        $ref: '#/definitions/model.User'
+      author_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      parent:
+        $ref: '#/definitions/model.Comment'
+      parent_id:
+        type: integer
+      replies:
+        items:
+          $ref: '#/definitions/model.Comment'
+        type: array
+      status:
+        enum:
+        - pending
+        - approved
+        - rejected
+        type: string
+      updated_at:
+        type: string
+    required:
+    - article_id
+    - author_id
+    - content
+    type: object
+  model.DictCategory:
+    properties:
+      code:
+        maxLength: 50
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/model.DictItem'
+        type: array
+      name:
+        maxLength: 100
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    required:
+    - code
+    - name
+    type: object
+  model.DictItem:
+    properties:
+      category:
+        $ref: '#/definitions/model.DictCategory'
+      category_code:
+        maxLength: 50
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      item_key:
+        maxLength: 50
+        type: string
+      item_value:
+        maxLength: 200
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    required:
+    - category_code
+    - item_key
+    - item_value
+    type: object
+  model.File:
+    properties:
+      created_at:
+        type: string
+      download_count:
+        type: integer
+      extension:
+        type: string
+      hash:
+        type: string
+      id:
+        type: integer
+      is_public:
+        type: boolean
+      mime_type:
+        type: string
+      name:
+        type: string
+      original_name:
+        type: string
+      owner:
+        $ref: '#/definitions/model.User'
+      owner_id:
+        type: integer
+      path:
+        type: string
+      size:
+        type: integer
+      storage_type:
+        enum:
+        - local
+        - s3
+        - oss
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+    required:
+    - extension
+    - hash
+    - mime_type
+    - name
+    - original_name
+    - owner_id
+    - path
+    - size
+    type: object
+  model.PublicUser:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_login:
+        type: string
+      nickname:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  model.Tag:
+    properties:
+      articles:
+        items:
+          $ref: '#/definitions/model.Article'
+        type: array
+      color:
+        type: string
+      created_at:
+        type: string
+      description:
+        maxLength: 100
+        type: string
+      id:
+        type: integer
+      name:
+        maxLength: 30
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - name
+    type: object
+  model.User:
+    properties:
+      articles:
+        items:
+          $ref: '#/definitions/model.Article'
+        type: array
+      avatar:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_login:
+        type: string
+      nickname:
+        maxLength: 50
+        type: string
+      role:
+        enum:
+        - admin
+        - user
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        - banned
+        type: string
+      updated_at:
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - username
+    type: object
+  service.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  service.CreateArticleRequest:
+    properties:
+      author_id:
+        description: 作者ID，由服务器设置
+        type: integer
+      category_id:
+        type: integer
+      content:
+        type: string
+      cover_image:
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        type: string
+      summary:
+        maxLength: 500
+        type: string
+      tag_ids:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 200
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  service.CreateCategoryRequest:
+    properties:
+      code:
+        maxLength: 50
+        type: string
+      description:
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - code
+    - name
+    type: object
+  service.CreateItemRequest:
+    properties:
+      category_code:
+        maxLength: 50
+        type: string
+      description:
+        type: string
+      is_active:
+        type: boolean
+      item_key:
+        maxLength: 50
+        type: string
+      item_value:
+        maxLength: 200
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - category_code
+    - item_key
+    - item_value
+    type: object
+  service.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  service.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/model.PublicUser'
+    type: object
+  service.RegisterRequest:
+    properties:
+      email:
+        type: string
+      nickname:
+        maxLength: 50
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  service.UpdateArticleRequest:
+    properties:
+      category_id:
+        type: integer
+      content:
+        type: string
+      cover_image:
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        type: string
+      summary:
+        maxLength: 500
+        type: string
+      tag_ids:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 200
+        type: string
+    type: object
+  service.UpdateItemRequest:
+    properties:
+      description:
+        type: string
+      is_active:
+        type: boolean
+      item_value:
+        maxLength: 200
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  service.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      nickname:
+        maxLength: 50
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A Go web application starter with AI-assisted development features
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Vibe Coding Starter API
+  version: "1.0"
+paths:
+  /api/v1/admin/articles:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有文章列表（管理员权限）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      - description: 文章状态
+        enum:
+        - draft
+        - published
+        - archived
+        in: query
+        name: status
+        type: string
+      - description: 作者ID
+        in: query
+        name: author_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取所有文章列表
+      tags:
+      - admin
+  /api/v1/articles:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前登录用户的文章列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      - description: 文章状态
+        enum:
+        - draft
+        - published
+        - archived
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取当前用户的文章列表
+      tags:
+      - articles
+    post:
+      consumes:
+      - application/json
+      description: 创建新文章
+      parameters:
+      - description: 创建文章请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Article'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建文章
+      tags:
+      - articles
+  /api/v1/articles/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定文章
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除文章
+      tags:
+      - articles
+    get:
+      consumes:
+      - application/json
+      description: 根据 ID 获取文章详情
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Article'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取文章详情
+      tags:
+      - articles
+    put:
+      consumes:
+      - application/json
+      description: 更新文章信息
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新文章请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Article'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新文章
+      tags:
+      - articles
+  /api/v1/articles/search:
+    get:
+      consumes:
+      - application/json
+      description: 根据关键词搜索文章
+      parameters:
+      - description: 搜索关键词
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 搜索文章
+      tags:
+      - articles
+  /api/v1/dict/categories:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统中所有的数据字典分类
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.DictCategory'
+                  type: array
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取所有字典分类
+      tags:
+      - dict
+    post:
+      consumes:
+      - application/json
+      description: 创建新的数据字典分类
+      parameters:
+      - description: 分类创建数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.DictCategory'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: 分类已存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 创建字典分类
+      tags:
+      - dict
+  /api/v1/dict/init:
+    post:
+      consumes:
+      - application/json
+      description: 初始化系统默认的数据字典数据
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 初始化成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 初始化默认数据
+      tags:
+      - dict
+  /api/v1/dict/item/{category}/{key}:
+    get:
+      consumes:
+      - application/json
+      description: 根据分类代码和项键值获取特定的字典项
+      parameters:
+      - description: 分类代码
+        in: path
+        name: category
+        required: true
+        type: string
+      - description: 项键值
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.DictItem'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: 字典项不存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取特定字典项
+      tags:
+      - dict
+  /api/v1/dict/items:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的数据字典项
+      parameters:
+      - description: 字典项创建数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.DictItem'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: 字典项已存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 创建字典项
+      tags:
+      - dict
+  /api/v1/dict/items/{category}:
+    get:
+      consumes:
+      - application/json
+      description: 根据分类代码获取该分类下的所有字典项
+      parameters:
+      - description: 分类代码
+        in: path
+        name: category
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.DictItem'
+                  type: array
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 根据分类获取字典项
+      tags:
+      - dict
+  /api/v1/dict/items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定ID的字典项
+      parameters:
+      - description: 字典项ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: 删除成功
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: 字典项不存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 删除字典项
+      tags:
+      - dict
+    put:
+      consumes:
+      - application/json
+      description: 更新指定ID的字典项
+      parameters:
+      - description: 字典项ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 字典项更新数据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.DictItem'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: 字典项不存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 更新字典项
+      tags:
+      - dict
+  /api/v1/files:
+    get:
+      consumes:
+      - application/json
+      description: 获取文件列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取文件列表
+      tags:
+      - files
+  /api/v1/files/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定文件
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除文件
+      tags:
+      - files
+    get:
+      consumes:
+      - application/json
+      description: 根据 ID 获取文件信息
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.File'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取文件信息
+      tags:
+      - files
+  /api/v1/files/{id}/download:
+    get:
+      consumes:
+      - application/json
+      description: 下载指定文件
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 下载文件
+      tags:
+      - files
+  /api/v1/files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件到服务器
+      parameters:
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      - default: false
+        description: 是否公开
+        in: formData
+        name: is_public
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.File'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 上传文件
+      tags:
+      - files
+  /api/v1/users:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户列表（需要管理员权限）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取用户列表
+      tags:
+      - users
+  /api/v1/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定用户（需要管理员权限）
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除用户
+      tags:
+      - users
+  /api/v1/users/change-password:
+    post:
+      consumes:
+      - application/json
+      description: 修改当前用户的密码
+      parameters:
+      - description: 修改密码请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 修改密码
+      tags:
+      - users
+  /api/v1/users/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录获取访问令牌
+      parameters:
+      - description: 登录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 用户登录
+      tags:
+      - users
+  /api/v1/users/profile:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的资料信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取用户资料
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: 更新当前用户的资料信息
+      parameters:
+      - description: 更新资料请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新用户资料
+      tags:
+      - users
+  /api/v1/users/register:
+    post:
+      consumes:
+      - application/json
+      description: 注册新用户账户
+      parameters:
+      - description: 注册请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 用户注册
+      tags:
+      - users
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: 检查应用程序和依赖服务的健康状态
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: 健康检查
+      tags:
+      - health
+  /live:
+    get:
+      consumes:
+      - application/json
+      description: 检查应用程序是否存活
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 存活检查
+      tags:
+      - health
+  /ready:
+    get:
+      consumes:
+      - application/json
+      description: 检查应用程序是否准备好接收流量
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 就绪检查
+      tags:
+      - health
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

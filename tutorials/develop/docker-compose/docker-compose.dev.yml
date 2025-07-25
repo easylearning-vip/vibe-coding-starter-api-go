@@ -1,0 +1,86 @@
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0.33
+    container_name: vibe-dev-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: vibe_coding_starter
+      MYSQL_USER: vibe_user
+      MYSQL_PASSWORD: vibe_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - vibe-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: vibe-dev-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - vibe-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 10s
+      start_period: 30s
+
+  # PostgreSQL 数据库 (可选)
+  postgres:
+    image: postgres:15-alpine
+    container_name: vibe-dev-postgres
+    environment:
+      POSTGRES_DB: vibe_coding_starter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - vibe-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+    profiles:
+      - postgres
+      
+# 网络配置
+networks:
+  vibe-dev-network:
+    driver: bridge
+    name: vibe-dev-network
+
+# 数据卷配置
+volumes:
+  mysql_dev_data:
+    driver: local
+    name: vibe_dev_mysql_data
+  postgres_dev_data:
+    driver: local
+    name: vibe_dev_postgres_data
+  redis_dev_data:
+    driver: local
+    name: vibe_dev_redis_data

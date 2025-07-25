@@ -1,0 +1,385 @@
+---
+description: Testing rules and patterns for Vibe Coding Starter Go API
+globs: ["**/*_test.go", "**/test/**/*.go", "**/mocks/**/*.go"]
+alwaysApply: false
+---
+
+# Testing Rules for Vibe Coding Starter Go API
+
+When working on tests, follow these comprehensive testing guidelines for the clean architecture Go API project.
+
+## Testing Strategy
+
+### Test Pyramid Structure
+- **Unit Tests (80%)**: Test individual functions/methods in isolation
+- **Integration Tests (15%)**: Test module interactions, especially database operations
+- **End-to-End Tests (5%)**: Test complete business workflows
+
+### Test Organization
+```
+test/
+├── config/                 # Test configuration
+├── handler/                # Handler layer tests
+├── service/                # Service layer tests
+├── repository/             # Repository layer tests
+├── mocks/                  # Mock implementations
+├── testutil/               # Test utilities
+└── scripts/                # Test scripts
+```
+
+## Test Naming Conventions
+
+### Test Function Naming
+```go
+// Format: Test[FunctionName]_[Scenario]_[ExpectedResult]
+func TestUserService_Create_Success(t *testing.T) {}
+func TestUserService_Create_UserExists_ReturnsError(t *testing.T) {}
+func TestUserService_Login_InvalidPassword_ReturnsError(t *testing.T) {}
+```
+
+### Test Suite Naming
+```go
+type UserServiceTestSuite struct {
+    suite.Suite
+    service     UserService
+    mockRepo    *mocks.MockUserRepository
+    mockCache   *mocks.MockCache
+    mockLogger  *mocks.MockLogger
+}
+```
+
+## Unit Testing Patterns
+
+### Service Layer Testing
+```go
+func (s *UserServiceTestSuite) SetupTest() {
+    s.mockRepo = &mocks.MockUserRepository{}
+    s.mockCache = &mocks.MockCache{}
+    s.mockLogger = &mocks.MockLogger{}
+    
+    s.service = NewUserService(s.mockRepo, s.mockCache, s.mockLogger)
+}
+
+func (s *UserServiceTestSuite) TestCreate_Success() {
+    // Given
+    req := &RegisterRequest{
+        Username: "testuser",
+        Email:    "test@example.com",
+        Password: "password123",
+        Nickname: "Test User",
+    }
+    
+    expectedUser := &model.User{
+        ID:       1,
+        Username: "testuser",
+        Email:    "test@example.com",
+        Nickname: "Test User",
+    }
+    
+    s.mockRepo.On("GetByUsername", mock.Anything, "testuser").Return(nil, repository.ErrUserNotFound)
+    s.mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, repository.ErrUserNotFound)
+    s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*model.User")).Return(expectedUser, nil)
+    
+    // When
+    user, err := s.service.Register(context.Background(), req)
+    
+    // Then
+    s.NoError(err)
+    s.Equal("testuser", user.Username)
+    s.Equal("test@example.com", user.Email)
+    s.Equal("Test User", user.Nickname)
+    s.mockRepo.AssertExpectations(s.T())
+}
+```
+
+### Handler Layer Testing
+```go
+func (s *UserHandlerTestSuite) TestRegister_Success() {
+    // Given
+    reqBody := map[string]interface{}{
+        "username": "testuser",
+        "email":    "test@example.com",
+        "password": "password123",
+        "nickname": "Test User",
+    }
+    
+    expectedUser := &model.User{
+        ID:       1,
+        Username: "testuser",
+        Email:    "test@example.com",
+        Nickname: "Test User",
+    }
+    
+    s.mockService.On("Register", mock.Anything, mock.AnythingOfType("*service.RegisterRequest")).Return(expectedUser, nil)
+    
+    jsonBody, _ := json.Marshal(reqBody)
+    req := httptest.NewRequest(http.MethodPost, "/api/v1/users/register", bytes.NewBuffer(jsonBody))
+    req.Header.Set("Content-Type", "application/json")
+    
+    // When
+    w := httptest.NewRecorder()
+    s.router.ServeHTTP(w, req)
+    
+    // Then
+    s.Equal(http.StatusCreated, w.Code)
+    
+    var response map[string]interface{}
+    err := json.Unmarshal(w.Body.Bytes(), &response)
+    s.NoError(err)
+    s.Equal(float64(201), response["code"])
+    s.Equal("user registered successfully", response["message"])
+    
+    s.mockService.AssertExpectations(s.T())
+}
+```
+
+## Integration Testing Patterns
+
+### Repository Integration Tests
+```go
+type UserRepositoryIntegrationTestSuite struct {
+    suite.Suite
+    db   database.Database
+    repo repository.UserRepository
+}
+
+func (s *UserRepositoryIntegrationTestSuite) SetupSuite() {
+    // Setup test database
+    db, err := testutil.SetupTestDatabase()
+    s.Require().NoError(err)
+    s.db = db
+    
+    // Run migrations
+    err = s.db.AutoMigrate(&model.User{})
+    s.Require().NoError(err)
+    
+    // Create repository
+    logger := testutil.NewTestLogger()
+    s.repo = repository.NewUserRepository(s.db, logger)
+}
+
+func (s *UserRepositoryIntegrationTestSuite) SetupTest() {
+    // Clean test data
+    s.db.GetDB().Exec("DELETE FROM users")
+}
+
+func (s *UserRepositoryIntegrationTestSuite) TestCreate_Success() {
+    // Given
+    user := &model.User{
+        Username: "testuser",
+        Email:    "test@example.com",
+        Password: "hashedpassword",
+        Nickname: "Test User",
+    }
+    
+    // When
+    createdUser, err := s.repo.Create(context.Background(), user)
+    
+    // Then
+    s.NoError(err)
+    s.NotZero(createdUser.ID)
+    s.Equal("testuser", createdUser.Username)
+    s.Equal("test@example.com", createdUser.Email)
+    s.NotZero(createdUser.CreatedAt)
+}
+```
+
+## Mock Implementation Guidelines
+
+### Repository Mock Example
+```go
+type MockUserRepository struct {
+    mock.Mock
+}
+
+func (m *MockUserRepository) Create(ctx context.Context, user *model.User) (*model.User, error) {
+    args := m.Called(ctx, user)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*model.User), args.Error(1)
+}
+
+func (m *MockUserRepository) GetByID(ctx context.Context, id uint) (*model.User, error) {
+    args := m.Called(ctx, id)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*model.User), args.Error(1)
+}
+```
+
+### Service Mock Example
+```go
+type MockUserService struct {
+    mock.Mock
+}
+
+func (m *MockUserService) Register(ctx context.Context, req *RegisterRequest) (*model.User, error) {
+    args := m.Called(ctx, req)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*model.User), args.Error(1)
+}
+```
+
+## Test Utilities
+
+### Test Database Setup
+```go
+func SetupTestDatabase() (database.Database, error) {
+    cfg := &config.Config{
+        Database: config.DatabaseConfig{
+            Driver:   "sqlite",
+            Database: ":memory:",
+        },
+    }
+    
+    logger := NewTestLogger()
+    return database.New(cfg, logger)
+}
+```
+
+### Test Cache Implementation
+```go
+type TestCache struct {
+    data map[string]string
+}
+
+func NewTestCache() cache.Cache {
+    return &TestCache{
+        data: make(map[string]string),
+    }
+}
+
+func (c *TestCache) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+    c.data[key] = value.(string)
+    return nil
+}
+
+func (c *TestCache) Get(ctx context.Context, key string) (string, error) {
+    if val, exists := c.data[key]; exists {
+        return val, nil
+    }
+    return "", cache.ErrKeyNotFound
+}
+```
+
+### Test Logger Implementation
+```go
+func NewTestLogger() logger.Logger {
+    zapLogger := zaptest.NewLogger(nil)
+    return &testLogger{logger: zapLogger}
+}
+
+type testLogger struct {
+    logger *zap.Logger
+}
+
+func (l *testLogger) Info(msg string, fields ...interface{}) {
+    l.logger.Sugar().Infow(msg, fields...)
+}
+
+func (l *testLogger) Error(msg string, fields ...interface{}) {
+    l.logger.Sugar().Errorw(msg, fields...)
+}
+```
+
+## Test Data Management
+
+### Test Data Factory Pattern
+```go
+func CreateTestUser() *model.User {
+    return &model.User{
+        Username: "testuser",
+        Email:    "test@example.com",
+        Password: "hashedpassword",
+        Nickname: "Test User",
+        Role:     "user",
+        Status:   "active",
+    }
+}
+
+func CreateTestUserWithID(id uint) *model.User {
+    user := CreateTestUser()
+    user.ID = id
+    return user
+}
+```
+
+### Table-Driven Tests
+```go
+func TestValidateEmail(t *testing.T) {
+    tests := []struct {
+        name     string
+        email    string
+        expected bool
+    }{
+        {"valid email", "test@example.com", true},
+        {"invalid email", "invalid-email", false},
+        {"empty email", "", false},
+        {"email without domain", "test@", false},
+        {"email without @", "testexample.com", false},
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result := validateEmail(tt.email)
+            assert.Equal(t, tt.expected, result)
+        })
+    }
+}
+```
+
+## Test Coverage Guidelines
+
+### Coverage Requirements
+- Unit tests: > 80% coverage
+- Critical business logic: > 90% coverage
+- All error paths should be tested
+- Edge cases and boundary conditions
+
+### Running Tests
+```bash
+# Run all tests
+go test -v ./...
+
+# Run tests with coverage
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
+
+# Run specific test suite
+go test -v ./internal/service/...
+
+# Run tests with race detection
+go test -race ./...
+```
+
+## Best Practices
+
+### Test Organization
+- Group related tests in test suites
+- Use SetupTest/TearDownTest for test isolation
+- Keep tests independent and idempotent
+- Use meaningful test data
+
+### Mock Best Practices
+- Only mock external dependencies
+- Verify mock expectations
+- Keep mocks simple and focused
+- Use interfaces for mockability
+
+### Test Maintenance
+- Keep tests up to date with code changes
+- Refactor tests when refactoring code
+- Remove obsolete tests
+- Document complex test scenarios
+
+### Performance Testing
+- Use benchmarks for performance-critical code
+- Test with realistic data volumes
+- Monitor test execution time
+- Optimize slow tests
+
+Remember: Write tests that are readable, maintainable, and provide confidence in your code. Tests should serve as documentation and safety nets for refactoring.

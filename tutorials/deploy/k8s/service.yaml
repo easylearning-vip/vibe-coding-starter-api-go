@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vibe-api-service
+  namespace: vibe-dev
+  labels:
+    app: vibe-api
+    environment: development
+spec:
+  selector:
+    app: vibe-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP

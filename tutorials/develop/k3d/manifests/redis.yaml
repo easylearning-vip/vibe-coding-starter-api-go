@@ -1,0 +1,148 @@
+---
+# Redis ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: vibe-dev
+data:
+  redis.conf: |
+    # Redis 开发环境配置
+    bind 0.0.0.0
+    port 6379
+    timeout 0
+    tcp-keepalive 300
+    
+    # 内存管理
+    maxmemory 256mb
+    maxmemory-policy allkeys-lru
+    
+    # 持久化
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # 日志配置
+    loglevel notice
+    logfile ""
+    
+    # 安全配置（开发环境关闭密码保护）
+    protected-mode no
+    
+    # 性能配置
+    tcp-backlog 511
+    databases 16
+    
+    # AOF 配置
+    appendonly yes
+    appendfsync everysec
+
+---
+# Redis StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: vibe-dev
+  labels:
+    app: redis
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        command:
+        - redis-server
+        - /etc/redis/redis.conf
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        - name: redis-config
+          mountPath: /etc/redis
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-config
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-path"
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: vibe-dev
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis
+
+---
+# Redis NodePort Service (for external access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-nodeport
+  namespace: vibe-dev
+  labels:
+    app: redis
+spec:
+  type: NodePort
+  ports:
+  - port: 6379
+    targetPort: 6379
+    nodePort: 30379
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis

@@ -1,0 +1,92 @@
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 构建产物
+bin/
+dist/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# 日志文件
+logs/
+*.log
+
+# 运行时数据
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 覆盖率报告
+coverage/
+*.cover
+*.coverprofile
+coverage.out
+coverage.html
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 依赖目录（如果使用 vendor）
+# vendor/
+
+# 临时文件
+tmp/
+temp/
+
+# 上传文件目录
+uploads/
+
+# 文档和说明文件（构建时不需要）
+README.md
+*.md
+docs/
+
+# 测试相关文件（构建时不需要）
+test/
+*_test.go
+
+# 开发工具配置
+.air.toml
+docker-compose*.yml
+
+# k3d 和部署相关（构建时不需要）
+dev-tutorial/
+deploy/
+
+# Docker 相关
+Dockerfile*
+.dockerignore
+
+# 其他不需要的文件
+*.orig
+*.rej
+*.bak

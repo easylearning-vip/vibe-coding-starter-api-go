@@ -1,0 +1,9 @@
+---
+# 开发命名空间
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vibe-dev
+  labels:
+    name: vibe-dev
+    environment: development

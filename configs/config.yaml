@@ -1,0 +1,202 @@
+# Vibe Coding Starter k3d 开发环境配置文件
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8081
+  mode: "debug"  # debug, release, test
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 60
+
+# 数据库配置 - k3d MySQL
+database:
+  driver: "mysql"  # mysql, postgres, sqlite
+  host: "localhost"  # k3d NodePort 映射到本地
+  port: 3306         # k3d MySQL NodePort 映射
+  username: "vibe_user"
+  password: "vibe_password"
+  database: "vibe_coding_starter"
+  charset: "utf8mb4"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600
+
+# 缓存配置 - k3d Redis
+cache:
+  driver: "redis"  # redis, memory
+  host: "localhost"  # k3d NodePort 映射到本地
+  port: 6379         # k3d Redis NodePort 映射
+  password: ""       # 开发环境无密码
+  database: 0
+  pool_size: 10
+
+# 日志配置
+logger:
+  level: "debug"  # debug, info, warn, error, fatal
+  format: "console"  # json, console
+  output: "stdout"  # stdout, file
+  filename: "logs/app.log"
+  max_size: 100  # MB
+  max_age: 30    # days
+  max_backups: 10
+  compress: true
+
+# JWT 配置
+jwt:
+  secret: "vibe-k3d-dev-secret-key-change-in-production"
+  issuer: "vibe-coding-starter-k3d"
+  expiration: 86400  # 24 hours in seconds
+
+# AI 配置
+ai:
+  enabled: false
+  provider: "openai"  # openai, anthropic, local
+  api_key: ""
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 1000
+
+# 文件上传配置
+upload:
+  max_size: 10485760  # 10MB in bytes
+  allowed_types:
+    - "image/jpeg"
+    - "image/png"
+    - "image/gif"
+    - "image/webp"
+    - "application/pdf"
+    - "text/plain"
+  storage_type: "local"  # local, s3, oss
+  local_path: "uploads"
+
+# S3 配置 (当 storage_type 为 s3 时使用)
+s3:
+  region: "us-east-1"
+  bucket: "your-bucket-name"
+  access_key: ""
+  secret_key: ""
+  endpoint: ""
+
+# 阿里云 OSS 配置 (当 storage_type 为 oss 时使用)
+oss:
+  endpoint: "oss-cn-hangzhou.aliyuncs.com"
+  bucket: "your-bucket-name"
+  access_key: ""
+  secret_key: ""
+
+# CORS 配置
+cors:
+  allow_origins:
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+    - "http://localhost:8080"
+    - "http://localhost:8081"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "PATCH"
+    - "DELETE"
+    - "HEAD"
+    - "OPTIONS"
+  allow_headers:
+    - "Origin"
+    - "Content-Length"
+    - "Content-Type"
+    - "Authorization"
+    - "X-Requested-With"
+    - "X-Request-ID"
+    - "X-API-Key"
+  expose_headers:
+    - "Content-Length"
+    - "X-Request-ID"
+    - "X-RateLimit-Limit"
+    - "X-RateLimit-Remaining"
+    - "X-RateLimit-Reset"
+  allow_credentials: true
+  max_age: 43200  # 12 hours
+
+# 限流配置
+rate_limit:
+  enabled: true
+  requests_per_minute: 120  # 开发环境放宽限制
+  burst: 20
+
+# 安全配置
+security:
+  enable_https: false
+  tls_cert_file: ""
+  tls_key_file: ""
+  hsts_max_age: 31536000
+  hsts_include_subdomains: true
+  hsts_preload: false
+  csp_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
+  ip_whitelist: []
+  ip_blacklist: []
+  blocked_user_agents:
+    - "sqlmap"
+    - "nmap"
+    - "nikto"
+  max_request_size: 10485760  # 10MB
+  request_timeout: 30
+  bcrypt_cost: 12
+  password_min_length: 6
+  session_timeout: 3600
+  max_login_attempts: 10  # 开发环境放宽限制
+  lockout_duration: 300   # 5 minutes
+
+# 邮件配置
+email:
+  enabled: false
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  username: ""
+  password: ""
+  from_email: "noreply@example.com"
+  from_name: "Vibe Coding Starter k3d"
+
+# 监控配置
+monitoring:
+  enabled: true  # 开发环境启用监控
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+# 开发配置
+development:
+  auto_migrate: true   # 自动执行数据库迁移
+  seed_data: true      # 自动填充测试数据
+  debug_sql: true      # 显示 SQL 调试信息
+  hot_reload: true     # 热重载（如果支持）
+
+# k3d 特定配置
+k3d:
+  cluster_name: "vibe-dev"
+  namespace: "vibe-dev"
+  mysql_service: "mysql.vibe-dev.svc.cluster.local"
+  mysql_port: 3306
+  mysql_nodeport: 30306
+  redis_service: "redis.vibe-dev.svc.cluster.local"
+  redis_port: 6379
+  redis_nodeport: 30379
+  registry: "registry.easylearning.vip"
+  
+  # 集群内服务连接配置（当应用部署在k3d集群内时使用）
+  cluster_internal:
+    mysql_host: "mysql.vibe-dev.svc.cluster.local"
+    mysql_port: 3306
+    redis_host: "redis.vibe-dev.svc.cluster.local"
+    redis_port: 6379
+  
+  # 本地开发连接配置（当应用在本地运行时使用）
+  local_development:
+    mysql_host: "localhost"
+    mysql_port: 30306
+    redis_host: "localhost"
+    redis_port: 30379
+
+# Kubernetes 配置
+kubernetes:
+  config_path: "~/.kube/config"
+  context: "k3d-vibe-dev"
+  namespace: "vibe-dev"

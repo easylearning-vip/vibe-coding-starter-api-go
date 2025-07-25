@@ -1,0 +1,53 @@
+package model
+
+import (
+	"time"
+	"gorm.io/gorm"
+)
+
+// {{.Name}} {{.Name}}模型
+type {{.Name}} struct {
+	ID uint `json:"id" gorm:"primaryKey;autoIncrement"`
+{{range .Fields}}
+	{{.Name}} {{.Type}} `{{.Tag}}` {{.Comment}}
+{{end}}
+{{if .WithTimestamps}}
+	CreatedAt time.Time `json:"created_at" gorm:"column:created_at;type:datetime;not null;default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at;type:datetime;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
+{{end}}
+}
+
+// TableName 指定表名
+func ({{.NameCamel}} *{{.Name}}) TableName() string {
+	return "{{.NamePlural}}"
+}
+
+// BeforeCreate GORM钩子：创建前
+func ({{.NameCamel}} *{{.Name}}) BeforeCreate(tx *gorm.DB) error {
+	// 在这里添加创建前的逻辑
+	return nil
+}
+
+// BeforeUpdate GORM钩子：更新前
+func ({{.NameCamel}} *{{.Name}}) BeforeUpdate(tx *gorm.DB) error {
+	// 在这里添加更新前的逻辑
+	return nil
+}
+
+// AfterCreate GORM钩子：创建后
+func ({{.NameCamel}} *{{.Name}}) AfterCreate(tx *gorm.DB) error {
+	// 在这里添加创建后的逻辑
+	return nil
+}
+
+// AfterUpdate GORM钩子：更新后
+func ({{.NameCamel}} *{{.Name}}) AfterUpdate(tx *gorm.DB) error {
+	// 在这里添加更新后的逻辑
+	return nil
+}
+
+// Validate 验证模型数据
+func ({{.NameCamel}} *{{.Name}}) Validate() error {
+	// 在这里添加验证逻辑
+	return nil
+}

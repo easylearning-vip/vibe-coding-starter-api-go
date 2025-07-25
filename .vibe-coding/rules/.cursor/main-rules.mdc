@@ -1,0 +1,290 @@
+---
+description: Main development rules for Vibe Coding Starter Go API
+globs: ["**/*.go", "**/*.md", "**/Dockerfile", "**/*.yaml", "**/*.yml"]
+alwaysApply: true
+---
+
+# Vibe Coding Starter Go API - Development Rules
+
+You are an expert Go developer working on a clean architecture web API project. This is the Vibe Coding Starter Go API - a production-ready template built entirely by AI tools.
+
+## Project Context
+- **Tech Stack**: Go + Gin + GORM + Redis + JWT + Docker + Kubernetes
+- **Architecture**: Clean Architecture with Dependency Injection (Uber FX)
+- **Layers**: Handler → Service → Repository → Database
+- **Testing**: Complete test coverage with testify/suite
+- **Documentation**: Swagger API docs
+
+## Code Standards
+
+### Go Best Practices
+- Follow standard Go conventions and idioms
+- Use meaningful names (PascalCase public, camelCase private)
+- Handle errors explicitly with proper wrapping: `fmt.Errorf("context: %w", err)`
+- Use context.Context for cancellation and timeouts
+- Keep functions small and focused (single responsibility)
+- Use interfaces for abstraction and testability
+
+### Project Structure
+```
+cmd/server/           # Application entry point
+internal/
+├── config/          # Configuration management
+├── handler/         # HTTP handlers (controllers)
+├── middleware/      # HTTP middleware
+├── model/           # Data models
+├── repository/      # Data access layer
+├── server/          # Server setup
+└── service/         # Business logic layer
+pkg/
+├── cache/           # Cache abstraction
+├── database/        # Database abstraction
+└── logger/          # Logging abstraction
+```
+
+### Naming Conventions
+- Files: snake_case (user_service.go)
+- Packages: lowercase, short (user, article)
+- Structs: PascalCase (UserService)
+- Interfaces: PascalCase with -er suffix (UserRepository)
+- Constants: UPPER_SNAKE_CASE
+
+## Architecture Patterns
+
+### Clean Architecture Implementation
+1. **Handler Layer**: HTTP request/response handling, validation
+2. **Service Layer**: Business logic, orchestration
+3. **Repository Layer**: Data access abstraction
+4. **Model Layer**: Domain entities and DTOs
+
+### Dependency Injection with Uber FX
+- Define providers for each component
+- Register in cmd/server/main.go
+- Use interfaces for loose coupling
+
+### Error Handling Pattern
+```go
+if err != nil {
+    return fmt.Errorf("failed to create user: %w", err)
+}
+
+// Define custom error types
+var ErrUserNotFound = errors.New("user not found")
+```
+
+### Structured Logging
+```go
+logger.Info("User created", "user_id", user.ID, "username", user.Username)
+logger.Error("Failed to create user", "error", err, "username", req.Username)
+```
+
+## API Design Standards
+
+### RESTful Principles
+- Standard HTTP methods (GET, POST, PUT, DELETE)
+- Resource-oriented URLs (/api/v1/users, /api/v1/articles)
+- Consistent response format with proper status codes
+- API versioning in URL path
+
+### Response Format
+```go
+type Response struct {
+    Code    int         `json:"code"`
+    Message string      `json:"message"`
+    Data    interface{} `json:"data,omitempty"`
+    Meta    *Meta       `json:"meta,omitempty"`
+}
+```
+
+### Input Validation
+- Use struct tags: `validate:"required,email"`
+- Validate at handler level
+- Return meaningful error messages
+
+## Testing Requirements
+
+### Test Organization
+- Unit tests for each layer (service, repository, handler)
+- Integration tests for database operations
+- Use testify/suite for organized test suites
+- Mock external dependencies with testify/mock
+
+### Test Naming Convention
+```go
+// Format: Test[Function]_[Scenario]_[Expected]
+func TestUserService_Create_Success(t *testing.T) {}
+func TestUserService_Create_UserExists_ReturnsError(t *testing.T) {}
+```
+
+## Database Patterns
+
+### GORM Best Practices
+- Use struct tags for mapping
+- Implement soft deletes where appropriate
+- Use transactions for multi-step operations
+- Optimize with proper indexing
+
+### Repository Interface Pattern
+```go
+type UserRepository interface {
+    Create(ctx context.Context, user *model.User) (*model.User, error)
+    GetByID(ctx context.Context, id uint) (*model.User, error)
+    Update(ctx context.Context, user *model.User) error
+    Delete(ctx context.Context, id uint) error
+}
+```
+
+## Security Requirements
+- JWT tokens for authentication
+- Role-based access control
+- Input validation and sanitization
+- Rate limiting and CORS protection
+- Hash passwords with bcrypt
+
+## Performance Guidelines
+- Cache frequently accessed data in Redis
+- Implement pagination for large datasets
+- Use database connection pooling
+- Monitor and optimize slow queries
+
+## Development Workflow
+
+### New Feature Implementation Process
+When creating a new feature:
+1. Define model in internal/model/
+2. Create repository interface and implementation
+3. Implement service layer with business logic
+4. Create handler with validation and error handling
+5. Register routes with appropriate middleware
+6. Write comprehensive tests for all layers
+7. Add Swagger documentation
+
+### Code Generation Template
+For any new entity (e.g., "Category"):
+- Model with GORM tags and validation
+- Repository interface and implementation
+- Service interface and implementation
+- Handler with proper HTTP responses
+- Complete test suite with mocks
+- Swagger documentation
+
+### Swagger Documentation Format
+```go
+// @Summary Create user
+// @Description Create a new user account
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param request body CreateUserRequest true "User data"
+// @Success 201 {object} Response{data=User}
+// @Failure 400 {object} Response
+// @Router /api/v1/users [post]
+```
+
+## AI Development Guidelines
+
+### Code Generation Best Practices
+When requesting code generation:
+1. Specify the layer you're working on
+2. Reference existing patterns in the project
+3. Request complete implementations with error handling
+4. Ask for corresponding tests
+5. Include Swagger documentation
+
+### Example AI Prompt Template
+"Create a complete CRUD implementation for '[Entity]' following the existing User patterns:
+- Model with GORM tags and validation
+- Repository interface and implementation with error handling
+- Service layer with business logic and caching
+- Handler with validation and HTTP responses
+- Complete test suite with mocks
+- Swagger documentation for all endpoints"
+
+## Implementation Patterns
+
+### Service Layer Pattern
+```go
+type userService struct {
+    repo   repository.UserRepository
+    cache  cache.Cache
+    logger logger.Logger
+}
+
+func (s *userService) Create(ctx context.Context, req *CreateUserRequest) (*model.User, error) {
+    // Validation
+    if err := s.validateRequest(req); err != nil {
+        return nil, fmt.Errorf("validation failed: %w", err)
+    }
+    
+    // Business logic
+    user := &model.User{
+        Username: req.Username,
+        Email:    req.Email,
+    }
+    
+    // Repository call
+    createdUser, err := s.repo.Create(ctx, user)
+    if err != nil {
+        s.logger.Error("Failed to create user", "error", err)
+        return nil, fmt.Errorf("failed to create user: %w", err)
+    }
+    
+    return createdUser, nil
+}
+```
+
+### Handler Layer Pattern
+```go
+func (h *UserHandler) Create(c *gin.Context) {
+    var req CreateUserRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    user, err := h.service.Create(c.Request.Context(), &req)
+    if err != nil {
+        h.handleError(c, err)
+        return
+    }
+    
+    c.JSON(http.StatusCreated, gin.H{
+        "code": http.StatusCreated,
+        "message": "User created successfully",
+        "data": user,
+    })
+}
+```
+
+## Project-Specific Configuration
+
+### Configuration Management
+- Use Viper for configuration management
+- Support YAML, JSON, and environment variables
+- Environment-specific configs in configs/ directory
+
+### Logging Standards
+- Use Zap for structured logging
+- Include request IDs for tracing
+- Log at appropriate levels (Debug, Info, Warn, Error)
+- Never log sensitive information
+
+### Error Response Format
+```json
+{
+    "code": 400,
+    "message": "validation failed",
+    "data": {
+        "errors": [
+            {"field": "email", "message": "invalid email format"}
+        ]
+    }
+}
+```
+
+### Authentication Flow
+- JWT tokens with configurable expiration
+- Role-based access control
+- Middleware for protected routes
+
+Remember: This project demonstrates AI-driven development best practices. Always write clean, testable, and maintainable code following Go idioms and established project patterns.

@@ -1,0 +1,18 @@
+mirrors:
+  "registry.easylearning.vip":
+    endpoint:
+      - "https://registry.easylearning.vip"
+  "localhost:5000":
+    endpoint:
+      - "http://localhost:5000"
+
+configs:
+  "registry.easylearning.vip":
+    auth:
+      username: "admin"
+      password: "admin123"
+    tls:
+      insecure_skip_verify: true
+  "localhost:5000":
+    tls:
+      insecure_skip_verify: true

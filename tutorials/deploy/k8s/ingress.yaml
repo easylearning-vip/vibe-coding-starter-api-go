@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vibe-api-ingress
+  namespace: vibe-dev
+  labels:
+    app: vibe-api
+    environment: development
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: api.vibe-dev.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vibe-api-service
+            port:
+              number: 8080

@@ -1,0 +1,138 @@
+package repository
+
+import (
+	"context"
+	"fmt"
+
+	"gorm.io/gorm"
+	"github.com/your-org/vibe-coding-starter/internal/model"
+	"github.com/your-org/vibe-coding-starter/pkg/logger"
+)
+
+// {{.NameCamel}}Repository {{.Name}}仓储实现
+type {{.NameCamel}}Repository struct {
+	db     *gorm.DB
+	logger logger.Logger
+}
+
+// New{{.Name}}Repository 创建{{.Name}}仓储
+func New{{.Name}}Repository(db *gorm.DB, logger logger.Logger) {{.Name}}Repository {
+	return &{{.NameCamel}}Repository{
+		db:     db,
+		logger: logger,
+	}
+}
+
+// Create 创建{{.Name}}
+func (r *{{.NameCamel}}Repository) Create(ctx context.Context, entity *model.{{.Name}}) error {
+	if err := r.db.WithContext(ctx).Create(entity).Error; err != nil {
+		r.logger.Error("Failed to create {{.NameLower}}", "error", err)
+		return fmt.Errorf("failed to create {{.NameLower}}: %w", err)
+	}
+	return nil
+}
+
+// GetByID 根据ID获取{{.Name}}
+func (r *{{.NameCamel}}Repository) GetByID(ctx context.Context, id uint) (*model.{{.Name}}, error) {
+	var entity model.{{.Name}}
+	if err := r.db.WithContext(ctx).First(&entity, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("{{.NameLower}} not found")
+		}
+		r.logger.Error("Failed to get {{.NameLower}} by ID", "id", id, "error", err)
+		return nil, fmt.Errorf("failed to get {{.NameLower}}: %w", err)
+	}
+	return &entity, nil
+}
+
+// GetByName 根据名称获取{{.Name}}
+func (r *{{.NameCamel}}Repository) GetByName(ctx context.Context, name string) (*model.{{.Name}}, error) {
+	var entity model.{{.Name}}
+	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&entity).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("{{.NameLower}} not found")
+		}
+		r.logger.Error("Failed to get {{.NameLower}} by name", "name", name, "error", err)
+		return nil, fmt.Errorf("failed to get {{.NameLower}}: %w", err)
+	}
+	return &entity, nil
+}
+
+// Update 更新{{.Name}}
+func (r *{{.NameCamel}}Repository) Update(ctx context.Context, entity *model.{{.Name}}) error {
+	if err := r.db.WithContext(ctx).Save(entity).Error; err != nil {
+		r.logger.Error("Failed to update {{.NameLower}}", "id", entity.ID, "error", err)
+		return fmt.Errorf("failed to update {{.NameLower}}: %w", err)
+	}
+	return nil
+}
+
+// Delete 删除{{.Name}}
+func (r *{{.NameCamel}}Repository) Delete(ctx context.Context, id uint) error {
+	if err := r.db.WithContext(ctx).Delete(&model.{{.Name}}{}, id).Error; err != nil {
+		r.logger.Error("Failed to delete {{.NameLower}}", "id", id, "error", err)
+		return fmt.Errorf("failed to delete {{.NameLower}}: %w", err)
+	}
+	return nil
+}
+
+// List 获取{{.Name}}列表
+func (r *{{.NameCamel}}Repository) List(ctx context.Context, opts ListOptions) ([]*model.{{.Name}}, int64, error) {
+	var entities []*model.{{.Name}}
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&model.{{.Name}}{})
+
+	// 应用过滤器
+	query = r.applyFilters(query, opts.Filters)
+
+	// 应用搜索
+	if opts.Search != "" {
+		query = query.Where("name LIKE ?", "%"+opts.Search+"%")
+	}
+
+	// 获取总数
+	if err := query.Count(&total).Error; err != nil {
+		r.logger.Error("Failed to count {{.NamePlural}}", "error", err)
+		return nil, 0, fmt.Errorf("failed to count {{.NamePlural}}: %w", err)
+	}
+
+	// 应用排序
+	if opts.Sort != "" {
+		order := opts.Sort
+		if opts.Order != "" {
+			order += " " + opts.Order
+		}
+		query = query.Order(order)
+	} else {
+		query = query.Order("created_at DESC")
+	}
+
+	// 应用分页
+	if opts.Page > 0 && opts.PageSize > 0 {
+		offset := (opts.Page - 1) * opts.PageSize
+		query = query.Offset(offset).Limit(opts.PageSize)
+	}
+
+	// 执行查询
+	if err := query.Find(&entities).Error; err != nil {
+		r.logger.Error("Failed to list {{.NamePlural}}", "error", err)
+		return nil, 0, fmt.Errorf("failed to list {{.NamePlural}}: %w", err)
+	}
+
+	return entities, total, nil
+}
+
+// applyFilters 应用过滤器
+func (r *{{.NameCamel}}Repository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
+	for key, value := range filters {
+		switch key {
+		case "name":
+			if v, ok := value.(string); ok && v != "" {
+				query = query.Where("name = ?", v)
+			}
+		// 在这里添加更多过滤器
+		}
+	}
+	return query
+}
