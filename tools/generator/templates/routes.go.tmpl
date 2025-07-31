@@ -1,0 +1,9 @@
+// Auto-generated route registration for {{.Model}}
+// Add this to your main routes file
+
+// Register {{.Model}} routes
+{{.ModelCamel}}Handler := handler.New{{.Model}}Handler(
+	{{.ModelCamel}}Service,
+	logger,
+)
+{{.ModelCamel}}Handler.RegisterRoutes(v1)

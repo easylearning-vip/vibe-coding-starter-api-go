@@ -96,12 +96,12 @@ k8s-logs: ## 查看 k8s 应用日志
 # 开发服务器
 dev-docker: ## 使用 Docker Compose 启动开发环境
 	@echo "启动 Docker 开发环境..."
-	cd dev-tutorial/docker-compose && docker compose -f docker-compose.dev.yml up -d
+	cd tutorials/develop/docker-compose && docker compose -f docker-compose.dev.yml up -d
 
 dev-k3d: ## 使用 k3d 启动开发环境
 	@echo "启动 k3d 开发环境..."
-	cd dev-tutorial/k3d && k3d cluster create --config k3d-cluster.yaml
-	kubectl apply -f dev-tutorial/k3d/manifests/
+	cd tutorials/develop/k3d && k3d cluster create --config k3d-cluster.yaml
+	kubectl apply -f tutorials/develop/k3d/manifests/
 
 run-local: build-local ## 运行本地开发服务器
 	@echo "启动本地开发服务器..."

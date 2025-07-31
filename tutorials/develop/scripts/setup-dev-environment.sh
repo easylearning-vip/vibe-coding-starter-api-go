@@ -479,7 +479,7 @@ show_next_steps() {
     echo "   k3d cluster delete vibe-dev  # 删除集群"
     echo
     echo "6. 开始开发："
-    echo "   cd vibe-coding-starter-go-api"
+    echo "   cd vibe-coding-starter-api-go"
     echo "   go run cmd/server/main.go -config configs/config-k3d.yaml"
     echo
 

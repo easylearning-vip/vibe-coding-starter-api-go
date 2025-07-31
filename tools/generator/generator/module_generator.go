@@ -1,4 +1,4 @@
-package cmd
+package generator
 
 import (
 	"fmt"
@@ -29,7 +29,8 @@ func (g *ModuleGenerator) Generate(config interface{}) error {
 	}
 
 	// 解析字段
-	fields, err := ParseFields(cfg.Fields)
+	parser := NewFieldParser()
+	fields, err := parser.ParseFields(cfg.Fields)
 	if err != nil {
 		return fmt.Errorf("failed to parse fields: %w", err)
 	}
@@ -72,19 +73,34 @@ func (g *ModuleGenerator) Generate(config interface{}) error {
 
 // prepareTemplateData 准备模板数据
 func (g *ModuleGenerator) prepareTemplateData(cfg *ModuleConfig, fields []*Field) map[string]interface{} {
+	name := ToPascalCase(cfg.Name)
 	return map[string]interface{}{
-		"Name":            ToPascalCase(cfg.Name),
+		// 原有的 Name 系列变量
+		"Name":            name,
 		"NameLower":       strings.ToLower(cfg.Name),
 		"NameCamel":       ToCamelCase(cfg.Name),
 		"NameSnake":       ToSnakeCase(cfg.Name),
 		"NameKebab":       ToKebabCase(cfg.Name),
 		"NamePlural":      Pluralize(strings.ToLower(cfg.Name)),
 		"NamePluralCamel": ToCamelCase(Pluralize(cfg.Name)),
-		"Fields":          fields,
-		"WithAuth":        cfg.WithAuth,
-		"WithCache":       cfg.WithCache,
-		"Timestamp":       GenerateTimestamp(),
-		"Year":            GetCurrentYear(),
+
+		// 新增的 Model 系列变量（与 Name 系列保持一致）
+		"Model":            name,
+		"ModelLower":       strings.ToLower(cfg.Name),
+		"ModelCamel":       ToCamelCase(cfg.Name),
+		"ModelSnake":       ToSnakeCase(cfg.Name),
+		"ModelKebab":       ToKebabCase(cfg.Name),
+		"ModelPlural":      Pluralize(strings.ToLower(cfg.Name)),
+		"ModelPluralCamel": ToCamelCase(Pluralize(cfg.Name)),
+
+		// 表名
+		"TableName": Pluralize(ToSnakeCase(cfg.Name)),
+
+		"Fields":    fields,
+		"WithAuth":  cfg.WithAuth,
+		"WithCache": cfg.WithCache,
+		"Timestamp": GenerateTimestamp(),
+		"Year":      GetCurrentYear(),
 	}
 }
 
@@ -142,15 +158,17 @@ func (g *ModuleGenerator) generateService(data map[string]interface{}) error {
 
 // generateHandler 生成处理器
 func (g *ModuleGenerator) generateHandler(data map[string]interface{}) error {
-	content, err := g.templateEngine.Render("handler.go.tmpl", data)
-	if err != nil {
-		return err
+	// 使用专门的 HandlerGenerator
+	handlerGen := NewHandlerGenerator()
+
+	// 准备 HandlerConfig
+	cfg := &HandlerConfig{
+		Model:          data["Model"].(string),
+		WithAuth:       data["WithAuth"].(bool),
+		WithValidation: false, // 默认不启用验证
 	}
 
-	filename := fmt.Sprintf("%s_handler.go", data["NameSnake"])
-	path := filepath.Join("internal", "handler", filename)
-
-	return g.writeFile(path, content)
+	return handlerGen.Generate(cfg)
 }
 
 // generateTests 生成测试
@@ -195,33 +213,31 @@ func (g *ModuleGenerator) generateTests(data map[string]interface{}) error {
 
 // generateMigration 生成数据库迁移
 func (g *ModuleGenerator) generateMigration(data map[string]interface{}) error {
-	content, err := g.templateEngine.Render("migration.sql.tmpl", data)
-	if err != nil {
-		return err
+	// 使用专门的 MigrationGenerator
+	migrationGen := NewMigrationGenerator()
+
+	// 准备 MigrationConfig
+	cfg := &MigrationConfig{
+		Name:   fmt.Sprintf("create_%s_table", data["NamePlural"]),
+		Table:  data["NamePlural"].(string),
+		Action: "create",
 	}
 
-	filename := fmt.Sprintf("%s_create_%s_table.sql", data["Timestamp"], data["NamePlural"])
-	path := filepath.Join("migrations", filename)
-
-	// 确保migrations目录存在
-	if err := os.MkdirAll("migrations", 0755); err != nil {
-		return err
-	}
-
-	return g.writeFile(path, content)
+	return migrationGen.Generate(cfg)
 }
 
 // updateRoutes 更新路由注册
 func (g *ModuleGenerator) updateRoutes(data map[string]interface{}) error {
-	routeContent, err := g.templateEngine.Render("routes.go.tmpl", data)
+	content, err := g.templateEngine.Render("routes.go.tmpl", data)
 	if err != nil {
 		return err
 	}
 
-	routesPath := filepath.Join("internal", "server", "routes.go")
+	// 生成路由注册代码到单独的文件
+	filename := fmt.Sprintf("%s_routes.go", data["NameSnake"])
+	routesPath := filepath.Join("docs", "generated", filename)
 
-	// 在路由文件中添加新的路由组
-	return g.appendToFile(routesPath, routeContent)
+	return g.writeFile(routesPath, content)
 }
 
 // writeFile 写入文件

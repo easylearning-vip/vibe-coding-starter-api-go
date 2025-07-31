@@ -1,4 +1,4 @@
-package cmd
+package generator
 
 import (
 	"fmt"
@@ -28,6 +28,18 @@ func (g *MigrationGenerator) Generate(config interface{}) error {
 		return fmt.Errorf("invalid config type for migration generator")
 	}
 
+	// 读取配置文件获取数据库类型
+	configReader := NewConfigReader("")
+	databaseType, err := configReader.GetDatabaseType()
+	if err != nil {
+		return fmt.Errorf("failed to read database config: %w", err)
+	}
+
+	migrationDir, err := configReader.GetMigrationDir()
+	if err != nil {
+		return fmt.Errorf("failed to get migration directory: %w", err)
+	}
+
 	// 如果没有指定表名，从迁移名称推断
 	table := cfg.Table
 	if table == "" {
@@ -36,25 +48,26 @@ func (g *MigrationGenerator) Generate(config interface{}) error {
 
 	// 准备模板数据
 	data := map[string]interface{}{
-		"Name":      cfg.Name,
-		"Table":     table,
-		"TableName": ToSnakeCase(table),
-		"Action":    cfg.Action,
-		"Timestamp": GenerateTimestamp(),
-		"Year":      GetCurrentYear(),
+		"Name":         cfg.Name,
+		"Table":        table,
+		"TableName":    ToSnakeCase(table),
+		"Action":       cfg.Action,
+		"DatabaseType": databaseType,
+		"Timestamp":    GenerateTimestamp(),
+		"Year":         GetCurrentYear(),
 	}
 
 	// 根据操作类型选择模板
 	var templateName string
 	switch cfg.Action {
 	case "create":
-		templateName = "migration_create.sql.tmpl"
+		templateName = "migration.sql.tmpl"
 	case "alter":
 		templateName = "migration_alter.sql.tmpl"
 	case "drop":
 		templateName = "migration_drop.sql.tmpl"
 	default:
-		templateName = "migration_create.sql.tmpl"
+		templateName = "migration.sql.tmpl"
 	}
 
 	// 生成迁移文件
@@ -63,18 +76,18 @@ func (g *MigrationGenerator) Generate(config interface{}) error {
 		return fmt.Errorf("failed to render migration template: %w", err)
 	}
 
-	// 生成文件名
+	// 生成文件名和路径
 	filename := fmt.Sprintf("%s_%s.sql", data["Timestamp"], ToSnakeCase(cfg.Name))
-	path := filepath.Join("migrations", filename)
+	path := filepath.Join(migrationDir, filename)
 
 	if err := g.writeFile(path, content); err != nil {
 		return fmt.Errorf("failed to write migration file: %w", err)
 	}
 
-	// 生成回滚文件
-	if err := g.generateRollback(data, cfg); err != nil {
-		return fmt.Errorf("failed to generate rollback file: %w", err)
-	}
+	// TODO: 生成回滚文件（暂时禁用）
+	// if err := g.generateRollback(data, cfg); err != nil {
+	//     return fmt.Errorf("failed to generate rollback file: %w", err)
+	// }
 
 	return nil
 }
@@ -107,7 +120,7 @@ func (g *MigrationGenerator) generateRollback(data map[string]interface{}, cfg *
 // extractTableFromName 从迁移名称提取表名
 func (g *MigrationGenerator) extractTableFromName(name string) string {
 	name = strings.ToLower(name)
-	
+
 	// 移除常见的前缀
 	prefixes := []string{"create_", "add_", "drop_", "alter_", "modify_"}
 	for _, prefix := range prefixes {

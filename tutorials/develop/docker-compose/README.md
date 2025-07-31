@@ -87,7 +87,7 @@ https://docs.docker.com/desktop/windows/install/
 ### 1. 进入项目目录
 
 ```bash
-cd vibe-coding-starter-go-api/dev-tutorial/docker-compose
+cd vibe-coding-starter-api-go/tutorials/develop/docker-compose
 ```
 
 ### 2. 检查配置文件

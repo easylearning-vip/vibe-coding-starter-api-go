@@ -1,4 +1,4 @@
-package cmd
+package generator
 
 import (
 	"fmt"
@@ -29,21 +29,23 @@ func (g *ModelGenerator) Generate(config interface{}) error {
 	}
 
 	// 解析字段
-	fields, err := ParseFields(cfg.Fields)
+	parser := NewFieldParser()
+	fields, err := parser.ParseFields(cfg.Fields)
 	if err != nil {
 		return fmt.Errorf("failed to parse fields: %w", err)
 	}
 
 	// 准备模板数据
 	data := map[string]interface{}{
-		"Name":           ToPascalCase(cfg.Name),
-		"NameLower":      strings.ToLower(cfg.Name),
-		"NameCamel":      ToCamelCase(cfg.Name),
-		"NameSnake":      ToSnakeCase(cfg.Name),
-		"NamePlural":     Pluralize(strings.ToLower(cfg.Name)),
-		"Fields":         fields,
-		"WithTimestamps": cfg.WithTimestamps,
-		"Year":           GetCurrentYear(),
+		"Name":            ToPascalCase(cfg.Name),
+		"NameLower":       strings.ToLower(cfg.Name),
+		"NameCamel":       ToCamelCase(cfg.Name),
+		"NameSnake":       ToSnakeCase(cfg.Name),
+		"NamePlural":      Pluralize(strings.ToLower(cfg.Name)),
+		"Fields":          fields,
+		"RequiredImports": parser.GetRequiredImports(fields),
+		"WithTimestamps":  cfg.WithTimestamps,
+		"Year":            GetCurrentYear(),
 	}
 
 	// 生成模型文件

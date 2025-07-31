@@ -4,7 +4,7 @@
 
 ## 前置条件
 
-- k3d 集群已创建并运行（使用 `dev-tutorial/k3d` 下的配置）
+- k3d 集群已创建并运行（使用 `tutorials/develop/k3d` 下的配置）
 - MySQL 和 Redis 服务已部署在 `vibe-dev` 命名空间
 - kubectl 已配置并可访问 k3d 集群
 - Docker 已安装并运行
@@ -41,7 +41,7 @@
 
 ```bash
 # 进入部署目录
-cd vibe-coding-starter-go-api/deploy/k8s
+cd vibe-coding-starter-api-go/deploy/k8s
 
 # 执行自动化部署
 ./deploy.sh
@@ -74,7 +74,7 @@ curl http://localhost:5555/v2/_catalog
 
 ```bash
 # 进入项目根目录
-cd vibe-coding-starter-go-api
+cd vibe-coding-starter-api-go
 
 # 构建 Docker 镜像
 docker build -t localhost:5555/vibe-coding-starter-api:latest .
@@ -553,5 +553,5 @@ kubectl rollout status deployment/vibe-api-deployment -n vibe-dev
 
 更多详细信息请参考：
 - `deploy/k8s/README.md` - K8s 部署资源说明
-- `dev-tutorial/k3d/README.md` - k3d 环境详细指南
+- `tutorials/develop/k3d/README.md` - k3d 环境详细指南
 - 项目根目录的 `Makefile` - 构建和部署命令

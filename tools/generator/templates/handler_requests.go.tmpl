@@ -1,0 +1,13 @@
+package handler
+
+// Create{{.Model}}Request 创建{{.Model}}请求
+type Create{{.Model}}Request struct {
+	Name        string `json:"name" validate:"required,min=1,max=255"`
+	Description string `json:"description" validate:"max=1000"`
+}
+
+// Update{{.Model}}Request 更新{{.Model}}请求
+type Update{{.Model}}Request struct {
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
+}

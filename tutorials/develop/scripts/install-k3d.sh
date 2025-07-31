@@ -258,7 +258,7 @@ show_next_steps() {
     echo "   k3d cluster delete test"
     echo
     echo "4. 开始使用开发环境:"
-    echo "   cd vibe-coding-starter-go-api/dev-tutorial/k3d"
+    echo "   cd vibe-coding-starter-api-go/tutorials/develop/k3d"
     echo "   k3d cluster create --config k3d-cluster.yaml"
     echo "   kubectl apply -f manifests/"
     echo

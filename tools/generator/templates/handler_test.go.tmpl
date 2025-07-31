@@ -1,0 +1,100 @@
+package handler_test
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+
+	"vibe-coding-starter/internal/handler"
+	"vibe-coding-starter/internal/model"
+	"vibe-coding-starter/internal/service"
+	"vibe-coding-starter/test/mocks"
+)
+
+type {{.Model}}HandlerTestSuite struct {
+	suite.Suite
+	handler     *handler.{{.Model}}Handler
+	mockService *mocks.Mock{{.Model}}Service
+	mockLogger  *mocks.MockLogger
+	router      *gin.Engine
+}
+
+func (suite *{{.Model}}HandlerTestSuite) SetupTest() {
+	gin.SetMode(gin.TestMode)
+
+	suite.mockService = &mocks.Mock{{.Model}}Service{}
+	suite.mockLogger = &mocks.MockLogger{}
+
+	suite.handler = handler.New{{.Model}}Handler(
+		suite.mockService,
+		suite.mockLogger,
+	)
+	
+	suite.router = gin.New()
+	v1 := suite.router.Group("/api/v1")
+	suite.handler.RegisterRoutes(v1)
+}
+
+func (suite *{{.Model}}HandlerTestSuite) TestCreate{{.Model}}_Success() {
+	// 准备测试数据
+	req := service.Create{{.Model}}Request{
+		Name:        "Test {{.Model}}",
+		Description: "Test Description",
+	}
+	
+	expected{{.Model}} := &model.{{.Model}}{
+		BaseModel: model.BaseModel{ID: 1},
+		Name:      req.Name,
+		Description: req.Description,
+	}
+	
+	// 设置 mock 期望
+	suite.mockService.On("Create", mock.Anything, &req).Return(expected{{.Model}}, nil)
+	
+	// 准备请求
+	reqBody, _ := json.Marshal(req)
+	w := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/api/v1/{{.ModelPlural}}", bytes.NewBuffer(reqBody))
+	request.Header.Set("Content-Type", "application/json")
+	
+	// 执行请求
+	suite.router.ServeHTTP(w, request)
+	
+	// 验证结果
+	assert.Equal(suite.T(), http.StatusCreated, w.Code)
+	suite.mockService.AssertExpectations(suite.T())
+}
+
+func (suite *{{.Model}}HandlerTestSuite) TestGetByID_Success() {
+	// 准备测试数据
+	expected{{.Model}} := &model.{{.Model}}{
+		BaseModel: model.BaseModel{ID: 1},
+		Name:      "Test {{.Model}}",
+		Description: "Test Description",
+	}
+	
+	// 设置 mock 期望
+	suite.mockService.On("GetByID", mock.Anything, uint(1)).Return(expected{{.Model}}, nil)
+	
+	// 准备请求
+	w := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/api/v1/{{.ModelPlural}}/1", nil)
+	
+	// 执行请求
+	suite.router.ServeHTTP(w, request)
+	
+	// 验证结果
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+	suite.mockService.AssertExpectations(suite.T())
+}
+
+func Test{{.Model}}HandlerSuite(t *testing.T) {
+	suite.Run(t, new({{.Model}}HandlerTestSuite))
+}

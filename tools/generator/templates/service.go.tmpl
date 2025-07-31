@@ -3,17 +3,21 @@ package service
 import (
 	"context"
 	"fmt"
-
-	"github.com/your-org/vibe-coding-starter/internal/model"
-	"github.com/your-org/vibe-coding-starter/internal/repository"
-	"github.com/your-org/vibe-coding-starter/pkg/logger"
 {{if .WithCache}}
-	"github.com/your-org/vibe-coding-starter/pkg/cache"
+	"encoding/json"
+	"time"
+{{end}}
+
+	"vibe-coding-starter/internal/model"
+	"vibe-coding-starter/internal/repository"
+	"vibe-coding-starter/pkg/logger"
+{{if .WithCache}}
+	"vibe-coding-starter/pkg/cache"
 {{end}}
 )
 
-// {{.Name}}Service {{.Name}}服务接口
-type {{.Name}}Service interface {
+// {{.Model}}Service {{.Model}}服务接口
+type {{.Model}}Service interface {
 	Create(ctx context.Context, req *Create{{.Model}}Request) (*model.{{.Model}}, error)
 	GetByID(ctx context.Context, id uint) (*model.{{.Model}}, error)
 	Update(ctx context.Context, id uint, req *Update{{.Model}}Request) (*model.{{.Model}}, error)
@@ -21,42 +25,40 @@ type {{.Name}}Service interface {
 	List(ctx context.Context, opts *List{{.Model}}Options) ([]*model.{{.Model}}, int64, error)
 }
 
-// {{.NameCamel}}Service {{.Name}}服务实现
-type {{.NameCamel}}Service struct {
-	repo   repository.{{.Model}}Repository
-	logger logger.Logger
+// {{.ModelCamel}}Service {{.Model}}服务实现
+type {{.ModelCamel}}Service struct {
+	{{.ModelCamel}}Repo repository.{{.Model}}Repository
 {{if .WithCache}}
-	cache  cache.Cache
+	cache       cache.Cache
 {{end}}
+	logger      logger.Logger
 }
 
-// New{{.Name}}Service 创建{{.Name}}服务
-func New{{.Name}}Service(
-	repo repository.{{.Model}}Repository,
-	logger logger.Logger,
+// New{{.Model}}Service 创建{{.Model}}服务
+func New{{.Model}}Service(
+	{{.ModelCamel}}Repo repository.{{.Model}}Repository,
 {{if .WithCache}}
 	cache cache.Cache,
 {{end}}
-) {{.Name}}Service {
-	return &{{.NameCamel}}Service{
-		repo:   repo,
-		logger: logger,
+	logger logger.Logger,
+) {{.Model}}Service {
+	return &{{.ModelCamel}}Service{
+		{{.ModelCamel}}Repo: {{.ModelCamel}}Repo,
 {{if .WithCache}}
-		cache:  cache,
+		cache:       cache,
 {{end}}
+		logger:      logger,
 	}
 }
 
 // Create{{.Model}}Request 创建{{.Model}}请求
 type Create{{.Model}}Request struct {
-	Name        string `json:"name" validate:"required,min=1,max=255"`
-	Description string `json:"description" validate:"max=1000"`
+{{.CreateRequestFields}}
 }
 
 // Update{{.Model}}Request 更新{{.Model}}请求
 type Update{{.Model}}Request struct {
-	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
+{{.UpdateRequestFields}}
 }
 
 // List{{.Model}}Options 列表查询选项
@@ -70,7 +72,7 @@ type List{{.Model}}Options struct {
 }
 
 // Create 创建{{.Model}}
-func (s *{{.NameCamel}}Service) Create(ctx context.Context, req *Create{{.Model}}Request) (*model.{{.Model}}, error) {
+func (s *{{.ModelCamel}}Service) Create(ctx context.Context, req *Create{{.Model}}Request) (*model.{{.Model}}, error) {
 	// 验证请求
 	if err := s.validateCreateRequest(req); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
@@ -78,12 +80,11 @@ func (s *{{.NameCamel}}Service) Create(ctx context.Context, req *Create{{.Model}
 
 	// 创建模型
 	entity := &model.{{.Model}}{
-		Name:        req.Name,
-		Description: req.Description,
+{{.ModelAssignment}}
 	}
 
 	// 保存到数据库
-	if err := s.repo.Create(ctx, entity); err != nil {
+	if err := s.{{.ModelCamel}}Repo.Create(ctx, entity); err != nil {
 		s.logger.Error("Failed to create {{.ModelLower}}", "error", err)
 		return nil, fmt.Errorf("failed to create {{.ModelLower}}: %w", err)
 	}
@@ -93,12 +94,12 @@ func (s *{{.NameCamel}}Service) Create(ctx context.Context, req *Create{{.Model}
 	s.clearCache(ctx, entity.ID)
 {{end}}
 
-	s.logger.Info("{{.Model}} created successfully", "id", entity.ID, "name", entity.Name)
+	s.logger.Info("{{.Model}} created successfully", "id", entity.ID)
 	return entity, nil
 }
 
 // GetByID 根据ID获取{{.Model}}
-func (s *{{.NameCamel}}Service) GetByID(ctx context.Context, id uint) (*model.{{.Model}}, error) {
+func (s *{{.ModelCamel}}Service) GetByID(ctx context.Context, id uint) (*model.{{.Model}}, error) {
 {{if .WithCache}}
 	// 尝试从缓存获取
 	cacheKey := fmt.Sprintf("{{.ModelSnake}}:%d", id)
@@ -111,7 +112,7 @@ func (s *{{.NameCamel}}Service) GetByID(ctx context.Context, id uint) (*model.{{
 {{end}}
 
 	// 从数据库获取
-	entity, err := s.repo.GetByID(ctx, id)
+	entity, err := s.{{.ModelCamel}}Repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get {{.ModelLower}}: %w", err)
 	}
@@ -127,28 +128,23 @@ func (s *{{.NameCamel}}Service) GetByID(ctx context.Context, id uint) (*model.{{
 }
 
 // Update 更新{{.Model}}
-func (s *{{.NameCamel}}Service) Update(ctx context.Context, id uint, req *Update{{.Model}}Request) (*model.{{.Model}}, error) {
+func (s *{{.ModelCamel}}Service) Update(ctx context.Context, id uint, req *Update{{.Model}}Request) (*model.{{.Model}}, error) {
 	// 验证请求
 	if err := s.validateUpdateRequest(req); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
 	// 获取现有实体
-	entity, err := s.repo.GetByID(ctx, id)
+	entity, err := s.{{.ModelCamel}}Repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get {{.ModelLower}}: %w", err)
 	}
 
 	// 更新字段
-	if req.Name != nil {
-		entity.Name = *req.Name
-	}
-	if req.Description != nil {
-		entity.Description = *req.Description
-	}
+{{.UpdateAssignment}}
 
 	// 保存更新
-	if err := s.repo.Update(ctx, entity); err != nil {
+	if err := s.{{.ModelCamel}}Repo.Update(ctx, entity); err != nil {
 		s.logger.Error("Failed to update {{.ModelLower}}", "id", id, "error", err)
 		return nil, fmt.Errorf("failed to update {{.ModelLower}}: %w", err)
 	}
@@ -163,14 +159,14 @@ func (s *{{.NameCamel}}Service) Update(ctx context.Context, id uint, req *Update
 }
 
 // Delete 删除{{.Model}}
-func (s *{{.NameCamel}}Service) Delete(ctx context.Context, id uint) error {
+func (s *{{.ModelCamel}}Service) Delete(ctx context.Context, id uint) error {
 	// 检查实体是否存在
-	if _, err := s.repo.GetByID(ctx, id); err != nil {
+	if _, err := s.{{.ModelCamel}}Repo.GetByID(ctx, id); err != nil {
 		return fmt.Errorf("failed to get {{.ModelLower}}: %w", err)
 	}
 
 	// 删除实体
-	if err := s.repo.Delete(ctx, id); err != nil {
+	if err := s.{{.ModelCamel}}Repo.Delete(ctx, id); err != nil {
 		s.logger.Error("Failed to delete {{.ModelLower}}", "id", id, "error", err)
 		return fmt.Errorf("failed to delete {{.ModelLower}}: %w", err)
 	}
@@ -185,7 +181,7 @@ func (s *{{.NameCamel}}Service) Delete(ctx context.Context, id uint) error {
 }
 
 // List 获取{{.Model}}列表
-func (s *{{.NameCamel}}Service) List(ctx context.Context, opts *List{{.Model}}Options) ([]*model.{{.Model}}, int64, error) {
+func (s *{{.ModelCamel}}Service) List(ctx context.Context, opts *List{{.Model}}Options) ([]*model.{{.Model}}, int64, error) {
 	// 设置默认值
 	if opts.Page <= 0 {
 		opts.Page = 1
@@ -208,7 +204,7 @@ func (s *{{.NameCamel}}Service) List(ctx context.Context, opts *List{{.Model}}Op
 	}
 
 	// 获取列表
-	entities, total, err := s.repo.List(ctx, repoOpts)
+	entities, total, err := s.{{.ModelCamel}}Repo.List(ctx, repoOpts)
 	if err != nil {
 		s.logger.Error("Failed to list {{.ModelPlural}}", "error", err)
 		return nil, 0, fmt.Errorf("failed to list {{.ModelPlural}}: %w", err)
@@ -218,39 +214,23 @@ func (s *{{.NameCamel}}Service) List(ctx context.Context, opts *List{{.Model}}Op
 }
 
 // validateCreateRequest 验证创建请求
-func (s *{{.NameCamel}}Service) validateCreateRequest(req *Create{{.Model}}Request) error {
-	if req.Name == "" {
-		return fmt.Errorf("name is required")
-	}
-	if len(req.Name) > 255 {
-		return fmt.Errorf("name too long")
-	}
-	if len(req.Description) > 1000 {
-		return fmt.Errorf("description too long")
-	}
+func (s *{{.ModelCamel}}Service) validateCreateRequest(req *Create{{.Model}}Request) error {
+	// 使用 validate 标签进行验证
+	// 这里可以添加自定义验证逻辑
 	return nil
 }
 
 // validateUpdateRequest 验证更新请求
-func (s *{{.NameCamel}}Service) validateUpdateRequest(req *Update{{.Model}}Request) error {
-	if req.Name != nil {
-		if *req.Name == "" {
-			return fmt.Errorf("name cannot be empty")
-		}
-		if len(*req.Name) > 255 {
-			return fmt.Errorf("name too long")
-		}
-	}
-	if req.Description != nil && len(*req.Description) > 1000 {
-		return fmt.Errorf("description too long")
-	}
+func (s *{{.ModelCamel}}Service) validateUpdateRequest(req *Update{{.Model}}Request) error {
+	// 使用 validate 标签进行验证
+	// 这里可以添加自定义验证逻辑
 	return nil
 }
 
 {{if .WithCache}}
 // clearCache 清除相关缓存
-func (s *{{.NameCamel}}Service) clearCache(ctx context.Context, id uint) {
+func (s *{{.ModelCamel}}Service) clearCache(ctx context.Context, id uint) {
 	cacheKey := fmt.Sprintf("{{.ModelSnake}}:%d", id)
-	s.cache.Delete(ctx, cacheKey)
+	s.cache.Del(ctx, cacheKey)
 }
 {{end}}

@@ -1,4 +1,4 @@
-package cmd
+package generator
 
 import (
 	"fmt"
@@ -84,7 +84,7 @@ func (g *RepositoryGenerator) generateRepositoryImpl(data map[string]interface{}
 		return err
 	}
 
-	filename := fmt.Sprintf("%s.go", data["NameSnake"])
+	filename := fmt.Sprintf("%s.go", data["ModelSnake"])
 	path := filepath.Join("internal", "repository", filename)
 
 	return g.writeFile(path, content)

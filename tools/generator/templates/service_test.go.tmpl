@@ -1,0 +1,166 @@
+package service
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+
+	"vibe-coding-starter/internal/model"
+	"vibe-coding-starter/internal/repository"
+	"vibe-coding-starter/test/mocks"
+)
+
+type {{.Name}}ServiceTestSuite struct {
+	suite.Suite
+	service    {{.Name}}Service
+	mockRepo   *mocks.Mock{{.Model}}Repository
+	mockLogger *mocks.MockLogger
+	ctx        context.Context
+}
+
+func (suite *{{.Name}}ServiceTestSuite) SetupTest() {
+	suite.mockRepo = &mocks.Mock{{.Model}}Repository{}
+	suite.mockLogger = &mocks.MockLogger{}
+	suite.ctx = context.Background()
+	
+	suite.service = New{{.Name}}Service(
+		suite.mockRepo,
+		suite.mockLogger,
+	)
+}
+
+func (suite *{{.Name}}ServiceTestSuite) TestCreate_Success() {
+	// 准备测试数据
+	req := &Create{{.Model}}Request{
+		Name:        "Test {{.Model}}",
+		Description: "Test Description",
+	}
+	
+	expected{{.Model}} := &model.{{.Model}}{
+		BaseModel:   model.BaseModel{ID: 1},
+		Name:        req.Name,
+		Description: req.Description,
+	}
+	
+	// 设置 mock 期望
+	suite.mockRepo.On("Create", suite.ctx, mock.AnythingOfType("*model.{{.Model}}")).Return(nil).Run(func(args mock.Arguments) {
+		{{.ModelCamel}} := args.Get(1).(*model.{{.Model}})
+		{{.ModelCamel}}.ID = 1
+	})
+	
+	// 执行测试
+	result, err := suite.service.Create(suite.ctx, req)
+	
+	// 验证结果
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), result)
+	assert.Equal(suite.T(), expected{{.Model}}.Name, result.Name)
+	assert.Equal(suite.T(), expected{{.Model}}.Description, result.Description)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *{{.Name}}ServiceTestSuite) TestGetByID_Success() {
+	// 准备测试数据
+	expected{{.Model}} := &model.{{.Model}}{
+		BaseModel:   model.BaseModel{ID: 1},
+		Name:        "Test {{.Model}}",
+		Description: "Test Description",
+	}
+	
+	// 设置 mock 期望
+	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(expected{{.Model}}, nil)
+	
+	// 执行测试
+	result, err := suite.service.GetByID(suite.ctx, 1)
+	
+	// 验证结果
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), expected{{.Model}}, result)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *{{.Name}}ServiceTestSuite) TestUpdate_Success() {
+	// 准备测试数据
+	existing{{.Model}} := &model.{{.Model}}{
+		BaseModel:   model.BaseModel{ID: 1},
+		Name:        "Old Name",
+		Description: "Old Description",
+	}
+	
+	newName := "New Name"
+	req := &Update{{.Model}}Request{
+		Name: &newName,
+	}
+	
+	// 设置 mock 期望
+	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existing{{.Model}}, nil)
+	suite.mockRepo.On("Update", suite.ctx, mock.AnythingOfType("*model.{{.Model}}")).Return(nil)
+	
+	// 执行测试
+	result, err := suite.service.Update(suite.ctx, 1, req)
+	
+	// 验证结果
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), newName, result.Name)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *{{.Name}}ServiceTestSuite) TestDelete_Success() {
+	// 准备测试数据
+	existing{{.Model}} := &model.{{.Model}}{
+		BaseModel: model.BaseModel{ID: 1},
+		Name:      "Test {{.Model}}",
+	}
+	
+	// 设置 mock 期望
+	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existing{{.Model}}, nil)
+	suite.mockRepo.On("Delete", suite.ctx, uint(1)).Return(nil)
+	
+	// 执行测试
+	err := suite.service.Delete(suite.ctx, 1)
+	
+	// 验证结果
+	assert.NoError(suite.T(), err)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func (suite *{{.Name}}ServiceTestSuite) TestList_Success() {
+	// 准备测试数据
+	expected{{.ModelPlural}} := []*model.{{.Model}}{
+		{BaseModel: model.BaseModel{ID: 1}, Name: "{{.Model}} 1"},
+		{BaseModel: model.BaseModel{ID: 2}, Name: "{{.Model}} 2"},
+	}
+	
+	opts := &List{{.Model}}Options{
+		Page:     1,
+		PageSize: 10,
+	}
+	
+	repoOpts := repository.ListOptions{
+		Page:     1,
+		PageSize: 10,
+		Sort:     "",
+		Order:    "",
+		Filters:  make(map[string]interface{}),
+		Search:   "",
+	}
+	
+	// 设置 mock 期望
+	suite.mockRepo.On("List", suite.ctx, repoOpts).Return(expected{{.ModelPlural}}, int64(2), nil)
+	
+	// 执行测试
+	result, total, err := suite.service.List(suite.ctx, opts)
+	
+	// 验证结果
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), expected{{.ModelPlural}}, result)
+	assert.Equal(suite.T(), int64(2), total)
+	suite.mockRepo.AssertExpectations(suite.T())
+}
+
+func Test{{.Name}}ServiceSuite(t *testing.T) {
+	suite.Run(t, new({{.Name}}ServiceTestSuite))
+}

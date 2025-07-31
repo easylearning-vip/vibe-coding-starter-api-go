@@ -5,26 +5,28 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
-	"github.com/your-org/vibe-coding-starter/internal/model"
-	"github.com/your-org/vibe-coding-starter/pkg/logger"
+
+	"vibe-coding-starter/internal/model"
+	"vibe-coding-starter/pkg/database"
+	"vibe-coding-starter/pkg/logger"
 )
 
-// {{.NameCamel}}Repository {{.Name}}仓储实现
-type {{.NameCamel}}Repository struct {
+// {{.ModelCamel}}Repository {{.Model}}仓储实现
+type {{.ModelCamel}}Repository struct {
 	db     *gorm.DB
 	logger logger.Logger
 }
 
-// New{{.Name}}Repository 创建{{.Name}}仓储
-func New{{.Name}}Repository(db *gorm.DB, logger logger.Logger) {{.Name}}Repository {
-	return &{{.NameCamel}}Repository{
-		db:     db,
+// New{{.Model}}Repository 创建{{.Model}}仓储
+func New{{.Model}}Repository(db database.Database, logger logger.Logger) {{.Model}}Repository {
+	return &{{.ModelCamel}}Repository{
+		db:     db.GetDB(),
 		logger: logger,
 	}
 }
 
-// Create 创建{{.Name}}
-func (r *{{.NameCamel}}Repository) Create(ctx context.Context, entity *model.{{.Name}}) error {
+// Create 创建{{.Model}}
+func (r *{{.ModelCamel}}Repository) Create(ctx context.Context, entity *model.{{.Model}}) error {
 	if err := r.db.WithContext(ctx).Create(entity).Error; err != nil {
 		r.logger.Error("Failed to create {{.NameLower}}", "error", err)
 		return fmt.Errorf("failed to create {{.NameLower}}: %w", err)
@@ -32,56 +34,56 @@ func (r *{{.NameCamel}}Repository) Create(ctx context.Context, entity *model.{{.
 	return nil
 }
 
-// GetByID 根据ID获取{{.Name}}
-func (r *{{.NameCamel}}Repository) GetByID(ctx context.Context, id uint) (*model.{{.Name}}, error) {
-	var entity model.{{.Name}}
+// GetByID 根据ID获取{{.Model}}
+func (r *{{.ModelCamel}}Repository) GetByID(ctx context.Context, id uint) (*model.{{.Model}}, error) {
+	var entity model.{{.Model}}
 	if err := r.db.WithContext(ctx).First(&entity, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("{{.NameLower}} not found")
+			return nil, fmt.Errorf("{{.Model}} not found")
 		}
-		r.logger.Error("Failed to get {{.NameLower}} by ID", "id", id, "error", err)
-		return nil, fmt.Errorf("failed to get {{.NameLower}}: %w", err)
+		r.logger.Error("Failed to get {{.Model}} by ID", "id", id, "error", err)
+		return nil, fmt.Errorf("failed to get {{.Model}}: %w", err)
 	}
 	return &entity, nil
 }
 
-// GetByName 根据名称获取{{.Name}}
-func (r *{{.NameCamel}}Repository) GetByName(ctx context.Context, name string) (*model.{{.Name}}, error) {
-	var entity model.{{.Name}}
+// GetByName 根据名称获取{{.Model}}
+func (r *{{.ModelCamel}}Repository) GetByName(ctx context.Context, name string) (*model.{{.Model}}, error) {
+	var entity model.{{.Model}}
 	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&entity).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("{{.NameLower}} not found")
+			return nil, fmt.Errorf("{{.Model}} not found")
 		}
-		r.logger.Error("Failed to get {{.NameLower}} by name", "name", name, "error", err)
-		return nil, fmt.Errorf("failed to get {{.NameLower}}: %w", err)
+		r.logger.Error("Failed to get {{.Model}} by name", "name", name, "error", err)
+		return nil, fmt.Errorf("failed to get {{.Model}}: %w", err)
 	}
 	return &entity, nil
 }
 
-// Update 更新{{.Name}}
-func (r *{{.NameCamel}}Repository) Update(ctx context.Context, entity *model.{{.Name}}) error {
+// Update 更新{{.Model}}
+func (r *{{.ModelCamel}}Repository) Update(ctx context.Context, entity *model.{{.Model}}) error {
 	if err := r.db.WithContext(ctx).Save(entity).Error; err != nil {
-		r.logger.Error("Failed to update {{.NameLower}}", "id", entity.ID, "error", err)
-		return fmt.Errorf("failed to update {{.NameLower}}: %w", err)
+		r.logger.Error("Failed to update {{.Model}}", "id", entity.ID, "error", err)
+		return fmt.Errorf("failed to update {{.Model}}: %w", err)
 	}
 	return nil
 }
 
-// Delete 删除{{.Name}}
-func (r *{{.NameCamel}}Repository) Delete(ctx context.Context, id uint) error {
-	if err := r.db.WithContext(ctx).Delete(&model.{{.Name}}{}, id).Error; err != nil {
-		r.logger.Error("Failed to delete {{.NameLower}}", "id", id, "error", err)
-		return fmt.Errorf("failed to delete {{.NameLower}}: %w", err)
+// Delete 删除{{.Model}}
+func (r *{{.ModelCamel}}Repository) Delete(ctx context.Context, id uint) error {
+	if err := r.db.WithContext(ctx).Delete(&model.{{.Model}}{}, id).Error; err != nil {
+		r.logger.Error("Failed to delete {{.Model}}", "id", id, "error", err)
+		return fmt.Errorf("failed to delete {{.Model}}: %w", err)
 	}
 	return nil
 }
 
-// List 获取{{.Name}}列表
-func (r *{{.NameCamel}}Repository) List(ctx context.Context, opts ListOptions) ([]*model.{{.Name}}, int64, error) {
-	var entities []*model.{{.Name}}
+// List 获取{{.Model}}列表
+func (r *{{.ModelCamel}}Repository) List(ctx context.Context, opts ListOptions) ([]*model.{{.Model}}, int64, error) {
+	var entities []*model.{{.Model}}
 	var total int64
 
-	query := r.db.WithContext(ctx).Model(&model.{{.Name}}{})
+	query := r.db.WithContext(ctx).Model(&model.{{.Model}}{})
 
 	// 应用过滤器
 	query = r.applyFilters(query, opts.Filters)
@@ -99,11 +101,11 @@ func (r *{{.NameCamel}}Repository) List(ctx context.Context, opts ListOptions) (
 
 	// 应用排序
 	if opts.Sort != "" {
-		order := opts.Sort
-		if opts.Order != "" {
-			order += " " + opts.Order
+		order := "ASC"
+		if opts.Order == "desc" {
+			order = "DESC"
 		}
-		query = query.Order(order)
+		query = query.Order(fmt.Sprintf("%s %s", opts.Sort, order))
 	} else {
 		query = query.Order("created_at DESC")
 	}
@@ -124,7 +126,7 @@ func (r *{{.NameCamel}}Repository) List(ctx context.Context, opts ListOptions) (
 }
 
 // applyFilters 应用过滤器
-func (r *{{.NameCamel}}Repository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
+func (r *{{.ModelCamel}}Repository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
 		switch key {
 		case "name":

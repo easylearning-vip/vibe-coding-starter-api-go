@@ -87,7 +87,7 @@ docker info
 
 ```bash
 # 进入 k3d 目录
-cd vibe-coding-starter-go-api/dev-tutorial/k3d
+cd vibe-coding-starter-api-go/tutorials/develop/k3d
 
 # 使用配置文件创建集群
 k3d cluster create --config k3d-cluster.yaml

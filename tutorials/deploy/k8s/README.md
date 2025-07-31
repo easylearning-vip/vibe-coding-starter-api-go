@@ -17,7 +17,7 @@
 
 ```bash
 # 进入部署目录
-cd vibe-coding-starter-go-api/deploy/k8s
+cd vibe-coding-starter-api-go/deploy/k8s
 
 # 执行部署脚本
 ./deploy.sh
@@ -34,7 +34,7 @@ docker run -d --name local-registry --restart=always -p 5555:5000 registry:2
 docker network connect k3d-vibe-dev local-registry
 
 # 2. 构建和推送镜像
-cd vibe-coding-starter-go-api
+cd vibe-coding-starter-api-go
 docker build -t localhost:5555/vibe-coding-starter-api:latest .
 docker push localhost:5555/vibe-coding-starter-api:latest
 

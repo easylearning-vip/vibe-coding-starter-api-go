@@ -51,7 +51,7 @@ Docker Compose 是最简单快速的开发环境搭建方式，适合大多数�
 
 ```bash
 # 1. 进入 Docker Compose 目录
-cd vibe-coding-starter-go-api/dev-tutorial/docker-compose
+cd vibe-coding-starter-api-go/tutorials/develop/docker-compose
 
 # 2. 启动基础服务（MySQL + Redis）
 docker compose -f docker-compose.dev.yml up -d
@@ -104,7 +104,7 @@ k3d 提供了真正的 Kubernetes 开发环境，适合云原生应用开发和�
 
 ```bash
 # 1. 进入 k3d 目录
-cd vibe-coding-starter-go-api/dev-tutorial/k3d
+cd vibe-coding-starter-api-go/tutorials/develop/k3d
 
 # 2. 使用配置文件创建 k3d 集群
 k3d cluster create --config k3d-cluster.yaml
@@ -183,11 +183,11 @@ go run cmd/server/main.go -config configs/config-k3d.yaml
 
 ```bash
 # Docker Compose 方式
-cd dev-tutorial/docker-compose
+cd tutorials/develop/docker-compose
 docker compose -f docker-compose.dev.yml up -d
 
 # 或 k3d 方式
-cd dev-tutorial/k3d
+cd tutorials/develop/k3d
 k3d cluster create --config k3d-cluster.yaml
 kubectl apply -f manifests/namespace.yaml
 kubectl apply -f manifests/mysql.yaml

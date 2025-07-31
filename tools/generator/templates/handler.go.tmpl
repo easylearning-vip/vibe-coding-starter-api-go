@@ -5,332 +5,268 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/your-org/vibe-coding-starter/internal/service"
-	"github.com/your-org/vibe-coding-starter/pkg/logger"
-{{if .WithAuth}}
-	"github.com/your-org/vibe-coding-starter/internal/middleware"
-{{end}}
+
+	"vibe-coding-starter/internal/repository"
+	"vibe-coding-starter/internal/service"
+	"vibe-coding-starter/pkg/logger"
 )
 
 // {{.Model}}Handler {{.Model}}处理器
 type {{.Model}}Handler struct {
-	service service.{{.Model}}Service
-	logger  logger.Logger
+	{{.ModelCamel}}Service service.{{.Model}}Service
+	logger         logger.Logger
 }
 
 // New{{.Model}}Handler 创建{{.Model}}处理器
-func New{{.Model}}Handler(service service.{{.Model}}Service, logger logger.Logger) *{{.Model}}Handler {
+func New{{.Model}}Handler(
+	{{.ModelCamel}}Service service.{{.Model}}Service,
+	logger logger.Logger,
+) *{{.Model}}Handler {
 	return &{{.Model}}Handler{
-		service: service,
-		logger:  logger,
+		{{.ModelCamel}}Service: {{.ModelCamel}}Service,
+		logger:         logger,
 	}
 }
 
 // RegisterRoutes 注册路由
 func (h *{{.Model}}Handler) RegisterRoutes(r *gin.RouterGroup) {
-	{{.ModelCamel}}Group := r.Group("/{{.ModelPlural}}")
+	{{.ModelPlural}} := r.Group("/{{.ModelPlural}}")
 	{
 {{if .WithAuth}}
-		{{.ModelCamel}}Group.Use(middleware.AuthRequired())
+		// 需要认证的路由
 {{end}}
-		{{.ModelCamel}}Group.POST("", h.Create)
-		{{.ModelCamel}}Group.GET("", h.List)
-		{{.ModelCamel}}Group.GET("/:id", h.GetByID)
-		{{.ModelCamel}}Group.PUT("/:id", h.Update)
-		{{.ModelCamel}}Group.DELETE("/:id", h.Delete)
+		{{.ModelPlural}}.POST("", h.Create)
+		{{.ModelPlural}}.GET("", h.List)
+		{{.ModelPlural}}.GET("/:id", h.GetByID)
+		{{.ModelPlural}}.PUT("/:id", h.Update)
+		{{.ModelPlural}}.DELETE("/:id", h.Delete)
 	}
 }
 
 // Create 创建{{.Model}}
 // @Summary 创建{{.Model}}
 // @Description 创建新的{{.Model}}
-// @Tags {{.Model}}
+// @Tags {{.ModelPlural}}
 // @Accept json
 // @Produce json
 // @Param request body service.Create{{.Model}}Request true "创建{{.Model}}请求"
-// @Success 201 {object} Response{data=model.{{.Model}}} "创建成功"
-// @Failure 400 {object} Response "请求参数错误"
-// @Failure 500 {object} Response "服务器内部错误"
+// @Success 201 {object} model.{{.Model}}
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /api/v1/{{.ModelPlural}} [post]
 func (h *{{.Model}}Handler) Create(c *gin.Context) {
 	var req service.Create{{.Model}}Request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Failed to bind create {{.ModelLower}} request", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request format",
-			"details": err.Error(),
+		h.logger.Error("Invalid create {{.ModelLower}} request", "error", err)
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
 		})
 		return
 	}
 
-{{if .WithValidation}}
-	// 验证请求
-	if err := h.validateCreateRequest(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Validation failed",
-			"details": err.Error(),
-		})
-		return
-	}
-{{end}}
-
-	// 创建{{.Model}}
-	entity, err := h.service.Create(c.Request.Context(), &req)
+	{{.ModelCamel}}, err := h.{{.ModelCamel}}Service.Create(c.Request.Context(), &req)
 	if err != nil {
 		h.logger.Error("Failed to create {{.ModelLower}}", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to create {{.ModelLower}}",
-			"details": err.Error(),
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "create_failed",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "{{.Model}} created successfully",
-		"data":    entity,
-	})
+	c.JSON(http.StatusCreated, {{.ModelCamel}})
 }
 
 // GetByID 根据ID获取{{.Model}}
 // @Summary 获取{{.Model}}详情
 // @Description 根据ID获取{{.Model}}详情
-// @Tags {{.Model}}
+// @Tags {{.ModelPlural}}
 // @Accept json
 // @Produce json
 // @Param id path int true "{{.Model}} ID"
-// @Success 200 {object} Response{data=model.{{.Model}}} "获取成功"
-// @Failure 400 {object} Response "请求参数错误"
-// @Failure 404 {object} Response "{{.Model}}不存在"
-// @Failure 500 {object} Response "服务器内部错误"
+// @Success 200 {object} model.{{.Model}}
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /api/v1/{{.ModelPlural}}/{id} [get]
 func (h *{{.Model}}Handler) GetByID(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid ID format",
-			"details": "ID must be a positive integer",
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "invalid_id",
+			Message: "Invalid {{.Model}} ID",
 		})
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), uint(id))
+	{{.ModelCamel}}, err := h.{{.ModelCamel}}Service.GetByID(c.Request.Context(), uint(id))
 	if err != nil {
-		if err.Error() == "{{.ModelLower}} not found" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error":   "{{.Model}} not found",
-				"details": "The requested {{.ModelLower}} does not exist",
-			})
-			return
-		}
-
-		h.logger.Error("Failed to get {{.ModelLower}}", "id", id, "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get {{.ModelLower}}",
-			"details": err.Error(),
+		h.logger.Error("Failed to get {{.ModelLower}}", "{{.ModelLower}}_id", id, "error", err)
+		c.JSON(http.StatusNotFound, ErrorResponse{
+			Error:   "{{.ModelLower}}_not_found",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": entity,
-	})
+	c.JSON(http.StatusOK, {{.ModelCamel}})
 }
 
 // Update 更新{{.Model}}
 // @Summary 更新{{.Model}}
 // @Description 更新{{.Model}}信息
-// @Tags {{.Model}}
+// @Tags {{.ModelPlural}}
 // @Accept json
 // @Produce json
 // @Param id path int true "{{.Model}} ID"
 // @Param request body service.Update{{.Model}}Request true "更新{{.Model}}请求"
-// @Success 200 {object} Response{data=model.{{.Model}}} "更新成功"
-// @Failure 400 {object} Response "请求参数错误"
-// @Failure 404 {object} Response "{{.Model}}不存在"
-// @Failure 500 {object} Response "服务器内部错误"
+// @Success 200 {object} model.{{.Model}}
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /api/v1/{{.ModelPlural}}/{id} [put]
 func (h *{{.Model}}Handler) Update(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid ID format",
-			"details": "ID must be a positive integer",
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "invalid_id",
+			Message: "Invalid {{.Model}} ID",
 		})
 		return
 	}
 
 	var req service.Update{{.Model}}Request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Failed to bind update {{.ModelLower}} request", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request format",
-			"details": err.Error(),
+		h.logger.Error("Invalid update {{.ModelLower}} request", "error", err)
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
 		})
 		return
 	}
 
-{{if .WithValidation}}
-	// 验证请求
-	if err := h.validateUpdateRequest(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Validation failed",
-			"details": err.Error(),
-		})
-		return
-	}
-{{end}}
-
-	// 更新{{.Model}}
-	entity, err := h.service.Update(c.Request.Context(), uint(id), &req)
+	{{.ModelCamel}}, err := h.{{.ModelCamel}}Service.Update(c.Request.Context(), uint(id), &req)
 	if err != nil {
-		if err.Error() == "{{.ModelLower}} not found" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error":   "{{.Model}} not found",
-				"details": "The requested {{.ModelLower}} does not exist",
-			})
-			return
-		}
-
-		h.logger.Error("Failed to update {{.ModelLower}}", "id", id, "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to update {{.ModelLower}}",
-			"details": err.Error(),
+		h.logger.Error("Failed to update {{.ModelLower}}", "{{.ModelLower}}_id", id, "error", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "update_failed",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "{{.Model}} updated successfully",
-		"data":    entity,
-	})
+	c.JSON(http.StatusOK, {{.ModelCamel}})
 }
 
 // Delete 删除{{.Model}}
 // @Summary 删除{{.Model}}
 // @Description 删除{{.Model}}
-// @Tags {{.Model}}
+// @Tags {{.ModelPlural}}
 // @Accept json
 // @Produce json
 // @Param id path int true "{{.Model}} ID"
-// @Success 200 {object} Response "删除成功"
-// @Failure 400 {object} Response "请求参数错误"
-// @Failure 404 {object} Response "{{.Model}}不存在"
-// @Failure 500 {object} Response "服务器内部错误"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /api/v1/{{.ModelPlural}}/{id} [delete]
 func (h *{{.Model}}Handler) Delete(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid ID format",
-			"details": "ID must be a positive integer",
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error:   "invalid_id",
+			Message: "Invalid {{.Model}} ID",
 		})
 		return
 	}
 
-	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
-		if err.Error() == "{{.ModelLower}} not found" {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error":   "{{.Model}} not found",
-				"details": "The requested {{.ModelLower}} does not exist",
-			})
-			return
-		}
-
-		h.logger.Error("Failed to delete {{.ModelLower}}", "id", id, "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to delete {{.ModelLower}}",
-			"details": err.Error(),
+	if err := h.{{.ModelCamel}}Service.Delete(c.Request.Context(), uint(id)); err != nil {
+		h.logger.Error("Failed to delete {{.ModelLower}}", "{{.ModelLower}}_id", id, "error", err)
+		c.JSON(http.StatusNotFound, ErrorResponse{
+			Error:   "delete_failed",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "{{.Model}} deleted successfully",
+	c.JSON(http.StatusOK, SuccessResponse{
+		Message: "{{.Model}} deleted successfully",
 	})
 }
 
 // List 获取{{.Model}}列表
 // @Summary 获取{{.Model}}列表
 // @Description 获取{{.Model}}列表，支持分页、搜索和过滤
-// @Tags {{.Model}}
+// @Tags {{.ModelPlural}}
 // @Accept json
 // @Produce json
 // @Param page query int false "页码" default(1)
-// @Param page_size query int false "每页数量" default(20)
+// @Param page_size query int false "每页数量" default(10)
 // @Param search query string false "搜索关键词"
-// @Param sort query string false "排序字段"
-// @Param order query string false "排序方向" Enums(asc, desc)
-// @Success 200 {object} Response{data=[]model.{{.Model}}} "获取成功"
-// @Failure 400 {object} Response "请求参数错误"
-// @Failure 500 {object} Response "服务器内部错误"
+// @Success 200 {object} ListResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /api/v1/{{.ModelPlural}} [get]
 func (h *{{.Model}}Handler) List(c *gin.Context) {
-	// 解析查询参数
-	opts := &service.List{{.Model}}Options{
-		Page:     1,
-		PageSize: 20,
-		Filters:  make(map[string]interface{}),
+	opts := h.parseListOptions(c)
+	serviceOpts := &service.List{{.Model}}Options{
+		Page:     opts.Page,
+		PageSize: opts.PageSize,
+		Search:   opts.Search,
+		Sort:     opts.Sort,
+		Order:    opts.Order,
+		Filters:  opts.Filters,
 	}
 
-	if page := c.Query("page"); page != "" {
-		if p, err := strconv.Atoi(page); err == nil && p > 0 {
-			opts.Page = p
-		}
-	}
-
-	if pageSize := c.Query("page_size"); pageSize != "" {
-		if ps, err := strconv.Atoi(pageSize); err == nil && ps > 0 {
-			opts.PageSize = ps
-		}
-	}
-
-	opts.Search = c.Query("search")
-	opts.Sort = c.Query("sort")
-	opts.Order = c.Query("order")
-
-	// 获取列表
-	entities, total, err := h.service.List(c.Request.Context(), opts)
+	{{.ModelPlural}}, total, err := h.{{.ModelCamel}}Service.List(c.Request.Context(), serviceOpts)
 	if err != nil {
-		h.logger.Error("Failed to list {{.ModelPlural}}", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to list {{.ModelPlural}}",
-			"details": err.Error(),
+		h.logger.Error("Failed to get {{.ModelPlural}}", "error", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "get_{{.ModelPlural}}_failed",
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": entities,
-		"pagination": gin.H{
-			"page":       opts.Page,
-			"page_size":  opts.PageSize,
-			"total":      total,
-			"total_pages": (total + int64(opts.PageSize) - 1) / int64(opts.PageSize),
-		},
+	c.JSON(http.StatusOK, ListResponse{
+		Data:  {{.ModelPlural}},
+		Total: total,
+		Page:  opts.Page,
+		Size:  opts.PageSize,
 	})
 }
 
-{{if .WithValidation}}
-// validateCreateRequest 验证创建请求
-func (h *{{.Model}}Handler) validateCreateRequest(req *service.Create{{.Model}}Request) error {
-	// 在这里添加验证逻辑
-	return nil
+// 辅助方法
+
+func (h *{{.Model}}Handler) parseListOptions(c *gin.Context) repository.ListOptions {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	search := c.Query("search")
+
+	// 构建过滤器
+	filters := make(map[string]interface{})
+	// 在这里添加特定的过滤器逻辑
+
+	return repository.ListOptions{
+		Page:     page,
+		PageSize: pageSize,
+		Search:   search,
+		Sort:     c.DefaultQuery("sort", "created_at"),
+		Order:    c.DefaultQuery("order", "desc"),
+		Filters:  filters,
+	}
 }
 
-// validateUpdateRequest 验证更新请求
-func (h *{{.Model}}Handler) validateUpdateRequest(req *service.Update{{.Model}}Request) error {
-	// 在这里添加验证逻辑
-	return nil
-}
-{{end}}
+// 请求结构体
 
-// Response 通用响应结构
-type Response struct {
-	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
-	Details string      `json:"details,omitempty"`
+// Create{{.Model}}Request 创建{{.Model}}请求
+type Create{{.Model}}Request struct {
+	Name        string `json:"name" validate:"required,min=1,max=255"`
+	Description string `json:"description" validate:"max=1000"`
+}
+
+// Update{{.Model}}Request 更新{{.Model}}请求
+type Update{{.Model}}Request struct {
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
 }

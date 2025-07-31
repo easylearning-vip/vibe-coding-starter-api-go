@@ -1,6 +1,6 @@
-// {{.Name}}Repository {{.Name}}仓储接口
-type {{.Name}}Repository interface {
-	Repository[model.{{.Name}}, uint]
+// {{.Model}}Repository {{.Model}}仓储接口
+type {{.Model}}Repository interface {
+	Repository[model.{{.Model}}, uint]
 	// 在这里添加特定的查询方法
-	GetByName(ctx context.Context, name string) (*model.{{.Name}}, error)
+	GetByName(ctx context.Context, name string) (*model.{{.Model}}, error)
 }

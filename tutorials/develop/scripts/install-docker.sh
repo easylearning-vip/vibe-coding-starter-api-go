@@ -177,7 +177,7 @@ show_next_steps() {
     echo "3. 验证安装: docker --version"
     echo "4. 运行测试: docker run --rm hello-world"
     echo "5. 开始使用开发环境:"
-    echo "   cd vibe-coding-starter-go-api/dev-tutorial/docker-compose"
+    echo "   cd vibe-coding-starter-api-go/tutorials/develop/docker-compose"
     echo "   docker compose -f docker-compose.dev.yml up -d"
 }
 

@@ -1,4 +1,4 @@
-package cmd
+package generator
 
 import (
 	"fmt"
@@ -47,7 +47,7 @@ func (g *TestGenerator) Generate(config interface{}) error {
 // generateServiceTest 生成服务测试
 func (g *TestGenerator) generateServiceTest(cfg *TestConfig) error {
 	serviceName := strings.TrimSuffix(cfg.Service, "Service")
-	
+
 	data := map[string]interface{}{
 		"Service":     ToPascalCase(cfg.Service),
 		"ServiceName": ToPascalCase(serviceName),
@@ -62,10 +62,10 @@ func (g *TestGenerator) generateServiceTest(cfg *TestConfig) error {
 
 	switch cfg.Type {
 	case "unit":
-		templateName = "service_unit_test.go.tmpl"
+		templateName = "service_test.go.tmpl"
 		outputDir = "test/service"
 	case "integration":
-		templateName = "service_integration_test.go.tmpl"
+		templateName = "service_test.go.tmpl" // 暂时使用同一个模板
 		outputDir = "test/integration"
 	default:
 		templateName = "service_test.go.tmpl"
@@ -86,7 +86,7 @@ func (g *TestGenerator) generateServiceTest(cfg *TestConfig) error {
 // generateHandlerTest 生成处理器测试
 func (g *TestGenerator) generateHandlerTest(cfg *TestConfig) error {
 	handlerName := strings.TrimSuffix(cfg.Handler, "Handler")
-	
+
 	data := map[string]interface{}{
 		"Handler":     ToPascalCase(cfg.Handler),
 		"HandlerName": ToPascalCase(handlerName),
@@ -128,7 +128,7 @@ func (g *TestGenerator) generateHandlerTest(cfg *TestConfig) error {
 // generateRepositoryTest 生成仓储测试
 func (g *TestGenerator) generateRepositoryTest(cfg *TestConfig) error {
 	repoName := strings.TrimSuffix(cfg.Repository, "Repository")
-	
+
 	data := map[string]interface{}{
 		"Repository":     ToPascalCase(cfg.Repository),
 		"RepositoryName": ToPascalCase(repoName),

@@ -1,4 +1,4 @@
-package cmd
+package generator
 
 import (
 	"fmt"
@@ -46,19 +46,14 @@ func (g *HandlerGenerator) Generate(config interface{}) error {
 		return fmt.Errorf("failed to render handler template: %w", err)
 	}
 
-	filename := fmt.Sprintf("%s_handler.go", data["ModelSnake"])
+	filename := fmt.Sprintf("%s.go", data["ModelSnake"])
 	path := filepath.Join("internal", "handler", filename)
 
 	if err := g.writeFile(path, content); err != nil {
 		return fmt.Errorf("failed to write handler file: %w", err)
 	}
 
-	// 生成请求/响应结构体
-	if cfg.WithValidation {
-		if err := g.generateRequestStructs(data); err != nil {
-			return fmt.Errorf("failed to generate request structs: %w", err)
-		}
-	}
+	// 请求结构体现在包含在主 handler 文件中，不需要单独生成
 
 	// 生成处理器测试
 	if err := g.generateHandlerTest(data); err != nil {

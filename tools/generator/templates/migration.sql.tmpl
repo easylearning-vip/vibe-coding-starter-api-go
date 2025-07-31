@@ -1,0 +1,54 @@
+-- Migration: {{.Name}}
+-- Created: {{.Timestamp}}
+-- Description: Create {{.TableName}} table
+
+{{if eq .DatabaseType "mysql"}}
+CREATE TABLE IF NOT EXISTS {{.TableName}} (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+
+    -- Indexes
+    KEY idx_{{.TableName}}_created_at (created_at),
+    KEY idx_{{.TableName}}_updated_at (updated_at),
+    KEY idx_{{.TableName}}_deleted_at (deleted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+{{else if eq .DatabaseType "postgres"}}
+CREATE TABLE IF NOT EXISTS {{.TableName}} (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE NULL
+);
+
+-- Indexes for PostgreSQL
+CREATE INDEX IF NOT EXISTS idx_{{.TableName}}_created_at ON {{.TableName}} (created_at);
+CREATE INDEX IF NOT EXISTS idx_{{.TableName}}_updated_at ON {{.TableName}} (updated_at);
+CREATE INDEX IF NOT EXISTS idx_{{.TableName}}_deleted_at ON {{.TableName}} (deleted_at);
+{{else}}
+-- Default to MySQL syntax
+CREATE TABLE IF NOT EXISTS {{.TableName}} (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+
+    -- Indexes
+    KEY idx_{{.TableName}}_created_at (created_at),
+    KEY idx_{{.TableName}}_updated_at (updated_at),
+    KEY idx_{{.TableName}}_deleted_at (deleted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+{{end}}

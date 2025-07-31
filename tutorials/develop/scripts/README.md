@@ -21,10 +21,10 @@
 **使用方法：**
 ```bash
 # 下载并运行（推荐）
-curl -fsSL https://raw.githubusercontent.com/your-repo/vibe-coding-starter-go-api/main/dev-tutorial/scripts/setup-dev-environment.sh | bash
+curl -fsSL https://raw.githubusercontent.com/easylearning-vip/vibe-coding-starter-api-go/main/tutorials/develop/scripts/setup-dev-environment.sh | bash
 
 # 或者本地运行
-cd vibe-coding-starter-go-api/dev-tutorial/scripts
+cd vibe-coding-starter-api-go/tutorials/develop/scripts
 ./setup-dev-environment.sh
 ```
 
@@ -38,7 +38,7 @@ cd vibe-coding-starter-go-api/dev-tutorial/scripts
 
 **使用方法：**
 ```bash
-cd vibe-coding-starter-go-api/dev-tutorial/scripts
+cd vibe-coding-starter-api-go/tutorials/develop/scripts
 ./quick-start.sh
 ```
 
@@ -92,7 +92,7 @@ cd vibe-coding-starter-go-api/dev-tutorial/scripts
 ```bash
 # 1. 克隆项目（如果还没有）
 git clone <repository-url>
-cd vibe-coding-starter-go-api/dev-tutorial/scripts
+cd vibe-coding-starter-api-go/tutorials/develop/scripts
 
 # 2. 运行一键安装脚本
 ./setup-dev-environment.sh

@@ -18,7 +18,7 @@ Vibe Coding Starter Go API 是一个现代化的 Go Web API 项目模板，采�
 
 ### 目录结构
 ```
-vibe-coding-starter-go-api/
+vibe-coding-starter-api-go/
 ├── cmd/                    # 应用程序入口点
 │   ├── server/            # HTTP 服务器
 │   ├── migrate/           # 数据库迁移工具
@@ -40,7 +40,7 @@ vibe-coding-starter-go-api/
 ├── migrations/            # 数据库迁移脚本
 ├── test/                  # 测试代码
 ├── deploy/                # 部署配置
-├── dev-tutorial/          # 开发环境教程
+├── tutorials/develop/          # 开发环境教程
 └── tools/                 # 开发工具
 ```
 
@@ -94,7 +94,7 @@ vibe-coding-starter-go-api/
 ```bash
 # 1. 克隆项目
 git clone <repository-url>
-cd vibe-coding-starter-go-api
+cd vibe-coding-starter-api-go
 
 # 2. 安装依赖
 go mod tidy
@@ -113,13 +113,13 @@ make run-docker
 
 #### 选项 1: Docker Compose (推荐)
 ```bash
-cd dev-tutorial/docker-compose
+cd tutorials/develop/docker-compose
 docker compose -f docker-compose.dev.yml up -d
 ```
 
 #### 选项 2: K3D (Kubernetes)
 ```bash
-cd dev-tutorial/k3d
+cd tutorials/develop/k3d
 k3d cluster create --config k3d-cluster.yaml
 ```
 
