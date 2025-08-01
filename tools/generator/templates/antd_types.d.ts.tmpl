@@ -1,0 +1,40 @@
+declare namespace {{.Model}}API {
+  // {{.Model}} model from API
+  interface {{.Model}} {
+{{- range .Fields}}
+    {{.JSONName}}: {{.TSType}};
+{{- end}}
+  }
+
+  // Create {{.Model}} request
+  interface Create{{.Model}}Request {
+{{- range .Fields}}
+{{- if and .FormShow (ne .JSONName "id") (ne .JSONName "created_at") (ne .JSONName "updated_at")}}
+    {{.JSONName}}{{if not .Required}}?{{end}}: {{.TSType}};
+{{- end}}
+{{- end}}
+  }
+
+  // Update {{.Model}} request
+  interface Update{{.Model}}Request {
+{{- range .Fields}}
+{{- if and .FormShow (ne .JSONName "id") (ne .JSONName "created_at") (ne .JSONName "updated_at")}}
+    {{.JSONName}}?: {{.TSType}};
+{{- end}}
+{{- end}}
+  }
+
+  // Success response
+  interface SuccessResponse {
+    success: boolean;
+    message: string;
+  }
+
+  // List response
+  interface ListResponse<T> {
+    data: T[];
+    total: number;
+    page: number;
+    size: number;
+  }
+}

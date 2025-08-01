@@ -253,3 +253,10 @@ func (m *MockDictService) InitDefaultDictData(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
 }
+
+
+
+
+
+
+

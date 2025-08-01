@@ -59,6 +59,8 @@ func main() {
 		handleFromDatabaseCommand()
 	case "list-tables":
 		handleListTablesCommand()
+	case "frontend":
+		handleFrontendCommand()
 	case "help", "-h", "--help":
 		showUsage()
 	case "version", "-v", "--version":
@@ -85,6 +87,7 @@ func showUsage() {
 	fmt.Println("  from-table  Generate model from database table")
 	fmt.Println("  from-db     Generate models from all tables in database")
 	fmt.Println("  list-tables List all tables in database")
+	fmt.Println("  frontend    Generate frontend code (Antd/Vue)")
 	fmt.Println("  help        Show this help message")
 	fmt.Println("  version     Show version information")
 	fmt.Println()
@@ -103,6 +106,11 @@ func showUsage() {
 	fmt.Println("  go run cmd/generator/main.go from-table --table=users --host=localhost --port=3306 --user=root --password=secret --database=mydb")
 	fmt.Println("  go run cmd/generator/main.go from-db --host=localhost --port=3306 --user=root --password=secret --database=mydb")
 	fmt.Println("  go run cmd/generator/main.go list-tables --host=localhost --port=3306 --user=root --password=secret --database=mydb")
+	fmt.Println("  # Generate frontend code")
+	fmt.Println("  go run cmd/generator/main.go frontend --model=Product --framework=antd --output=../vibe-coding-starter-ui-antd")
+	fmt.Println("  go run cmd/generator/main.go frontend --model=User --framework=antd --output=../vibe-coding-starter-ui-antd --with-auth --with-search")
+	fmt.Println("  go run cmd/generator/main.go frontend --model=Product --framework=antd --module-type=admin --output=../vibe-coding-starter-ui-antd")
+	fmt.Println("  go run cmd/generator/main.go frontend --model=Article --framework=antd --module-type=public --output=../vibe-coding-starter-ui-antd")
 }
 
 func handleAllCommand() {
@@ -639,4 +647,93 @@ func convertGoTypeToFieldType(goType string) string {
 	default:
 		return "string"
 	}
+}
+
+func handleFrontendCommand() {
+	fs := flag.NewFlagSet("frontend", flag.ExitOnError)
+	model := fs.String("model", "", "Model name (required)")
+	framework := fs.String("framework", "antd", "Frontend framework (antd, vue)")
+	output := fs.String("output", "", "Output directory (required)")
+	moduleType := fs.String("module-type", "admin", "Module type (admin, public)")
+	withAuth := fs.Bool("with-auth", false, "Include authentication")
+	withSearch := fs.Bool("with-search", true, "Include search functionality")
+	withExport := fs.Bool("with-export", false, "Include export functionality")
+	withBatch := fs.Bool("with-batch", false, "Include batch operations")
+	apiPrefix := fs.String("api-prefix", "/api/v1", "API prefix")
+	moduleName := fs.String("module", "", "Module name (default: lowercase model name)")
+
+	fs.Parse(os.Args[2:])
+
+	if *model == "" {
+		fmt.Println("Error: --model is required")
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	if *output == "" {
+		fmt.Println("Error: --output is required")
+		fmt.Println("Please specify the frontend project directory, e.g., --output=../vibe-coding-starter-ui-antd")
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	// 验证框架类型
+	var fwType generator.FrontendFramework
+	switch *framework {
+	case "antd":
+		fwType = generator.FrameworkAntd
+	case "vue":
+		fwType = generator.FrameworkVue
+	default:
+		fmt.Printf("Error: unsupported framework '%s'. Supported: antd, vue\n", *framework)
+		os.Exit(1)
+	}
+
+	// 验证模块类型
+	var modType generator.ModuleType
+	switch *moduleType {
+	case "admin":
+		modType = generator.ModuleTypeAdmin
+	case "public":
+		modType = generator.ModuleTypePublic
+	default:
+		fmt.Printf("Error: unsupported module type '%s'. Supported: admin, public\n", *moduleType)
+		os.Exit(1)
+	}
+
+	// 设置默认模块名
+	if *moduleName == "" {
+		*moduleName = strings.ToLower(*model)
+	}
+
+	// 根据模块类型设置默认 API 前缀
+	if *apiPrefix == "/api/v1" && modType == generator.ModuleTypeAdmin {
+		*apiPrefix = "/api/v1/admin"
+	}
+
+	fmt.Printf("🚀 Generating %s frontend code for '%s'...\n\n", *framework, *model)
+
+	gen := generator.NewFrontendGenerator()
+	config := &generator.FrontendConfig{
+		Model:      *model,
+		Framework:  fwType,
+		OutputDir:  *output,
+		ModuleType: modType,
+		WithAuth:   *withAuth,
+		WithSearch: *withSearch,
+		WithExport: *withExport,
+		WithBatch:  *withBatch,
+		ApiPrefix:  *apiPrefix,
+		ModuleName: *moduleName,
+	}
+
+	if err := gen.Generate(config); err != nil {
+		log.Fatalf("Failed to generate frontend code: %v", err)
+	}
+
+	fmt.Printf("✅ Frontend code for '%s' generated successfully!\n", *model)
+	fmt.Printf("📁 Output directory: %s\n", *output)
+	fmt.Printf("🎨 Framework: %s\n", *framework)
+	fmt.Printf("🏗️  Module type: %s\n", *moduleType)
+	fmt.Printf("📦 Module: %s\n", *moduleName)
 }

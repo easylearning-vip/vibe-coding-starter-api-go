@@ -1,0 +1,201 @@
+import React, { useEffect, useState } from 'react';
+import { Button, Card, Form, Input, Modal, message, Popconfirm, Space, Table } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
+import { useIntl } from '@umijs/max';
+import type { ColumnsType } from 'antd/es/table';
+import {
+  create{{.Model}},
+  delete{{.Model}},
+  get{{.Model}}List,
+  update{{.Model}},
+} from '@/services/{{.ModuleName}}/api';
+
+type {{.Model}} = {{.Model}}API.{{.Model}};
+
+const {{.Model}}Management: React.FC = () => {
+  const intl = useIntl();
+  const [{{.ModelCamel}}s, set{{.Model}}s] = useState<{{.Model}}[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editing{{.Model}}, setEditing{{.Model}}] = useState<{{.Model}} | null>(null);
+  const [form] = Form.useForm();
+
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const columns: ColumnsType<{{.Model}}> = [
+{{- range .Fields}}
+{{- if .TableShow}}
+    {
+      title: intl.formatMessage({ id: 'pages.{{$.ModelCamel}}.table.{{.JSONName}}' }),
+      dataIndex: '{{.JSONName}}',
+      key: '{{.JSONName}}',
+{{- if eq .JSONName "id"}}
+      width: 80,
+{{- end}}
+{{- if or (eq .Type "time.Time") (eq .JSONName "created_at") (eq .JSONName "updated_at")}}
+      sorter: true,
+      render: (date: string) => new Date(date).toLocaleString(),
+{{- else if eq .TSType "number"}}
+      sorter: true,
+{{- else if eq .TSType "string"}}
+      sorter: true,
+{{- end}}
+    },
+{{- end}}
+{{- end}}
+    {
+      title: intl.formatMessage({ id: 'pages.common.actions' }),
+      key: 'action',
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            {intl.formatMessage({ id: 'pages.common.edit' })}
+          </Button>
+          <Popconfirm
+            title={intl.formatMessage({
+              id: 'pages.{{.ModelCamel}}.delete.confirm.title',
+            })}
+            onConfirm={() => handleDelete(record)}
+            okText={intl.formatMessage({ id: 'pages.common.confirm' })}
+            cancelText={intl.formatMessage({ id: 'pages.common.cancel' })}
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              {intl.formatMessage({ id: 'pages.common.delete' })}
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  const fetch{{.Model}}s = async () => {
+    setLoading(true);
+    try {
+      const response = await get{{.Model}}List({
+        page: pagination.current,
+        page_size: pagination.pageSize,
+      });
+      set{{.Model}}s(response.data);
+      setPagination((prev) => ({
+        ...prev,
+        total: response.total,
+        current: response.page,
+        pageSize: response.size,
+      }));
+    } catch (error) {
+      console.error('获取{{.Model}}列表失败:', error);
+      message.error('获取{{.Model}}列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = ({{.ModelCamel}}: {{.Model}}) => {
+    setEditing{{.Model}}({{.ModelCamel}});
+    form.setFieldsValue({{.ModelCamel}});
+    setModalVisible(true);
+  };
+
+  const handleAdd = () => {
+    setEditing{{.Model}}(null);
+    form.resetFields();
+    setModalVisible(true);
+  };
+
+  const handleDelete = async ({{.ModelCamel}}: {{.Model}}) => {
+    try {
+      await delete{{.Model}}({{.ModelCamel}}.id);
+      message.success('删除成功');
+      fetch{{.Model}}s();
+    } catch (error) {
+      console.error('删除失败:', error);
+      message.error('删除失败');
+    }
+  };
+
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      if (editing{{.Model}}) {
+        await update{{.Model}}(editing{{.Model}}.id, values);
+        message.success('更新成功');
+      } else {
+        await create{{.Model}}(values);
+        message.success('创建成功');
+      }
+      
+      setModalVisible(false);
+      fetch{{.Model}}s();
+    } catch (error) {
+      console.error('保存失败:', error);
+      message.error('保存失败');
+    }
+  };
+
+  useEffect(() => {
+    fetch{{.Model}}s();
+  }, []);
+
+  const buttonStyle = { marginBottom: 16 };
+
+  return (
+    <PageContainer>
+      <Card>
+        <div style={buttonStyle}>
+          <Space>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+              新增{{.Model}}
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={fetch{{.Model}}s}>
+              刷新
+            </Button>
+          </Space>
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={ {{.ModelCamel}}s}
+          rowKey="id"
+          loading={loading}
+          pagination={pagination}
+        />
+      </Card>
+
+      <Modal
+        title={editing{{.Model}} ? '编辑{{.Model}}' : '新增{{.Model}}'}
+        open={modalVisible}
+        onOk={handleModalOk}
+        onCancel={() => setModalVisible(false)}
+        width={600}
+      >
+        <Form form={form} layout="vertical">
+{{- range .Fields}}
+{{- if .FormShow}}
+          <Form.Item
+            name="{{.JSONName}}"
+            label="{{.Name}}"
+{{- if .Required}}
+            rules={[{ required: true, message: '请输入{{.Name}}' }]}
+{{- end}}
+          >
+            <Input />
+          </Form.Item>
+{{- end}}
+{{- end}}
+        </Form>
+      </Modal>
+    </PageContainer>
+  );
+};
+
+export default {{.Model}}Management;

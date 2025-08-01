@@ -74,6 +74,36 @@ type DatabaseTableConfig struct {
 	WithSoftDelete   bool
 }
 
+// FrontendFramework 前端框架类型
+type FrontendFramework string
+
+const (
+	FrameworkAntd FrontendFramework = "antd"
+	FrameworkVue  FrontendFramework = "vue"
+)
+
+// ModuleType 模块类型
+type ModuleType string
+
+const (
+	ModuleTypeAdmin  ModuleType = "admin"  // 管理后台模块
+	ModuleTypePublic ModuleType = "public" // 普通用户模块
+)
+
+// FrontendConfig 前端代码生成配置
+type FrontendConfig struct {
+	Model      string            // 模型名称
+	Framework  FrontendFramework // 前端框架类型
+	OutputDir  string            // 输出目录
+	ModuleType ModuleType        // 模块类型 (admin/public)
+	WithAuth   bool              // 是否包含权限控制
+	WithSearch bool              // 是否包含搜索功能
+	WithExport bool              // 是否包含导出功能
+	WithBatch  bool              // 是否包含批量操作
+	ApiPrefix  string            // API 前缀，默认 /api/v1
+	ModuleName string            // 模块名称，用于路由和菜单
+}
+
 // mapGoType 映射Go类型
 func mapGoType(fieldType string) string {
 	typeMap := map[string]string{
