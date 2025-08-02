@@ -252,9 +252,10 @@ go run cmd/generator/main.go from-db --host=localhost --port=3306 --user=root --
 - test: 测试相关
 - chore: 构建过程或辅助工具的变动
 
-## 📄 许可证
+## 学习资源
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+- [Vibe Coding 应用开发完整教程](https://www.easylearning.vip/tutorials/vibe-coding){:target="_blank"}
+- [Vibe Coding Starter 全栈开发学习路线](https://www.easylearning.vip/roadmaps/35){:target="_blank"}
 
 ## � 技术交流
 
@@ -283,3 +284,7 @@ go run cmd/generator/main.go from-db --host=localhost --port=3306 --user=root --
 ---
 
 **Vibe Coding Starter** - 让 AI 辅助开发更简单！
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
