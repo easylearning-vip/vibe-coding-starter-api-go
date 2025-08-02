@@ -15,7 +15,7 @@
 ### 基本连接参数
 ```yaml
 # 数据库连接信息
-Host: localhost
+Host: 127.0.0.1
 Port: 3306 (k3d NodePort 映射)
 Username: vibe_user
 Password: vibe_password
@@ -51,19 +51,19 @@ sudo apt install mysql-server
 
 #### 标准连接
 ```bash
-mysql -h localhost -P 3306 -u vibe_user -p vibe_coding_starter
+mysql -h 127.0.0.1 -P 3306 -u vibe_user -p vibe_coding_starter
 # 输入密码：vibe_password
 ```
 
 #### 一行命令连接（不推荐生产环境）
 ```bash
-mysql -h localhost -P 3306 -u vibe_user -pvibe_password vibe_coding_starter
+mysql -h 127.0.0.1 -P 3306 -u vibe_user -pvibe_password vibe_coding_starter
 ```
 
 #### 使用完整参数
 ```bash
 mysql \
-  --host=localhost \
+  --host=127.0.0.1 \
   --port=3306 \
   --user=vibe_user \
   --password=vibe_password \
@@ -83,7 +83,7 @@ mkdir -p ~/.mysql
 # 创建配置文件
 cat > ~/.mysql/vibe-dev.cnf << 'EOF'
 [client]
-host = localhost
+host = 127.0.0.1
 port = 3306
 user = vibe_user
 password = vibe_password

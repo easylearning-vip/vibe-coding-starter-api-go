@@ -27,7 +27,7 @@ COPY . .
 
 # 构建应用程序
 RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags="-w -s -X main.Version=$(git describe --tags --always --dirty) -X main.BuildTime=$(date +%Y-%m-%d_%H:%M:%S)" \
+    -ldflags="-w -s -X main.BuildTime=$(date +%Y-%m-%d_%H:%M:%S)" \
     -a -installsuffix cgo \
     -o main cmd/server/main.go
 

@@ -68,7 +68,7 @@ uploads/
 # 文档和说明文件（构建时不需要）
 README.md
 *.md
-docs/
+# docs/ - 注释掉，因为 Swagger 文档需要在构建时包含
 
 # 测试相关文件（构建时不需要）
 test/
