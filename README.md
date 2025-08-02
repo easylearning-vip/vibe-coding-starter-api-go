@@ -254,8 +254,8 @@ go run cmd/generator/main.go from-db --host=localhost --port=3306 --user=root --
 
 ## 学习资源
 
-- [Vibe Coding 应用开发完整教程](https://www.easylearning.vip/tutorials/vibe-coding){:target="_blank"}
-- [Vibe Coding Starter 全栈开发学习路线](https://www.easylearning.vip/roadmaps/35){:target="_blank"}
+- [Vibe Coding 应用开发完整教程](https://www.easylearning.vip/tutorials/vibe-coding)
+- [Vibe Coding Starter 全栈开发学习路线](https://www.easylearning.vip/roadmaps/35)
 
 ## � 技术交流
 
