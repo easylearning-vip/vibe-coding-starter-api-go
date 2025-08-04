@@ -59,7 +59,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:7-alpine
+        image: registry.cn-guangzhou.aliyuncs.com/easylearning/redis:7-alpine
         ports:
         - containerPort: 6379
           name: redis
