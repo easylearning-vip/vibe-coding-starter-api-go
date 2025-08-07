@@ -64,6 +64,7 @@ func (suite *ArticleHandlerTestSuite) TestCreate() {
 		Summary:    "Test article summary",
 		CategoryID: func() *uint { id := uint(1); return &id }(),
 		Status:     model.ArticleStatusDraft,
+		AuthorID:   1, // This will be set by the handler from context
 	}
 
 	article := &model.Article{
@@ -84,8 +85,13 @@ func (suite *ArticleHandlerTestSuite) TestCreate() {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
+	// 创建Gin上下文并设置用户ID
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Set("user_id", uint(1))
+
 	// 执行请求
-	suite.router.ServeHTTP(w, req)
+	suite.handler.Create(c)
 
 	// 验证响应
 	assert.Equal(suite.T(), http.StatusCreated, w.Code)

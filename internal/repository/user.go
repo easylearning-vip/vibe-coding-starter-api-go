@@ -143,7 +143,7 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (*m
 func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uint) error {
 	if err := r.db.WithContext(ctx).Model(&model.User{}).
 		Where("id = ?", userID).
-		Update("last_login", gorm.Expr("NOW()")).Error; err != nil {
+		Update("last_login", gorm.Expr("CURRENT_TIMESTAMP")).Error; err != nil {
 		r.logger.Error("Failed to update last login", "user_id", userID, "error", err)
 		return fmt.Errorf("failed to update last login: %w", err)
 	}

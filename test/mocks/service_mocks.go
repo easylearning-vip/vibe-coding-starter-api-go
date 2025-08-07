@@ -254,9 +254,7 @@ func (m *MockDictService) InitDefaultDictData(ctx context.Context) error {
 	return args.Error(0)
 }
 
-
-
-
-
-
-
+func (m *MockDictService) ClearDefaultDictData(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}

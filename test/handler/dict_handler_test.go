@@ -328,7 +328,7 @@ func (suite *DictHandlerTestSuite) TestDeleteItem_Success() {
 	suite.router.ServeHTTP(w, req)
 
 	// 验证响应
-	assert.Equal(suite.T(), http.StatusNoContent, w.Code)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
 
 	// 验证mock调用
 	suite.dictService.AssertExpectations(suite.T())

@@ -149,6 +149,10 @@ func (suite *UserHandlerTestSuite) TestLogin() {
 		Token: "jwt-token-here",
 	}
 
+	// Mock 日志
+	suite.logger.On("Debug", mock.AnythingOfType("string"), mock.Anything, mock.Anything).Return()
+	suite.logger.On("Debug", mock.AnythingOfType("string"), mock.Anything, mock.Anything, mock.Anything).Return()
+
 	// Mock 用户服务
 	suite.userService.On("Login", mock.Anything, &reqBody).Return(loginResponse, nil)
 
@@ -181,11 +185,13 @@ func (suite *UserHandlerTestSuite) TestLoginServiceError() {
 		Password: "wrongpassword",
 	}
 
+	// Mock 日志
+	suite.logger.On("Debug", mock.AnythingOfType("string"), mock.Anything, mock.Anything).Return()
+	suite.logger.On("Debug", mock.AnythingOfType("string"), mock.Anything, mock.Anything, mock.Anything).Return()
+	suite.logger.On("Error", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return()
+
 	// Mock 用户服务返回错误
 	suite.userService.On("Login", mock.Anything, &reqBody).Return(nil, assert.AnError)
-
-	// Mock 日志
-	suite.logger.On("Error", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return()
 
 	// 创建请求
 	body, _ := json.Marshal(reqBody)

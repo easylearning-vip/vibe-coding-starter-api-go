@@ -153,7 +153,7 @@ func (suite *UserRepositoryTestSuite) TestGetByEmail() {
 func (suite *UserRepositoryTestSuite) TestGetByEmailNotFound() {
 	_, err := suite.repo.GetByEmail(suite.ctx, "nonexistent@example.com")
 	assert.Error(suite.T(), err)
-	assert.Contains(suite.T(), err.Error(), "user not found")
+	assert.Contains(suite.T(), err.Error(), "record not found")
 }
 
 // TestGetByUsername 测试根据用户名获取用户

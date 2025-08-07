@@ -13,6 +13,7 @@ import (
 
 	"vibe-coding-starter/internal/config"
 	"vibe-coding-starter/internal/handler"
+	"vibe-coding-starter/internal/model"
 	"vibe-coding-starter/internal/repository"
 	"vibe-coding-starter/internal/service"
 	"vibe-coding-starter/pkg/cache"
@@ -37,6 +38,19 @@ func TestUserLoginWithUsername(t *testing.T) {
 
 	// 创建数据库连接
 	db, err := database.New(cfg, log)
+	require.NoError(t, err)
+
+	// 执行数据库迁移
+	err = db.AutoMigrate(
+		&model.User{},
+		&model.Category{},
+		&model.Tag{},
+		&model.Article{},
+		&model.Comment{},
+		&model.File{},
+		&model.DictCategory{},
+		&model.DictItem{},
+	)
 	require.NoError(t, err)
 
 	// 创建缓存

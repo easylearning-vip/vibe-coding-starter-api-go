@@ -84,7 +84,7 @@ func (r *articleRepository) List(ctx context.Context, opts ListOptions) ([]*mode
 
 	// 应用搜索
 	if opts.Search != "" {
-		query = query.Where("title LIKE ? OR content LIKE ? OR summary LIKE ?",
+		query = query.Where("title LIKE ? OR content LIKE ? OR excerpt LIKE ?",
 			"%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%")
 	}
 
@@ -251,7 +251,7 @@ func (r *articleRepository) GetPublished(ctx context.Context, opts ListOptions) 
 
 	// 应用搜索
 	if opts.Search != "" {
-		query = query.Where("title LIKE ? OR content LIKE ? OR summary LIKE ?",
+		query = query.Where("title LIKE ? OR content LIKE ? OR excerpt LIKE ?",
 			"%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%")
 	}
 
@@ -279,7 +279,7 @@ func (r *articleRepository) Search(ctx context.Context, query string, opts ListO
 	var total int64
 
 	dbQuery := r.db.WithContext(ctx).Model(&model.Article{}).
-		Where("title LIKE ? OR content LIKE ? OR summary LIKE ?",
+		Where("title LIKE ? OR content LIKE ? OR excerpt LIKE ?",
 			"%"+query+"%", "%"+query+"%", "%"+query+"%").
 		Preload("Author").
 		Preload("Category").

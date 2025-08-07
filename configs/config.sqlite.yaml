@@ -1,0 +1,161 @@
+# Vibe Coding Starter SQLite 测试环境配置文件
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8081
+  mode: "test"  # debug, release, test
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 60
+
+# 数据库配置 - SQLite
+database:
+  driver: "sqlite"  # mysql, postgres, sqlite
+  host: ""
+  port: 0
+  username: ""
+  password: ""
+  database: ":memory:"  # 使用内存数据库进行测试
+  charset: ""
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600
+
+# 缓存配置 - 内存缓存
+cache:
+  driver: "memory"  # redis, memory
+  host: ""
+  port: 0
+  password: ""
+  database: 0
+  pool_size: 10
+
+# 日志配置
+logger:
+  level: "debug"  # debug, info, warn, error, fatal
+  format: "console"  # json, console
+  output: "stdout"  # stdout, file
+  filename: "logs/test.log"
+  max_size: 100  # MB
+  max_age: 30    # days
+  max_backups: 10
+  compress: true
+
+# JWT 配置
+jwt:
+  secret: "test-secret-key-for-testing-only"
+  issuer: "vibe-coding-starter-test"
+  expiration: 86400  # 24 hours in seconds
+
+# AI 配置
+ai:
+  enabled: false
+  provider: "openai"  # openai, anthropic, local
+  api_key: ""
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 1000
+
+# 文件上传配置
+upload:
+  max_size: 10485760  # 10MB in bytes
+  allowed_types:
+    - "image/jpeg"
+    - "image/png"
+    - "image/gif"
+    - "image/webp"
+    - "application/pdf"
+    - "text/plain"
+  storage_type: "local"  # local, s3, oss
+  local_path: "test_uploads"
+
+# S3 配置 (当 storage_type 为 s3 时使用)
+s3:
+  region: "us-east-1"
+  bucket: "test-bucket"
+  access_key: ""
+  secret_key: ""
+  endpoint: ""
+
+# 阿里云 OSS 配置 (当 storage_type 为 oss 时使用)
+oss:
+  endpoint: "oss-cn-hangzhou.aliyuncs.com"
+  bucket: "test-bucket"
+  access_key: ""
+  secret_key: ""
+
+# CORS 配置
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "PATCH"
+    - "DELETE"
+    - "HEAD"
+    - "OPTIONS"
+  allow_headers:
+    - "Origin"
+    - "Content-Length"
+    - "Content-Type"
+    - "Authorization"
+    - "X-Requested-With"
+    - "X-Request-ID"
+    - "X-API-Key"
+  expose_headers:
+    - "Content-Length"
+    - "X-Request-ID"
+  allow_credentials: true
+  max_age: 43200  # 12 hours
+
+# 限流配置
+rate_limit:
+  enabled: false  # 测试环境禁用限流
+  requests_per_minute: 1000
+  burst: 100
+
+# 安全配置
+security:
+  enable_https: false
+  tls_cert_file: ""
+  tls_key_file: ""
+  hsts_max_age: 31536000
+  hsts_include_subdomains: false
+  hsts_preload: false
+  csp_policy: ""
+  ip_whitelist: []
+  ip_blacklist: []
+  blocked_user_agents: []
+  max_request_size: 10485760  # 10MB
+  request_timeout: 30
+  bcrypt_cost: 4  # 测试环境使用较低的成本
+  password_min_length: 6
+  session_timeout: 3600
+  max_login_attempts: 100  # 测试环境放宽限制
+  lockout_duration: 1   # 1 second
+
+# 邮件配置
+email:
+  enabled: false
+  smtp_host: ""
+  smtp_port: 587
+  username: ""
+  password: ""
+  from_email: "test@example.com"
+  from_name: "Test"
+
+# 监控配置
+monitoring:
+  enabled: false  # 测试环境禁用监控
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+# 开发配置
+development:
+  auto_migrate: true   # 自动执行数据库迁移
+  seed_data: false     # 测试环境不自动填充数据
+  debug_sql: false     # 测试环境不显示 SQL 调试信息
+  hot_reload: false    # 测试环境禁用热重载
