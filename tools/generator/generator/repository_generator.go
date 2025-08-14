@@ -62,6 +62,11 @@ func (g *RepositoryGenerator) Generate(config interface{}) error {
 		return fmt.Errorf("failed to generate repository test: %w", err)
 	}
 
+	// 生成仓储Mock
+	if err := g.generateRepositoryMock(data); err != nil {
+		return fmt.Errorf("failed to generate repository mock: %w", err)
+	}
+
 	return nil
 }
 
@@ -137,4 +142,16 @@ func (g *RepositoryGenerator) appendToFile(path, content string) error {
 	newContent := string(existing) + "\n" + content
 
 	return os.WriteFile(path, []byte(newContent), 0644)
+}
+
+// generateRepositoryMock 生成仓储Mock
+func (g *RepositoryGenerator) generateRepositoryMock(data map[string]interface{}) error {
+	content, err := g.templateEngine.Render("repository_mock.go.tmpl", data)
+	if err != nil {
+		return err
+	}
+
+	// 更新repository_mocks.go文件
+	mockPath := filepath.Join("test", "mocks", "repository_mocks.go")
+	return g.appendToFile(mockPath, content)
 }

@@ -68,6 +68,11 @@ func (g *ModuleGenerator) Generate(config interface{}) error {
 		return fmt.Errorf("failed to update routes: %w", err)
 	}
 
+	// 自动更新 server.go
+	if err := g.UpdateServerFile(data); err != nil {
+		return fmt.Errorf("failed to update server.go: %w", err)
+	}
+
 	return nil
 }
 
@@ -274,4 +279,147 @@ func (g *ModuleGenerator) appendToFile(path, content string) error {
 	newContent := string(existing) + "\n" + content
 
 	return os.WriteFile(path, []byte(newContent), 0644)
+}
+
+// UpdateServerFile 自动更新 server.go 文件
+func (g *ModuleGenerator) UpdateServerFile(data map[string]interface{}) error {
+	serverPath := "internal/server/server.go"
+
+	// 读取现有内容
+	content, err := os.ReadFile(serverPath)
+	if err != nil {
+		return fmt.Errorf("failed to read server.go: %w", err)
+	}
+
+	serverContent := string(content)
+	modelName := data["Model"].(string)
+	modelCamel := ToCamelCase(strings.ToLower(modelName))
+
+	// 检查是否已经存在
+	if strings.Contains(serverContent, fmt.Sprintf("%sHandler", modelCamel)) {
+		fmt.Printf("⚠️  %s handler already exists in server.go\n", modelName)
+		return nil
+	}
+
+	// 1. 添加字段到 Server 结构体
+	structPattern := "dictHandler    *handler.DictHandler"
+	structIndex := strings.Index(serverContent, structPattern)
+	if structIndex == -1 {
+		return fmt.Errorf("could not find Server struct fields section")
+	}
+
+	structEnd := structIndex + len(structPattern)
+	newField := fmt.Sprintf("\n\t%sHandler *handler.%sHandler", modelCamel, modelName)
+	serverContent = serverContent[:structEnd] + newField + serverContent[structEnd:]
+
+	// 2. 添加参数到构造函数
+	paramPattern := "dictHandler *handler.DictHandler,"
+	paramIndex := strings.Index(serverContent, paramPattern)
+	if paramIndex == -1 {
+		return fmt.Errorf("could not find constructor parameters section")
+	}
+
+	paramEnd := paramIndex + len(paramPattern)
+	newParam := fmt.Sprintf("\n\t%sHandler *handler.%sHandler,", modelCamel, modelName)
+	serverContent = serverContent[:paramEnd] + newParam + serverContent[paramEnd:]
+
+	// 3. 添加字段初始化
+	initPattern := "dictHandler:    dictHandler,"
+	initIndex := strings.Index(serverContent, initPattern)
+	if initIndex == -1 {
+		return fmt.Errorf("could not find constructor initialization section")
+	}
+
+	initEnd := initIndex + len(initPattern)
+	newInit := fmt.Sprintf("\n\t\t%sHandler: %sHandler,", modelCamel, modelCamel)
+	serverContent = serverContent[:initEnd] + newInit + serverContent[initEnd:]
+
+	// 4. 添加路由注册
+	// 寻找admin路由组的结束位置，在管理员文章路由之后添加
+	adminArticlesPattern := "adminArticles.DELETE(\"/:id\", s.articleHandler.Delete)\n\t\t\t\t}"
+	adminArticlesIndex := strings.Index(serverContent, adminArticlesPattern)
+	if adminArticlesIndex != -1 {
+		// 在管理员文章路由组之后添加新的路由
+		insertPos := adminArticlesIndex + len(adminArticlesPattern)
+		newRoute := fmt.Sprintf("\n\n\t\t\t\t// %s管理路由\n\t\t\t\ts.%sHandler.RegisterRoutes(admin)", modelName, modelCamel)
+		serverContent = serverContent[:insertPos] + newRoute + serverContent[insertPos:]
+	} else {
+		// 如果找不到管理员文章路由，尝试在admin路由组的末尾添加
+		// 寻找admin路由组的结束位置
+		adminPattern := "// 管理员专用路由\n\t\t\t\ts.userHandler.RegisterRoutes(admin)"
+		adminIndex := strings.Index(serverContent, adminPattern)
+		if adminIndex != -1 {
+			insertPos := adminIndex + len(adminPattern)
+			newRoute := fmt.Sprintf("\n\n\t\t\t\t// %s管理路由\n\t\t\t\ts.%sHandler.RegisterRoutes(admin)", modelName, modelCamel)
+			serverContent = serverContent[:insertPos] + newRoute + serverContent[insertPos:]
+		} else {
+			return fmt.Errorf("could not find admin routes section")
+		}
+	}
+
+	// 写回文件
+	if err := os.WriteFile(serverPath, []byte(serverContent), 0644); err != nil {
+		return fmt.Errorf("failed to write server.go: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateMainFile 自动更新 main.go 文件
+func (g *ModuleGenerator) UpdateMainFile(data map[string]interface{}) error {
+	modelName := data["Model"].(string)
+
+	// 读取 main.go 文件
+	mainPath := "cmd/server/main.go"
+	mainContent, err := os.ReadFile(mainPath)
+	if err != nil {
+		return fmt.Errorf("failed to read main.go: %w", err)
+	}
+
+	content := string(mainContent)
+
+	// 检查是否已经存在
+	if strings.Contains(content, fmt.Sprintf("repository.New%sRepository", modelName)) {
+		return fmt.Errorf("%s repository already exists in main.go", modelName)
+	}
+
+	// 1. 添加仓储提供者
+	repoPattern := "repository.NewDictRepository,"
+	repoIndex := strings.Index(content, repoPattern)
+	if repoIndex == -1 {
+		return fmt.Errorf("could not find repository providers section in main.go")
+	}
+
+	repoEnd := repoIndex + len(repoPattern)
+	newRepo := fmt.Sprintf("\n\t\t\trepository.New%sRepository,", modelName)
+	content = content[:repoEnd] + newRepo + content[repoEnd:]
+
+	// 2. 添加服务提供者
+	servicePattern := "service.NewDictService,"
+	serviceIndex := strings.Index(content, servicePattern)
+	if serviceIndex == -1 {
+		return fmt.Errorf("could not find service providers section in main.go")
+	}
+
+	serviceEnd := serviceIndex + len(servicePattern)
+	newService := fmt.Sprintf("\n\t\t\tservice.New%sService,", modelName)
+	content = content[:serviceEnd] + newService + content[serviceEnd:]
+
+	// 3. 添加处理器提供者
+	handlerPattern := "handler.NewDictHandler,"
+	handlerIndex := strings.Index(content, handlerPattern)
+	if handlerIndex == -1 {
+		return fmt.Errorf("could not find handler providers section in main.go")
+	}
+
+	handlerEnd := handlerIndex + len(handlerPattern)
+	newHandler := fmt.Sprintf("\n\t\t\thandler.New%sHandler,", modelName)
+	content = content[:handlerEnd] + newHandler + content[handlerEnd:]
+
+	// 写回文件
+	if err := os.WriteFile(mainPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write main.go: %w", err)
+	}
+
+	return nil
 }

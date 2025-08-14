@@ -41,6 +41,8 @@ func main() {
 		handleAllCommand()
 	case "module":
 		handleModuleCommand()
+	case "enhanced":
+		handleEnhancedCommand()
 	case "handler":
 		handleHandlerCommand()
 	case "test":
@@ -78,6 +80,7 @@ func showUsage() {
 	fmt.Println("Available commands:")
 	fmt.Println("  all         Generate all components for a model (model + repository + service + handler + migration)")
 	fmt.Println("  module      Generate a complete business module")
+	fmt.Println("  enhanced    Generate enhanced module with auto-route registration, migration, i18n, smart search")
 	fmt.Println("  handler     Generate API handler")
 	fmt.Println("  service     Generate service layer")
 	fmt.Println("  repository  Generate repository layer")
@@ -97,6 +100,8 @@ func showUsage() {
 	fmt.Println("  # Generate all components from database table")
 	fmt.Println("  go run cmd/generator/main.go all --name=Product --table=products --host=localhost --port=3306 --user=root --password=secret --database=mydb")
 	fmt.Println("  go run cmd/generator/main.go module --name=product")
+	fmt.Println("  # Generate enhanced module with all features")
+	fmt.Println("  go run cmd/generator/main.go enhanced --name=ProductStockHistory --fields=\"product_id:uint,change_type:string,quantity_change:int,quantity_before:int,quantity_after:int,reason:string,operator_id:uint,reference_id:string,reference_type:string\" --frontend-output=../vibe-coding-starter-ui-antd")
 	fmt.Println("  go run cmd/generator/main.go handler --model=Product")
 	fmt.Println("  go run cmd/generator/main.go service --model=Product")
 	fmt.Println("  go run cmd/generator/main.go repository --model=Product")
@@ -225,7 +230,7 @@ func handleAllCommand() {
 	fmt.Println("\n🗄️  Step 2/5: Generating Repository...")
 	repoGen := generator.NewRepositoryGenerator()
 	repoConfig := &generator.RepositoryConfig{
-		Name:  *name + "Repository",
+		Name:  *name, // 使用模型名称，而不是添加"Repository"后缀
 		Model: *name,
 	}
 	if err := repoGen.Generate(repoConfig); err != nil {
@@ -237,7 +242,7 @@ func handleAllCommand() {
 	fmt.Println("\n⚙️  Step 3/5: Generating Service...")
 	serviceGen := generator.NewServiceGenerator()
 	serviceConfig := &generator.ServiceConfig{
-		Name:      *name + "Service",
+		Name:      *name, // 使用模型名称，而不是添加"Service"后缀
 		Model:     *name,
 		Fields:    fieldsStr, // 使用从数据库读取或手动指定的字段
 		WithCache: *withCache,
@@ -264,13 +269,38 @@ func handleAllCommand() {
 	migrationGen := generator.NewMigrationGenerator()
 	migrationConfig := &generator.MigrationConfig{
 		Name:   "create_" + generator.ToSnakeCase(*name) + "s_table",
-		Table:  *name,
+		Table:  generator.ToSnakeCase(generator.Pluralize(*name)), // 使用正确的snake_case复数表名
 		Action: "create",
+		Fields: fieldsStr, // 使用从数据库读取或手动指定的字段
 	}
 	if err := migrationGen.Generate(migrationConfig); err != nil {
 		log.Fatalf("Failed to generate migration: %v", err)
 	}
 	fmt.Println("✅ Migration generated successfully!")
+
+	// 步骤6: 自动更新 server.go 和 main.go
+	fmt.Println("\n🔧 Step 6/6: Updating server configuration...")
+	moduleGen := generator.NewModuleGenerator()
+
+	// 准备数据用于配置更新
+	data := map[string]interface{}{
+		"Model":     *name,
+		"NameLower": strings.ToLower(*name),
+	}
+
+	if err := moduleGen.UpdateServerFile(data); err != nil {
+		fmt.Printf("⚠️  Warning: Failed to update server.go automatically: %v\n", err)
+		fmt.Printf("   Please manually add the handler to internal/server/server.go\n")
+	} else {
+		fmt.Println("✅ server.go updated successfully!")
+	}
+
+	if err := moduleGen.UpdateMainFile(data); err != nil {
+		fmt.Printf("⚠️  Warning: Failed to update main.go automatically: %v\n", err)
+		fmt.Printf("   Please manually add the dependencies to cmd/server/main.go\n")
+	} else {
+		fmt.Println("✅ main.go updated successfully!")
+	}
 
 	fmt.Printf("\n🎉 All components for '%s' generated successfully!\n", *name)
 	fmt.Println("\nGenerated files:")
@@ -279,6 +309,10 @@ func handleAllCommand() {
 	fmt.Printf("  ⚙️  Service:    internal/service/%s.go\n", generator.ToSnakeCase(*name))
 	fmt.Printf("  🌐 Handler:    internal/handler/%s.go\n", generator.ToSnakeCase(*name))
 	fmt.Printf("  🗃️  Migration:  migrations/{db_type}/{timestamp}_create_%ss_table.sql\n", generator.ToSnakeCase(*name))
+	fmt.Println("\nGenerated test files:")
+	fmt.Printf("  🧪 Repository Test: test/repository/%s_test.go\n", generator.ToSnakeCase(*name))
+	fmt.Printf("  🧪 Service Test:    test/service/%s_test.go\n", generator.ToSnakeCase(*name))
+	fmt.Printf("  🧪 Handler Test:    test/handler/%s_test.go\n", generator.ToSnakeCase(*name))
 	fmt.Println("\n💡 Next steps:")
 	fmt.Println("  1. Run 'go build ./...' to verify compilation")
 	fmt.Println("  2. Run tests with 'go test ./test/...'")
@@ -313,6 +347,122 @@ func handleModuleCommand() {
 	}
 
 	fmt.Printf("✅ Module '%s' generated successfully!\n", *name)
+}
+
+func handleEnhancedCommand() {
+	fs := flag.NewFlagSet("enhanced", flag.ExitOnError)
+	name := fs.String("name", "", "Module name (required)")
+	fields := fs.String("fields", "", "Model fields (e.g., 'name:string,price:float64,active:bool')")
+	withAuth := fs.Bool("auth", false, "Include authentication middleware")
+	withCache := fs.Bool("cache", false, "Include cache support")
+	autoRoute := fs.Bool("auto-route", true, "Auto register routes")
+	autoMigration := fs.Bool("auto-migration", true, "Auto execute database migration")
+	autoI18n := fs.Bool("auto-i18n", true, "Auto generate internationalization")
+	smartSearch := fs.Bool("smart-search", true, "Smart search fields configuration")
+	frontendOutput := fs.String("frontend-output", "", "Frontend output directory (optional)")
+	frontendFramework := fs.String("frontend-framework", "antd", "Frontend framework (antd, vue)")
+	frontendModuleType := fs.String("frontend-module-type", "admin", "Frontend module type (admin, public)")
+
+	fs.Parse(os.Args[2:])
+
+	if *name == "" {
+		fmt.Println("Error: --name is required")
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	// 准备字段标签配置
+	fieldLabels := make(map[string]string)
+	fieldLabelsEn := make(map[string]string)
+
+	// 为ProductStockHistory提供预定义的字段标签
+	if strings.ToLower(*name) == "productstockhistory" {
+		fieldLabels = map[string]string{
+			"ProductId":      "产品ID",
+			"ChangeType":     "变更类型",
+			"QuantityChange": "变更数量",
+			"QuantityBefore": "变更前数量",
+			"QuantityAfter":  "变更后数量",
+			"Reason":         "变更原因",
+			"OperatorId":     "操作员ID",
+			"ReferenceId":    "关联单据ID",
+			"ReferenceType":  "关联单据类型",
+		}
+		fieldLabelsEn = map[string]string{
+			"ProductId":      "Product ID",
+			"ChangeType":     "Change Type",
+			"QuantityChange": "Quantity Change",
+			"QuantityBefore": "Quantity Before",
+			"QuantityAfter":  "Quantity After",
+			"Reason":         "Reason",
+			"OperatorId":     "Operator ID",
+			"ReferenceId":    "Reference ID",
+			"ReferenceType":  "Reference Type",
+		}
+	}
+
+	// 验证前端框架类型
+	var fwType generator.FrontendFramework
+	switch *frontendFramework {
+	case "antd":
+		fwType = generator.FrameworkAntd
+	case "vue":
+		fwType = generator.FrameworkVue
+	default:
+		fmt.Printf("Error: unsupported frontend framework '%s'. Supported: antd, vue\n", *frontendFramework)
+		os.Exit(1)
+	}
+
+	// 验证前端模块类型
+	var modType generator.ModuleType
+	switch *frontendModuleType {
+	case "admin":
+		modType = generator.ModuleTypeAdmin
+	case "public":
+		modType = generator.ModuleTypePublic
+	default:
+		fmt.Printf("Error: unsupported frontend module type '%s'. Supported: admin, public\n", *frontendModuleType)
+		os.Exit(1)
+	}
+
+	gen := generator.NewEnhancedModuleGenerator()
+	config := &generator.EnhancedModuleConfig{
+		Name:               *name,
+		Fields:             *fields,
+		WithAuth:           *withAuth,
+		WithCache:          *withCache,
+		AutoRouteRegister:  *autoRoute,
+		AutoMigration:      *autoMigration,
+		AutoI18n:           *autoI18n,
+		SmartSearchFields:  *smartSearch,
+		FieldLabels:        fieldLabels,
+		FieldLabelsEn:      fieldLabelsEn,
+		FrontendOutputDir:  *frontendOutput,
+		FrontendFramework:  fwType,
+		FrontendModuleType: modType,
+	}
+
+	if err := gen.Generate(config); err != nil {
+		log.Fatalf("Failed to generate enhanced module: %v", err)
+	}
+
+	fmt.Printf("🎉 Enhanced module '%s' generated successfully!\n", *name)
+	fmt.Println("\n✨ Enhanced features enabled:")
+	if *autoRoute {
+		fmt.Println("  🔗 Auto route registration")
+	}
+	if *autoMigration {
+		fmt.Println("  🗄️  Auto database migration")
+	}
+	if *autoI18n {
+		fmt.Println("  🌍 Auto internationalization")
+	}
+	if *smartSearch {
+		fmt.Println("  🔍 Smart search fields")
+	}
+	if *frontendOutput != "" {
+		fmt.Printf("  🎨 Frontend generation (%s)\n", *frontendFramework)
+	}
 }
 
 func handleHandlerCommand() {
@@ -468,6 +618,7 @@ func handleMigrationCommand() {
 	name := fs.String("name", "", "Migration name (optional if --model is provided)")
 	model := fs.String("model", "", "Model name (optional if --name is provided)")
 	action := fs.String("action", "create", "Migration action (create, alter, drop)")
+	fields := fs.String("fields", "", "Model fields (e.g., 'name:string,price:float64,active:bool')")
 
 	fs.Parse(os.Args[2:])
 
@@ -475,7 +626,9 @@ func handleMigrationCommand() {
 
 	if *model != "" {
 		// 使用模型名称自动生成迁移名称和表名
-		tableName = generator.Pluralize(generator.ToSnakeCase(*model))
+		// 确保使用正确的命名规则：PascalCase -> Pluralize -> snake_case
+		modelName := generator.ToPascalCase(*model)
+		tableName = generator.ToSnakeCase(generator.Pluralize(modelName))
 		migrationName = fmt.Sprintf("create_%s_table", tableName)
 	} else if *name != "" {
 		// 使用手动指定的名称
@@ -492,6 +645,7 @@ func handleMigrationCommand() {
 		Name:   migrationName,
 		Table:  tableName,
 		Action: *action,
+		Fields: *fields,
 	}
 
 	if err := gen.Generate(config); err != nil {

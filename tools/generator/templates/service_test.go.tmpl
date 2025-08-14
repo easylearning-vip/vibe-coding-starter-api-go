@@ -10,12 +10,13 @@ import (
 
 	"vibe-coding-starter/internal/model"
 	"vibe-coding-starter/internal/repository"
+	"vibe-coding-starter/internal/service"
 	"vibe-coding-starter/test/mocks"
 )
 
 type {{.Name}}ServiceTestSuite struct {
 	suite.Suite
-	service    {{.Name}}Service
+	service    service.{{.Name}}Service
 	mockRepo   *mocks.Mock{{.Model}}Repository
 	mockLogger *mocks.MockLogger
 	ctx        context.Context
@@ -25,8 +26,11 @@ func (suite *{{.Name}}ServiceTestSuite) SetupTest() {
 	suite.mockRepo = &mocks.Mock{{.Model}}Repository{}
 	suite.mockLogger = &mocks.MockLogger{}
 	suite.ctx = context.Background()
-	
-	suite.service = New{{.Name}}Service(
+
+	// 设置logger mock的期望调用
+	suite.mockLogger.On("Info", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return()
+
+	suite.service = service.New{{.Name}}Service(
 		suite.mockRepo,
 		suite.mockLogger,
 	)
@@ -34,7 +38,7 @@ func (suite *{{.Name}}ServiceTestSuite) SetupTest() {
 
 func (suite *{{.Name}}ServiceTestSuite) TestCreate_Success() {
 	// 准备测试数据
-	req := &Create{{.Model}}Request{
+	req := &service.Create{{.Model}}Request{
 		Name:        "Test {{.Model}}",
 		Description: "Test Description",
 	}
@@ -91,7 +95,7 @@ func (suite *{{.Name}}ServiceTestSuite) TestUpdate_Success() {
 	}
 	
 	newName := "New Name"
-	req := &Update{{.Model}}Request{
+	req := &service.Update{{.Model}}Request{
 		Name: &newName,
 	}
 	
@@ -134,7 +138,7 @@ func (suite *{{.Name}}ServiceTestSuite) TestList_Success() {
 		{BaseModel: model.BaseModel{ID: 2}, Name: "{{.Model}} 2"},
 	}
 	
-	opts := &List{{.Model}}Options{
+	opts := &service.List{{.Model}}Options{
 		Page:     1,
 		PageSize: 10,
 	}
@@ -144,7 +148,7 @@ func (suite *{{.Name}}ServiceTestSuite) TestList_Success() {
 		PageSize: 10,
 		Sort:     "",
 		Order:    "",
-		Filters:  make(map[string]interface{}),
+		Filters:  nil, // 使用nil而不是空map，与service实际传递的值一致
 		Search:   "",
 	}
 	

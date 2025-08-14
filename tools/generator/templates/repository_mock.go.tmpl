@@ -1,0 +1,43 @@
+// Mock{{.Name}}Repository {{.Name}}仓储模拟
+type Mock{{.Name}}Repository struct {
+	mock.Mock
+}
+
+func (m *Mock{{.Name}}Repository) Create(ctx context.Context, {{.ModelCamel}} *model.{{.Name}}) error {
+	args := m.Called(ctx, {{.ModelCamel}})
+	return args.Error(0)
+}
+
+func (m *Mock{{.Name}}Repository) GetByID(ctx context.Context, id uint) (*model.{{.Name}}, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.{{.Name}}), args.Error(1)
+}
+
+func (m *Mock{{.Name}}Repository) Update(ctx context.Context, {{.ModelCamel}} *model.{{.Name}}) error {
+	args := m.Called(ctx, {{.ModelCamel}})
+	return args.Error(0)
+}
+
+func (m *Mock{{.Name}}Repository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *Mock{{.Name}}Repository) List(ctx context.Context, opts repository.ListOptions) ([]*model.{{.Name}}, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.{{.Name}}), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *Mock{{.Name}}Repository) GetByName(ctx context.Context, name string) (*model.{{.Name}}, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.{{.Name}}), args.Error(1)
+}

@@ -48,7 +48,7 @@ func (p *FieldParser) ParseFields(fieldsStr string) ([]*Field, error) {
 
 		field := &Field{
 			Name:     ToPascalCase(fieldName),
-			Type:     fieldType,
+			Type:     p.mapToGoType(fieldType),
 			JSONName: ToSnakeCase(fieldName),
 			GormTag:  p.generateGormTag(fieldName, fieldType),
 			Comment:  fmt.Sprintf("%s %s", ToPascalCase(fieldName), p.getTypeComment(fieldType)),
@@ -58,6 +58,48 @@ func (p *FieldParser) ParseFields(fieldsStr string) ([]*Field, error) {
 	}
 
 	return fields, nil
+}
+
+// mapToGoType 将字段类型映射为 Go 类型
+func (p *FieldParser) mapToGoType(fieldType string) string {
+	switch fieldType {
+	case "text":
+		return "string"
+	case "varchar":
+		return "string"
+	case "char":
+		return "string"
+	case "int":
+		return "int"
+	case "integer":
+		return "int"
+	case "bigint":
+		return "int64"
+	case "smallint":
+		return "int16"
+	case "tinyint":
+		return "int8"
+	case "float":
+		return "float32"
+	case "double":
+		return "float64"
+	case "decimal":
+		return "float64"
+	case "bool":
+		return "bool"
+	case "boolean":
+		return "bool"
+	case "datetime":
+		return "time.Time"
+	case "timestamp":
+		return "time.Time"
+	case "date":
+		return "time.Time"
+	case "time":
+		return "time.Time"
+	default:
+		return fieldType // 保持原类型
+	}
 }
 
 // generateGormTag 生成 GORM 标签
@@ -86,6 +128,11 @@ func (p *FieldParser) generateGormTag(fieldName, fieldType string) string {
 		gormType = "datetime"
 	default:
 		gormType = "text"
+	}
+
+	// 为Name字段添加唯一约束
+	if strings.ToLower(fieldName) == "name" && fieldType == "string" {
+		return fmt.Sprintf("gorm:\"column:%s;type:%s;uniqueIndex\"", columnName, gormType)
 	}
 
 	return fmt.Sprintf("gorm:\"column:%s;type:%s\"", columnName, gormType)
@@ -134,6 +181,86 @@ func (p *FieldParser) GetRequiredImports(fields []*Field) []string {
 	}
 
 	return result
+}
+
+// GenerateSQLColumn 生成SQL列定义
+func (p *FieldParser) GenerateSQLColumn(field *Field, databaseType string) string {
+	columnName := ToSnakeCase(field.Name)
+
+	var sqlType string
+	var defaultValue string
+
+	switch field.Type {
+	case "string":
+		sqlType = "VARCHAR(255)"
+		defaultValue = ""
+	case "int", "int32":
+		if databaseType == "postgres" {
+			sqlType = "INTEGER"
+		} else {
+			sqlType = "INT"
+		}
+		defaultValue = ""
+	case "int64":
+		if databaseType == "postgres" {
+			sqlType = "BIGINT"
+		} else {
+			sqlType = "BIGINT"
+		}
+		defaultValue = ""
+	case "uint", "uint32":
+		if databaseType == "postgres" {
+			sqlType = "INTEGER"
+		} else {
+			sqlType = "INT UNSIGNED"
+		}
+		defaultValue = ""
+	case "uint64":
+		if databaseType == "postgres" {
+			sqlType = "BIGINT"
+		} else {
+			sqlType = "BIGINT UNSIGNED"
+		}
+		defaultValue = ""
+	case "float32":
+		sqlType = "FLOAT"
+		defaultValue = ""
+	case "float64":
+		sqlType = "DECIMAL(10,2)"
+		defaultValue = ""
+	case "bool":
+		if databaseType == "postgres" {
+			sqlType = "BOOLEAN"
+		} else {
+			sqlType = "BOOLEAN"
+		}
+		defaultValue = " DEFAULT FALSE"
+	case "time.Time":
+		if databaseType == "postgres" {
+			sqlType = "TIMESTAMP WITH TIME ZONE"
+		} else {
+			sqlType = "DATETIME"
+		}
+		defaultValue = ""
+	default:
+		sqlType = "TEXT"
+		defaultValue = ""
+	}
+
+	// 构建完整的列定义
+	columnDef := fmt.Sprintf("    %s %s", columnName, sqlType)
+
+	// 添加NOT NULL约束（除了某些特殊情况）
+	if field.Type != "bool" && !strings.Contains(strings.ToLower(field.Name), "optional") {
+		columnDef += " NOT NULL"
+	}
+
+	// 添加默认值
+	if defaultValue != "" {
+		columnDef += defaultValue
+	}
+
+	return columnDef
 }
 
 // GenerateCreateRequestFields 生成创建请求的字段

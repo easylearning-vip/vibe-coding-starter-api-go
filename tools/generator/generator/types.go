@@ -18,6 +18,23 @@ type ModuleConfig struct {
 	WithCache bool
 }
 
+// EnhancedModuleConfig 增强的模块生成配置
+type EnhancedModuleConfig struct {
+	Name               string            // 模块名称
+	Fields             string            // 字段定义字符串
+	WithAuth           bool              // 是否包含权限控制
+	WithCache          bool              // 是否包含缓存
+	AutoRouteRegister  bool              // 是否自动注册路由
+	AutoMigration      bool              // 是否自动执行数据库迁移
+	AutoI18n           bool              // 是否自动生成国际化配置
+	SmartSearchFields  bool              // 是否智能配置搜索字段
+	FieldLabels        map[string]string // 字段标签配置 (字段名 -> 中文标签)
+	FieldLabelsEn      map[string]string // 字段英文标签配置 (字段名 -> 英文标签)
+	FrontendOutputDir  string            // 前端输出目录
+	FrontendFramework  FrontendFramework // 前端框架类型
+	FrontendModuleType ModuleType        // 前端模块类型
+}
+
 // HandlerConfig 处理器生成配置
 type HandlerConfig struct {
 	Model          string
@@ -59,6 +76,7 @@ type MigrationConfig struct {
 	Name   string
 	Table  string
 	Action string // create, alter, drop
+	Fields string // 字段定义字符串，用于生成表结构
 }
 
 // DatabaseTableConfig 数据库表生成配置
@@ -135,6 +153,11 @@ func mapGoType(fieldType string) string {
 
 // ToPascalCase 转换为PascalCase
 func ToPascalCase(s string) string {
+	// 如果字符串已经是PascalCase格式（首字母大写，没有分隔符），直接返回
+	if isPascalCase(s) {
+		return s
+	}
+
 	words := strings.FieldsFunc(s, func(r rune) bool {
 		return r == '_' || r == '-' || r == ' '
 	})
@@ -146,6 +169,27 @@ func ToPascalCase(s string) string {
 	}
 
 	return strings.Join(words, "")
+}
+
+// isPascalCase 检查字符串是否已经是PascalCase格式
+func isPascalCase(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	// 首字母必须是大写
+	if s[0] < 'A' || s[0] > 'Z' {
+		return false
+	}
+
+	// 不能包含分隔符
+	for _, r := range s {
+		if r == '_' || r == '-' || r == ' ' {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ToCamelCase 转换为camelCase

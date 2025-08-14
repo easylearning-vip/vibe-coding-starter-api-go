@@ -1,0 +1,70 @@
+// {{.Model}} Internationalization Configuration - English
+export default {
+  // Page titles
+  'pages.{{.ModelCamel}}.title': '{{.Model}} Management',
+  'pages.{{.ModelCamel}}.subTitle': '{{.Model}} List',
+
+  // Table columns
+  'pages.{{.ModelCamel}}.table.id': 'ID',
+{{range .Fields}}  'pages.{{$.ModelCamel}}.table.{{.JSONName}}': '{{.Name}}',
+{{end}}  'pages.{{.ModelCamel}}.table.created_at': 'Created At',
+  'pages.{{.ModelCamel}}.table.createdAt': 'Created At',
+  'pages.{{.ModelCamel}}.table.updated_at': 'Updated At',
+  'pages.{{.ModelCamel}}.table.updatedAt': 'Updated At',
+
+  // Form labels
+{{range .Fields}}  'pages.{{$.ModelCamel}}.form.{{.JSONName}}': '{{.Name}}',
+  'pages.{{$.ModelCamel}}.form.{{.JSONName}}.placeholder': 'Please enter {{.Name}}',
+  'pages.{{$.ModelCamel}}.form.{{.JSONName}}.required': '{{.Name}} is required',
+{{end}}  'pages.{{.ModelCamel}}.form.name': 'Name',
+  'pages.{{.ModelCamel}}.form.name.placeholder': 'Please enter name',
+  // Action buttons
+  'pages.{{.ModelCamel}}.button.add': 'Add {{.Model}}',
+  'pages.{{.ModelCamel}}.button.edit': 'Edit',
+  'pages.{{.ModelCamel}}.button.delete': 'Delete',
+  'pages.{{.ModelCamel}}.button.refresh': 'Refresh',
+  'pages.{{.ModelCamel}}.button.search': 'Search',
+  'pages.{{.ModelCamel}}.button.reset': 'Reset',
+  'pages.{{.ModelCamel}}.button.submit': 'Submit',
+  'pages.{{.ModelCamel}}.button.cancel': 'Cancel',
+
+  // Dialog titles
+  'pages.{{.ModelCamel}}.modal.add.title': 'Add {{.Model}}',
+  'pages.{{.ModelCamel}}.modal.edit.title': 'Edit {{.Model}}',
+  'pages.{{.ModelCamel}}.modal.delete.title': 'Delete Confirmation',
+  'pages.{{.ModelCamel}}.delete.confirm.title': 'Are you sure you want to delete this {{.Model}}?',
+  'pages.{{.ModelCamel}}.modal.delete.content': 'Are you sure you want to delete this {{.Model}}?',
+  
+  // Messages
+  'pages.{{.ModelCamel}}.message.add.success': '{{.Model}} created successfully',
+  'pages.{{.ModelCamel}}.message.edit.success': '{{.Model}} updated successfully',
+  'pages.{{.ModelCamel}}.message.delete.success': '{{.Model}} deleted successfully',
+  'pages.{{.ModelCamel}}.message.add.error': 'Failed to create {{.Model}}',
+  'pages.{{.ModelCamel}}.message.edit.error': 'Failed to update {{.Model}}',
+  'pages.{{.ModelCamel}}.message.delete.error': 'Failed to delete {{.Model}}',
+
+  // Validation messages
+  'pages.{{.ModelCamel}}.validation.required': 'This field is required',
+  'pages.{{.ModelCamel}}.validation.min': 'Minimum length is {min} characters',
+  'pages.{{.ModelCamel}}.validation.max': 'Maximum length is {max} characters',
+  'pages.{{.ModelCamel}}.validation.email': 'Please enter a valid email address',
+  'pages.{{.ModelCamel}}.validation.number': 'Please enter a valid number',
+
+  // Status text
+  'pages.{{.ModelCamel}}.status.active': 'Active',
+  'pages.{{.ModelCamel}}.status.inactive': 'Inactive',
+  'pages.{{.ModelCamel}}.status.loading': 'Loading...',
+  'pages.{{.ModelCamel}}.status.empty': 'No data',
+
+  // Common messages (if not exists)
+  'pages.common.actions': 'Actions',
+  'pages.common.edit': 'Edit',
+  'pages.common.delete': 'Delete',
+  'pages.common.confirm': 'Confirm',
+  'pages.common.cancel': 'Cancel',
+  'pages.common.search': 'Search',
+  'pages.common.reset': 'Reset',
+  'pages.common.startDate': 'Start Date',
+  'pages.common.endDate': 'End Date',
+  'pages.common.total.records': 'Total {total} records',
+};

@@ -91,8 +91,254 @@ type FrontendField struct {
 	Required   bool   // 是否必填
 }
 
-// getModelInfo 获取模型信息
+// getModelInfo 获取模型信息 - 使用反射机制动态获取字段
 func (g *FrontendGenerator) getModelInfo(modelName string) ([]*FrontendField, error) {
+	// 尝试从现有模型文件中反射获取字段信息
+	fields, err := g.getFieldsFromModel(modelName)
+	if err != nil {
+		// 如果反射失败，使用默认字段
+		return g.getDefaultFields(), nil
+	}
+
+	var frontendFields []*FrontendField
+
+	// 添加系统字段
+	frontendFields = append(frontendFields, &FrontendField{
+		Field: &Field{
+			Name:     "ID",
+			Type:     "uint",
+			JSONName: "id",
+		},
+		TSType:     "number",
+		FormType:   "hidden",
+		TableShow:  true,
+		SearchShow: false,
+		FormShow:   false,
+	})
+
+	// 转换反射获取的字段为前端字段
+	for _, field := range fields {
+		frontendField := g.convertToFrontendField(field)
+		if frontendField != nil {
+			frontendFields = append(frontendFields, frontendField)
+		}
+	}
+
+	// 添加时间戳字段
+	frontendFields = append(frontendFields, g.getTimestampFields()...)
+
+	return frontendFields, nil
+}
+
+// getFieldsFromModel 从模型文件中反射获取字段信息
+func (g *FrontendGenerator) getFieldsFromModel(modelName string) ([]*Field, error) {
+	// 尝试使用模型反射器获取字段
+	reflector := NewModelReflector()
+
+	fields, err := reflector.ReflectModelFields(modelName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reflect model fields: %w", err)
+	}
+
+	return fields, nil
+}
+
+// convertToFrontendField 将模型字段转换为前端字段
+func (g *FrontendGenerator) convertToFrontendField(field *Field) *FrontendField {
+	// 跳过系统字段和时间戳字段
+	if g.isSystemField(field.Name) {
+		return nil
+	}
+
+	frontendField := &FrontendField{
+		Field:      field,
+		TSType:     g.getTypeScriptType(field.Type),
+		FormType:   g.getFormType(field.Type, field.Name),
+		TableShow:  g.shouldShowInTable(field.Name, field.Type),
+		SearchShow: g.shouldShowInSearch(field.Name, field.Type),
+		FormShow:   true,
+		Required:   g.isRequiredField(field.Name, field.Type),
+	}
+
+	return frontendField
+}
+
+// isSystemField 判断是否为系统字段
+func (g *FrontendGenerator) isSystemField(fieldName string) bool {
+	systemFields := []string{"ID", "CreatedAt", "UpdatedAt", "DeletedAt"}
+	for _, sysField := range systemFields {
+		if strings.EqualFold(fieldName, sysField) {
+			return true
+		}
+	}
+	return false
+}
+
+// getTypeScriptType 获取TypeScript类型
+func (g *FrontendGenerator) getTypeScriptType(goType string) string {
+	switch goType {
+	case "string":
+		return "string"
+	case "int", "int32", "int64", "uint", "uint32", "uint64", "float32", "float64":
+		return "number"
+	case "bool":
+		return "boolean"
+	case "time.Time":
+		return "string"
+	default:
+		return "string"
+	}
+}
+
+// getFormType 获取表单控件类型
+func (g *FrontendGenerator) getFormType(goType, fieldName string) string {
+	fieldNameLower := strings.ToLower(fieldName)
+
+	// 根据字段名推断控件类型
+	if strings.Contains(fieldNameLower, "password") {
+		return "password"
+	}
+	if strings.Contains(fieldNameLower, "email") {
+		return "email"
+	}
+	if strings.Contains(fieldNameLower, "description") || strings.Contains(fieldNameLower, "content") {
+		return "textarea"
+	}
+	if strings.Contains(fieldNameLower, "active") || strings.Contains(fieldNameLower, "enabled") {
+		return "switch"
+	}
+
+	// 根据Go类型推断控件类型
+	switch goType {
+	case "bool":
+		return "switch"
+	case "int", "int32", "int64", "uint", "uint32", "uint64", "float32", "float64":
+		return "number"
+	case "time.Time":
+		return "datetime"
+	default:
+		return "input"
+	}
+}
+
+// shouldShowInTable 判断是否在表格中显示
+func (g *FrontendGenerator) shouldShowInTable(fieldName, goType string) bool {
+	fieldNameLower := strings.ToLower(fieldName)
+
+	// 不在表格中显示的字段
+	hideInTable := []string{"description", "content", "password", "dimensions", "weight"}
+	for _, hide := range hideInTable {
+		if strings.Contains(fieldNameLower, hide) {
+			return false
+		}
+	}
+
+	// 外键字段通常不显示
+	if strings.HasSuffix(fieldNameLower, "_id") && fieldNameLower != "id" {
+		return false
+	}
+
+	return true
+}
+
+// shouldShowInSearch 判断是否在搜索中显示
+func (g *FrontendGenerator) shouldShowInSearch(fieldName, goType string) bool {
+	fieldNameLower := strings.ToLower(fieldName)
+
+	// 可搜索的字段类型
+	searchableFields := []string{"name", "title", "sku", "code", "email", "username"}
+	for _, searchable := range searchableFields {
+		if strings.Contains(fieldNameLower, searchable) {
+			return true
+		}
+	}
+
+	// 字符串类型的字段通常可搜索
+	if goType == "string" && !strings.Contains(fieldNameLower, "password") {
+		return true
+	}
+
+	return false
+}
+
+// isRequiredField 判断是否为必填字段
+func (g *FrontendGenerator) isRequiredField(fieldName, goType string) bool {
+	fieldNameLower := strings.ToLower(fieldName)
+
+	// 通常必填的字段
+	requiredFields := []string{"name", "title", "sku", "price", "stock_quantity"}
+	for _, required := range requiredFields {
+		if strings.Contains(fieldNameLower, required) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getTimestampFields 获取时间戳字段
+func (g *FrontendGenerator) getTimestampFields() []*FrontendField {
+	return []*FrontendField{
+		{
+			Field: &Field{
+				Name:     "CreatedAt",
+				Type:     "time.Time",
+				JSONName: "created_at",
+			},
+			TSType:     "string",
+			FormType:   "datetime",
+			TableShow:  true,
+			SearchShow: false,
+			FormShow:   false,
+		},
+		{
+			Field: &Field{
+				Name:     "UpdatedAt",
+				Type:     "time.Time",
+				JSONName: "updated_at",
+			},
+			TSType:     "string",
+			FormType:   "datetime",
+			TableShow:  false,
+			SearchShow: false,
+			FormShow:   false,
+		},
+	}
+}
+
+// getDefaultFields 获取默认字段（当反射失败时使用）
+func (g *FrontendGenerator) getDefaultFields() []*FrontendField {
+	return []*FrontendField{
+		{
+			Field: &Field{
+				Name:     "ID",
+				Type:     "uint",
+				JSONName: "id",
+			},
+			TSType:     "number",
+			FormType:   "hidden",
+			TableShow:  true,
+			SearchShow: false,
+			FormShow:   false,
+		},
+		{
+			Field: &Field{
+				Name:     "Name",
+				Type:     "string",
+				JSONName: "name",
+			},
+			TSType:     "string",
+			FormType:   "input",
+			TableShow:  true,
+			SearchShow: true,
+			FormShow:   true,
+			Required:   true,
+		},
+	}
+}
+
+// 保留原有的硬编码逻辑作为备用（已废弃，但保留以防需要）
+func (g *FrontendGenerator) getModelInfoLegacy(modelName string) ([]*FrontendField, error) {
 	// 创建示例字段，基于常见的产品分类模型
 	var frontendFields []*FrontendField
 
@@ -143,6 +389,19 @@ func (g *FrontendGenerator) getModelInfo(modelName string) ([]*FrontendField, er
 			},
 			{
 				Field: &Field{
+					Name:     "ParentID",
+					Type:     "uint",
+					JSONName: "parent_id",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  false,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
 					Name:     "SortOrder",
 					Type:     "int",
 					JSONName: "sort_order",
@@ -163,6 +422,154 @@ func (g *FrontendGenerator) getModelInfo(modelName string) ([]*FrontendField, er
 				TSType:     "boolean",
 				FormType:   "switch",
 				TableShow:  true,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+		}
+		frontendFields = append(frontendFields, businessFields...)
+	case "product":
+		// 产品字段
+		businessFields := []*FrontendField{
+			{
+				Field: &Field{
+					Name:     "Name",
+					Type:     "string",
+					JSONName: "name",
+				},
+				TSType:     "string",
+				FormType:   "input",
+				TableShow:  true,
+				SearchShow: true,
+				FormShow:   true,
+				Required:   true,
+			},
+			{
+				Field: &Field{
+					Name:     "Description",
+					Type:     "string",
+					JSONName: "description",
+				},
+				TSType:     "string",
+				FormType:   "textarea",
+				TableShow:  true,
+				SearchShow: true,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
+					Name:     "CategoryID",
+					Type:     "uint",
+					JSONName: "category_id",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  false,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
+					Name:     "SKU",
+					Type:     "string",
+					JSONName: "sku",
+				},
+				TSType:     "string",
+				FormType:   "input",
+				TableShow:  true,
+				SearchShow: true,
+				FormShow:   true,
+				Required:   true,
+			},
+			{
+				Field: &Field{
+					Name:     "Price",
+					Type:     "float64",
+					JSONName: "price",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  true,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   true,
+			},
+			{
+				Field: &Field{
+					Name:     "CostPrice",
+					Type:     "float64",
+					JSONName: "cost_price",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  false,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
+					Name:     "StockQuantity",
+					Type:     "int",
+					JSONName: "stock_quantity",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  true,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   true,
+			},
+			{
+				Field: &Field{
+					Name:     "MinStock",
+					Type:     "int",
+					JSONName: "min_stock",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  false,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
+					Name:     "IsActive",
+					Type:     "bool",
+					JSONName: "is_active",
+				},
+				TSType:     "boolean",
+				FormType:   "switch",
+				TableShow:  true,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
+					Name:     "Weight",
+					Type:     "float64",
+					JSONName: "weight",
+				},
+				TSType:     "number",
+				FormType:   "number",
+				TableShow:  false,
+				SearchShow: false,
+				FormShow:   true,
+				Required:   false,
+			},
+			{
+				Field: &Field{
+					Name:     "Dimensions",
+					Type:     "string",
+					JSONName: "dimensions",
+				},
+				TSType:     "string",
+				FormType:   "input",
+				TableShow:  false,
 				SearchShow: false,
 				FormShow:   true,
 				Required:   false,
@@ -247,6 +654,8 @@ func (g *FrontendGenerator) prepareTemplateData(cfg *FrontendConfig, fields []*F
 		"WithExport":  cfg.WithExport,
 		"WithBatch":   cfg.WithBatch,
 		"Year":        GetCurrentYear(),
+		"DisplayName": pascalName,                  // 用于显示的名称
+		"NameLower":   strings.ToLower(pascalName), // 小写名称，用于国际化key
 	}
 
 	// 设置默认值
@@ -279,6 +688,32 @@ func (g *FrontendGenerator) generateAntdCode(data map[string]interface{}, cfg *F
 	// 生成类型定义
 	if err := g.generateAntdTypes(data, cfg); err != nil {
 		return fmt.Errorf("failed to generate Antd types: %w", err)
+	}
+
+	// 生成路由配置
+	if err := g.generateAntdRoute(data, cfg); err != nil {
+		return fmt.Errorf("failed to generate Antd route: %w", err)
+	}
+
+	// 生成国际化配置
+	if err := g.generateAntdLocales(data, cfg); err != nil {
+		return fmt.Errorf("failed to generate Antd locales: %w", err)
+	}
+
+	// 自动更新路由配置
+	if err := g.updateAntdRoutes(data, cfg); err != nil {
+		fmt.Printf("⚠️  Warning: Failed to update routes automatically: %v\n", err)
+		fmt.Printf("   Please manually add the route to config/routes.ts\n")
+	} else {
+		fmt.Printf("✅ Routes updated automatically\n")
+	}
+
+	// 自动更新国际化配置
+	if err := g.updateAntdLocales(data, cfg); err != nil {
+		fmt.Printf("⚠️  Warning: Failed to update locales automatically: %v\n", err)
+		fmt.Printf("   Please manually import the locale files\n")
+	} else {
+		fmt.Printf("✅ Locales updated automatically\n")
 	}
 
 	return nil
@@ -360,6 +795,172 @@ func (g *FrontendGenerator) generateAntdTypes(data map[string]interface{}, cfg *
 	return nil
 }
 
+// generateAntdRoute 生成 Antd 路由配置
+func (g *FrontendGenerator) generateAntdRoute(data map[string]interface{}, cfg *FrontendConfig) error {
+	content, err := g.templateEngine.Render("antd_route.ts.tmpl", data)
+	if err != nil {
+		return fmt.Errorf("failed to render Antd route template: %w", err)
+	}
+
+	// 确定文件路径
+	moduleName := data["ModuleName"].(string)
+	routePath := filepath.Join(cfg.OutputDir, "docs", "generated", fmt.Sprintf("%s_route.ts", moduleName))
+
+	if err := g.writeFile(routePath, content); err != nil {
+		return fmt.Errorf("failed to write Antd route file: %w", err)
+	}
+
+	fmt.Printf("✅ Generated Antd route config: %s\n", routePath)
+	fmt.Printf("📝 Please manually add the route configuration to config/routes.ts\n")
+	return nil
+}
+
+// generateAntdLocales 生成 Antd 国际化配置
+func (g *FrontendGenerator) generateAntdLocales(data map[string]interface{}, cfg *FrontendConfig) error {
+	moduleName := data["ModuleName"].(string)
+
+	// 生成中文国际化配置
+	zhContent, err := g.templateEngine.Render("locale.zh-CN.tmpl", data)
+	if err != nil {
+		return fmt.Errorf("failed to render zh-CN locale template: %w", err)
+	}
+
+	zhPath := filepath.Join(cfg.OutputDir, "src", "locales", "zh-CN", fmt.Sprintf("%s.ts", moduleName))
+	if err := g.writeFile(zhPath, zhContent); err != nil {
+		return fmt.Errorf("failed to write zh-CN locale file: %w", err)
+	}
+
+	// 生成英文国际化配置
+	enContent, err := g.templateEngine.Render("locale.en-US.tmpl", data)
+	if err != nil {
+		return fmt.Errorf("failed to render en-US locale template: %w", err)
+	}
+
+	enPath := filepath.Join(cfg.OutputDir, "src", "locales", "en-US", fmt.Sprintf("%s.ts", moduleName))
+	if err := g.writeFile(enPath, enContent); err != nil {
+		return fmt.Errorf("failed to write en-US locale file: %w", err)
+	}
+
+	fmt.Printf("✅ Generated locale files: %s, %s\n", zhPath, enPath)
+	return nil
+}
+
+// updateAntdRoutes 自动更新路由配置
+func (g *FrontendGenerator) updateAntdRoutes(data map[string]interface{}, cfg *FrontendConfig) error {
+	routesPath := filepath.Join(cfg.OutputDir, "config", "routes.ts")
+
+	// 读取现有路由配置
+	content, err := os.ReadFile(routesPath)
+	if err != nil {
+		return fmt.Errorf("failed to read routes.ts: %w", err)
+	}
+
+	routesContent := string(content)
+	moduleName := data["ModuleName"].(string)
+	displayName := data["DisplayName"].(string)
+
+	// 检查路由是否已存在
+	routePattern := fmt.Sprintf("/admin/%s", moduleName)
+	if strings.Contains(routesContent, routePattern) {
+		return fmt.Errorf("route already exists: %s", routePattern)
+	}
+
+	// 找到插入位置（在 dict 路由后面）
+	dictPattern := "{ path: '/admin/dict', name: '数据字典', component: './admin/dict' },"
+	dictIndex := strings.Index(routesContent, dictPattern)
+	if dictIndex == -1 {
+		return fmt.Errorf("could not find dict route pattern in routes.ts")
+	}
+
+	// 在 dict 路由后添加新路由
+	insertPos := dictIndex + len(dictPattern)
+	newRoute := fmt.Sprintf("\n      { path: '/admin/%s', name: '%s管理', component: './admin/%s' },",
+		moduleName, displayName, moduleName)
+
+	updatedContent := routesContent[:insertPos] + newRoute + routesContent[insertPos:]
+
+	// 写回文件
+	if err := os.WriteFile(routesPath, []byte(updatedContent), 0644); err != nil {
+		return fmt.Errorf("failed to write routes.ts: %w", err)
+	}
+
+	return nil
+}
+
+// updateAntdLocales 自动更新国际化配置
+func (g *FrontendGenerator) updateAntdLocales(data map[string]interface{}, cfg *FrontendConfig) error {
+	moduleName := data["ModuleName"].(string)
+
+	// 更新中文国际化配置
+	if err := g.updateLocaleFile(cfg.OutputDir, "zh-CN", moduleName); err != nil {
+		return fmt.Errorf("failed to update zh-CN locale: %w", err)
+	}
+
+	// 更新英文国际化配置
+	if err := g.updateLocaleFile(cfg.OutputDir, "en-US", moduleName); err != nil {
+		return fmt.Errorf("failed to update en-US locale: %w", err)
+	}
+
+	return nil
+}
+
+// updateLocaleFile 更新单个国际化文件
+func (g *FrontendGenerator) updateLocaleFile(outputDir, locale, moduleName string) error {
+	// 主国际化文件路径
+	mainLocalePath := filepath.Join(outputDir, "src", "locales", fmt.Sprintf("%s.ts", locale))
+
+	// 读取现有内容
+	content, err := os.ReadFile(mainLocalePath)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %w", mainLocalePath, err)
+	}
+
+	localeContent := string(content)
+
+	// 检查是否已经导入
+	importStatement := fmt.Sprintf("import %s from './%s/%s';", moduleName, locale, moduleName)
+	if strings.Contains(localeContent, importStatement) {
+		return fmt.Errorf("locale import already exists for %s", moduleName)
+	}
+
+	// 找到导入部分的结束位置
+	importEndPattern := "import settings from"
+	importEndIndex := strings.Index(localeContent, importEndPattern)
+	if importEndIndex == -1 {
+		return fmt.Errorf("could not find import section end in %s", mainLocalePath)
+	}
+
+	// 在导入部分末尾添加新的导入
+	// 找到这一行的结尾
+	lineEnd := strings.Index(localeContent[importEndIndex:], "\n")
+	if lineEnd == -1 {
+		return fmt.Errorf("could not find line end after import section")
+	}
+	insertPos := importEndIndex + lineEnd
+
+	newImport := fmt.Sprintf("\nimport %s from './%s/%s';", moduleName, locale, moduleName)
+	updatedContent := localeContent[:insertPos] + newImport + localeContent[insertPos:]
+
+	// 找到导出部分，添加新的模块
+	exportPattern := "...component,"
+	exportIndex := strings.Index(updatedContent, exportPattern)
+	if exportIndex == -1 {
+		return fmt.Errorf("could not find export section in %s", mainLocalePath)
+	}
+
+	// 在 component 后添加新模块
+	insertPos = exportIndex + len(exportPattern)
+	newExport := fmt.Sprintf("\n  ...%s,", moduleName)
+	finalContent := updatedContent[:insertPos] + newExport + updatedContent[insertPos:]
+
+	// 写回文件
+	if err := os.WriteFile(mainLocalePath, []byte(finalContent), 0644); err != nil {
+		return fmt.Errorf("failed to write %s: %w", mainLocalePath, err)
+	}
+
+	return nil
+}
+
 // writeFile 写入文件
 func (g *FrontendGenerator) writeFile(path, content string) error {
 	// 确保目录存在
@@ -368,9 +969,9 @@ func (g *FrontendGenerator) writeFile(path, content string) error {
 		return err
 	}
 
-	// 检查文件是否已存在
+	// 检查文件是否已存在，如果存在则覆盖
 	if _, err := os.Stat(path); err == nil {
-		return fmt.Errorf("file already exists: %s", path)
+		fmt.Printf("⚠️  File already exists, overwriting: %s\n", path)
 	}
 
 	// 写入文件
@@ -419,70 +1020,4 @@ func (g *FrontendGenerator) mapGoTypeToFormType(goType string) string {
 		return formType
 	}
 	return "input" // 默认为 input
-}
-
-// shouldShowInTable 判断字段是否应该在表格中显示
-func (g *FrontendGenerator) shouldShowInTable(fieldName, fieldType string) bool {
-	// 系统字段显示规则
-	systemFields := map[string]bool{
-		"ID":        true,
-		"CreatedAt": true,
-		"UpdatedAt": false,
-		"DeletedAt": false,
-	}
-
-	if show, exists := systemFields[fieldName]; exists {
-		return show
-	}
-
-	// 业务字段默认显示
-	return true
-}
-
-// shouldShowInSearch 判断字段是否应该在搜索中显示
-func (g *FrontendGenerator) shouldShowInSearch(fieldName, fieldType string) bool {
-	// 系统字段不参与搜索
-	systemFields := map[string]bool{
-		"ID":        false,
-		"CreatedAt": false,
-		"UpdatedAt": false,
-		"DeletedAt": false,
-	}
-
-	if show, exists := systemFields[fieldName]; exists {
-		return show
-	}
-
-	// 字符串类型字段适合搜索
-	return fieldType == "string"
-}
-
-// shouldShowInForm 判断字段是否应该在表单中显示
-func (g *FrontendGenerator) shouldShowInForm(fieldName, fieldType string) bool {
-	// 系统字段不在表单中编辑
-	systemFields := map[string]bool{
-		"ID":        false,
-		"CreatedAt": false,
-		"UpdatedAt": false,
-		"DeletedAt": false,
-	}
-
-	if show, exists := systemFields[fieldName]; exists {
-		return show
-	}
-
-	// 业务字段默认可编辑
-	return true
-}
-
-// isFieldRequired 判断字段是否必填
-func (g *FrontendGenerator) isFieldRequired(fieldName, fieldType string) bool {
-	// 根据字段名称判断
-	requiredFields := map[string]bool{
-		"Name":  true,
-		"Title": true,
-		"Email": true,
-	}
-
-	return requiredFields[fieldName]
 }

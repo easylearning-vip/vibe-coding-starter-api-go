@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"vibe-coding-starter/vibe-coding-starter/internal/model"
-	"vibe-coding-starter/vibe-coding-starter/internal/repository"
-	"vibe-coding-starter/vibe-coding-starter/test/testutil"
+	"vibe-coding-starter/internal/model"
+	"vibe-coding-starter/internal/repository"
+	"vibe-coding-starter/test/testutil"
 )
 
 // {{.Name}}RepositoryTestSuite {{.Name}}仓储测试套件
@@ -22,13 +23,16 @@ type {{.Name}}RepositoryTestSuite struct {
 
 // SetupSuite 设置测试套件
 func (suite *{{.Name}}RepositoryTestSuite) SetupSuite() {
-	suite.db = testutil.NewTestDatabase()
-	suite.cache = testutil.NewTestCache()
-	suite.logger = testutil.NewTestLogger()
+	suite.db = testutil.NewTestDatabase(suite.T())
+	suite.cache = testutil.NewTestCache(suite.T())
+	suite.logger = testutil.NewTestLogger(suite.T())
 	suite.ctx = context.Background()
 
 	// 创建仓储实例
-	suite.repo = repository.New{{.Name}}Repository(suite.db.DB, suite.logger)
+	suite.repo = repository.New{{.Name}}Repository(
+		suite.db.CreateTestDatabase(),
+		suite.logger.CreateTestLogger(),
+	)
 }
 
 // TearDownSuite 清理测试套件
@@ -40,7 +44,7 @@ func (suite *{{.Name}}RepositoryTestSuite) TearDownSuite() {
 // SetupTest 每个测试前的设置
 func (suite *{{.Name}}RepositoryTestSuite) SetupTest() {
 	// 清理数据
-	suite.db.CleanupTables("{{.NamePlural}}")
+	suite.db.Clean(suite.T())
 }
 
 // TestCreate 测试创建{{.Name}}

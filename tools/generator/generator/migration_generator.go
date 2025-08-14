@@ -44,17 +44,35 @@ func (g *MigrationGenerator) Generate(config interface{}) error {
 	table := cfg.Table
 	if table == "" {
 		table = g.extractTableFromName(cfg.Name)
+		// 只有从迁移名称推断的表名才需要应用命名规则
+		tableName := ToSnakeCase(Pluralize(ToPascalCase(table)))
+		table = tableName
+	}
+
+	// 使用提供的表名（已经是正确格式）
+	tableName := table
+
+	// 解析字段信息
+	var fields []*Field
+	if cfg.Fields != "" {
+		parser := NewFieldParser()
+		var err error
+		fields, err = parser.ParseFields(cfg.Fields)
+		if err != nil {
+			return fmt.Errorf("failed to parse fields: %w", err)
+		}
 	}
 
 	// 准备模板数据
 	data := map[string]interface{}{
 		"Name":         cfg.Name,
 		"Table":        table,
-		"TableName":    ToSnakeCase(table),
+		"TableName":    tableName, // 使用正确的表名
 		"Action":       cfg.Action,
 		"DatabaseType": databaseType,
 		"Timestamp":    GenerateTimestamp(),
 		"Year":         GetCurrentYear(),
+		"Fields":       fields,
 	}
 
 	// 根据操作类型选择模板
@@ -77,23 +95,23 @@ func (g *MigrationGenerator) Generate(config interface{}) error {
 	}
 
 	// 生成文件名和路径
-	filename := fmt.Sprintf("%s_%s.sql", data["Timestamp"], ToSnakeCase(cfg.Name))
+	filename := fmt.Sprintf("%s_%s.up.sql", data["Timestamp"], ToSnakeCase(cfg.Name))
 	path := filepath.Join(migrationDir, filename)
 
 	if err := g.writeFile(path, content); err != nil {
 		return fmt.Errorf("failed to write migration file: %w", err)
 	}
 
-	// TODO: 生成回滚文件（暂时禁用）
-	// if err := g.generateRollback(data, cfg); err != nil {
-	//     return fmt.Errorf("failed to generate rollback file: %w", err)
-	// }
+	// 生成回滚文件
+	if err := g.generateRollback(data, cfg, migrationDir); err != nil {
+		return fmt.Errorf("failed to generate rollback file: %w", err)
+	}
 
 	return nil
 }
 
 // generateRollback 生成回滚文件
-func (g *MigrationGenerator) generateRollback(data map[string]interface{}, cfg *MigrationConfig) error {
+func (g *MigrationGenerator) generateRollback(data map[string]interface{}, cfg *MigrationConfig, migrationDir string) error {
 	var templateName string
 	switch cfg.Action {
 	case "create":
@@ -111,8 +129,9 @@ func (g *MigrationGenerator) generateRollback(data map[string]interface{}, cfg *
 		return err
 	}
 
-	filename := fmt.Sprintf("%s_%s_rollback.sql", data["Timestamp"], ToSnakeCase(cfg.Name))
-	path := filepath.Join("migrations", "rollbacks", filename)
+	// 使用down后缀而不是rollback，这是更标准的命名约定
+	filename := fmt.Sprintf("%s_%s.down.sql", data["Timestamp"], ToSnakeCase(cfg.Name))
+	path := filepath.Join(migrationDir, filename)
 
 	return g.writeFile(path, content)
 }

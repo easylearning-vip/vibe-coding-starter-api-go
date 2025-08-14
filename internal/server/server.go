@@ -170,6 +170,7 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					adminArticles.PUT("/:id", s.articleHandler.Update)
 					adminArticles.DELETE("/:id", s.articleHandler.Delete)
 				}
+
 			}
 		}
 	}

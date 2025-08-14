@@ -1,0 +1,12 @@
+-- Rollback Migration: {{.Name}}
+-- Created: {{.Timestamp}}
+-- Description: Drop {{.TableName}} table
+
+{{if eq .DatabaseType "mysql"}}
+DROP TABLE IF EXISTS {{.TableName}};
+{{else if eq .DatabaseType "postgres"}}
+DROP TABLE IF EXISTS {{.TableName}};
+{{else}}
+-- Default to MySQL syntax
+DROP TABLE IF EXISTS {{.TableName}};
+{{end}}

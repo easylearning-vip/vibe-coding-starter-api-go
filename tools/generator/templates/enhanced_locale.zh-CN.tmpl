@@ -1,0 +1,81 @@
+// {{.Model}} 国际化配置 - 中文
+export default {
+  // 页面标题
+  'pages.{{.ModelCamel}}.title': '{{.DisplayName}}管理',
+  'pages.{{.ModelCamel}}.subTitle': '{{.DisplayName}}列表',
+  'pages.{{.ModelCamel}}.add': '新增{{.DisplayName}}',
+  'pages.{{.ModelCamel}}.edit': '编辑{{.DisplayName}}',
+
+  // 表格列头
+  'pages.{{.ModelCamel}}.table.id': 'ID',
+{{range .FrontendFields}}{{if index $.FieldLabels .Name}}  'pages.{{$.ModelCamel}}.table.{{.JSONName}}': '{{(index $.FieldLabels .Name).zh}}',
+{{else}}  'pages.{{$.ModelCamel}}.table.{{.JSONName}}': '{{.Name}}',
+{{end}}{{end}}  'pages.{{.ModelCamel}}.table.created_at': '创建时间',
+  'pages.{{.ModelCamel}}.table.createdAt': '创建时间',
+  'pages.{{.ModelCamel}}.table.updated_at': '更新时间',
+  'pages.{{.ModelCamel}}.table.updatedAt': '更新时间',
+
+  // 表单标签
+{{range .FrontendFields}}{{if index $.FieldLabels .Name}}  'pages.{{$.ModelCamel}}.form.{{.JSONName}}': '{{(index $.FieldLabels .Name).zh}}',
+  'pages.{{$.ModelCamel}}.form.{{.JSONName}}.placeholder': '请输入{{(index $.FieldLabels .Name).zh}}',
+  'pages.{{$.ModelCamel}}.form.{{.JSONName}}.required': '{{(index $.FieldLabels .Name).zh}}是必填项',
+{{else}}  'pages.{{$.ModelCamel}}.form.{{.JSONName}}': '{{.Name}}',
+  'pages.{{$.ModelCamel}}.form.{{.JSONName}}.placeholder': '请输入{{.Name}}',
+  'pages.{{$.ModelCamel}}.form.{{.JSONName}}.required': '{{.Name}}是必填项',
+{{end}}{{end}}
+  // 操作按钮
+  'pages.{{.ModelCamel}}.button.add': '新增{{.DisplayName}}',
+  'pages.{{.ModelCamel}}.button.edit': '编辑',
+  'pages.{{.ModelCamel}}.button.delete': '删除',
+  'pages.{{.ModelCamel}}.button.refresh': '刷新',
+  'pages.{{.ModelCamel}}.button.search': '搜索',
+  'pages.{{.ModelCamel}}.button.reset': '重置',
+  'pages.{{.ModelCamel}}.button.submit': '提交',
+  'pages.{{.ModelCamel}}.button.cancel': '取消',
+
+  // 对话框标题
+  'pages.{{.ModelCamel}}.modal.add.title': '新增{{.DisplayName}}',
+  'pages.{{.ModelCamel}}.modal.edit.title': '编辑{{.DisplayName}}',
+  'pages.{{.ModelCamel}}.modal.delete.title': '删除确认',
+  'pages.{{.ModelCamel}}.delete.confirm.title': '确定要删除这个{{.DisplayName}}吗？',
+  'pages.{{.ModelCamel}}.modal.delete.content': '确定要删除这个{{.DisplayName}}吗？',
+
+  // 消息提示
+  'pages.{{.ModelCamel}}.message.add.success': '{{.DisplayName}}创建成功',
+  'pages.{{.ModelCamel}}.message.edit.success': '{{.DisplayName}}更新成功',
+  'pages.{{.ModelCamel}}.message.delete.success': '{{.DisplayName}}删除成功',
+  'pages.{{.ModelCamel}}.message.add.error': '{{.DisplayName}}创建失败',
+  'pages.{{.ModelCamel}}.message.edit.error': '{{.DisplayName}}更新失败',
+  'pages.{{.ModelCamel}}.message.delete.error': '{{.DisplayName}}删除失败',
+
+  // 验证消息
+  'pages.{{.ModelCamel}}.validation.required': '此字段是必填项',
+  'pages.{{.ModelCamel}}.validation.min': '长度不能少于 {min} 个字符',
+  'pages.{{.ModelCamel}}.validation.max': '长度不能超过 {max} 个字符',
+  'pages.{{.ModelCamel}}.validation.email': '请输入有效的邮箱地址',
+  'pages.{{.ModelCamel}}.validation.number': '请输入有效的数字',
+
+  // 状态文本
+  'pages.{{.ModelCamel}}.status.active': '启用',
+  'pages.{{.ModelCamel}}.status.inactive': '禁用',
+  'pages.{{.ModelCamel}}.status.loading': '加载中...',
+  'pages.{{.ModelCamel}}.status.empty': '暂无数据',
+
+  // 通用消息（如果不存在的话）
+  'pages.common.actions': '操作',
+  'pages.common.edit': '编辑',
+  'pages.common.delete': '删除',
+  'pages.common.confirm': '确认',
+  'pages.common.cancel': '取消',
+  'pages.common.ok': '确定',
+  'pages.common.search': '搜索',
+  'pages.common.search.placeholder': '请输入搜索关键词',
+  'pages.common.reset': '重置',
+  'pages.common.startDate': '开始日期',
+  'pages.common.endDate': '结束日期',
+  'pages.common.total.records': '共 {total} 条记录',
+  'pages.common.deleteConfirm': '确定要删除吗？',
+  'pages.common.yes': '是',
+  'pages.common.no': '否',
+  'pages.common.pagination.total': '共 {total} 条记录，第 {start}-{end} 条',
+};

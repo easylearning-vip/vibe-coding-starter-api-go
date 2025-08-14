@@ -1,14 +1,16 @@
 declare namespace {{.Model}}API {
   // {{.Model}} model from API
   interface {{.Model}} {
-{{- range .Fields}}
+{{- range .FrontendFields}}
+{{- if or .TableShow .FormShow (eq .JSONName "id") (eq .JSONName "created_at") (eq .JSONName "updated_at")}}
     {{.JSONName}}: {{.TSType}};
+{{- end}}
 {{- end}}
   }
 
   // Create {{.Model}} request
   interface Create{{.Model}}Request {
-{{- range .Fields}}
+{{- range .FrontendFields}}
 {{- if and .FormShow (ne .JSONName "id") (ne .JSONName "created_at") (ne .JSONName "updated_at")}}
     {{.JSONName}}{{if not .Required}}?{{end}}: {{.TSType}};
 {{- end}}
@@ -17,7 +19,7 @@ declare namespace {{.Model}}API {
 
   // Update {{.Model}} request
   interface Update{{.Model}}Request {
-{{- range .Fields}}
+{{- range .FrontendFields}}
 {{- if and .FormShow (ne .JSONName "id") (ne .JSONName "created_at") (ne .JSONName "updated_at")}}
     {{.JSONName}}?: {{.TSType}};
 {{- end}}
