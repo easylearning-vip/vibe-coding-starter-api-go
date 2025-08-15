@@ -300,3 +300,45 @@ func (m *MockDepartmentService) List(ctx context.Context, opts *service.ListDepa
 	}
 	return args.Get(0).([]*model.Department), args.Get(1).(int64), args.Error(2)
 }
+
+// MockProductCategoryService ProductCategory服务模拟
+type MockProductCategoryService struct {
+	mock.Mock
+}
+
+func (m *MockProductCategoryService) Create(ctx context.Context, req *service.CreateProductCategoryRequest) (*model.ProductCategory, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ProductCategory), args.Error(1)
+}
+
+func (m *MockProductCategoryService) GetByID(ctx context.Context, id uint) (*model.ProductCategory, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ProductCategory), args.Error(1)
+}
+
+func (m *MockProductCategoryService) Update(ctx context.Context, id uint, req *service.UpdateProductCategoryRequest) (*model.ProductCategory, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ProductCategory), args.Error(1)
+}
+
+func (m *MockProductCategoryService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockProductCategoryService) List(ctx context.Context, opts *service.ListProductCategoryOptions) ([]*model.ProductCategory, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.ProductCategory), args.Get(1).(int64), args.Error(2)
+}

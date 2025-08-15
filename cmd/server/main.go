@@ -81,6 +81,7 @@ func main() {
 			repository.NewArticleRepository,
 			repository.NewFileRepository,
 			repository.NewDictRepository,
+			repository.NewProductCategoryRepository,
 			repository.NewDepartmentRepository,
 		),
 
@@ -90,6 +91,7 @@ func main() {
 			service.NewArticleService,
 			service.NewFileService,
 			service.NewDictService,
+			service.NewProductCategoryService,
 			service.NewDepartmentService,
 		),
 
@@ -100,6 +102,7 @@ func main() {
 			handler.NewFileHandler,
 			handler.NewHealthHandler,
 			handler.NewDictHandler,
+			handler.NewProductCategoryHandler,
 			handler.NewDepartmentHandler,
 		),
 
