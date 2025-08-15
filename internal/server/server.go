@@ -26,6 +26,7 @@ type Server struct {
 	articleHandler *handler.ArticleHandler
 	healthHandler  *handler.HealthHandler
 	dictHandler    *handler.DictHandler
+	departmentHandler *handler.DepartmentHandler
 }
 
 // New 创建新的服务器实例
@@ -37,6 +38,7 @@ func New(
 	articleHandler *handler.ArticleHandler,
 	healthHandler *handler.HealthHandler,
 	dictHandler *handler.DictHandler,
+	departmentHandler *handler.DepartmentHandler,
 ) *Server {
 	return &Server{
 		config:         config,
@@ -46,6 +48,7 @@ func New(
 		articleHandler: articleHandler,
 		healthHandler:  healthHandler,
 		dictHandler:    dictHandler,
+		departmentHandler: departmentHandler,
 	}
 }
 
@@ -170,6 +173,9 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					adminArticles.PUT("/:id", s.articleHandler.Update)
 					adminArticles.DELETE("/:id", s.articleHandler.Delete)
 				}
+
+				// Department管理路由
+				s.departmentHandler.RegisterRoutes(admin)
 
 			}
 		}

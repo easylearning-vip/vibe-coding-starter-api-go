@@ -81,6 +81,7 @@ func main() {
 			repository.NewArticleRepository,
 			repository.NewFileRepository,
 			repository.NewDictRepository,
+			repository.NewDepartmentRepository,
 		),
 
 		// 服务模块
@@ -89,6 +90,7 @@ func main() {
 			service.NewArticleService,
 			service.NewFileService,
 			service.NewDictService,
+			service.NewDepartmentService,
 		),
 
 		// 处理器模块
@@ -98,6 +100,7 @@ func main() {
 			handler.NewFileHandler,
 			handler.NewHealthHandler,
 			handler.NewDictHandler,
+			handler.NewDepartmentHandler,
 		),
 
 		// 服务器模块

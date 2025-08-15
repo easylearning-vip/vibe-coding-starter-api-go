@@ -105,3 +105,13 @@ type DictRepository interface {
 	UpdateItem(ctx context.Context, item *model.DictItem) error
 	DeleteItem(ctx context.Context, id uint) error
 }
+
+// DepartmentRepository Department仓储接口
+type DepartmentRepository interface {
+	Repository[model.Department, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Department, error)
+	GetByParentId(ctx context.Context, parentId uint) ([]*model.Department, error)
+	GetByCode(ctx context.Context, code string) (*model.Department, error)
+	GetChildrenTree(ctx context.Context, parentId uint) ([]*model.Department, error)
+}

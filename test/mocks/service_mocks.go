@@ -258,3 +258,45 @@ func (m *MockDictService) ClearDefaultDictData(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
 }
+
+// MockDepartmentService Department服务模拟
+type MockDepartmentService struct {
+	mock.Mock
+}
+
+func (m *MockDepartmentService) Create(ctx context.Context, req *service.CreateDepartmentRequest) (*model.Department, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) GetByID(ctx context.Context, id uint) (*model.Department, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) Update(ctx context.Context, id uint, req *service.UpdateDepartmentRequest) (*model.Department, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockDepartmentService) List(ctx context.Context, opts *service.ListDepartmentOptions) ([]*model.Department, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Department), args.Get(1).(int64), args.Error(2)
+}

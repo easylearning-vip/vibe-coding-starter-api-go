@@ -73,6 +73,7 @@ func (td *TestDatabase) Migrate(t *testing.T) {
 		&model.File{},
 		&model.DictCategory{},
 		&model.DictItem{},
+		&model.Department{},
 	)
 	if err != nil {
 		t.Fatalf("Failed to migrate database: %v", err)
@@ -92,6 +93,7 @@ func (td *TestDatabase) Clean(t *testing.T) {
 		"users",
 		"dict_items",
 		"dict_categories",
+		"departments",
 	}
 
 	for _, table := range tables {

@@ -276,3 +276,47 @@ func (m *MockDictRepository) DeleteCategory(ctx context.Context, id uint) error 
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
+
+// MockDepartmentRepository Department仓储模拟
+type MockDepartmentRepository struct {
+	mock.Mock
+}
+
+func (m *MockDepartmentRepository) Create(ctx context.Context, department *model.Department) error {
+	args := m.Called(ctx, department)
+	return args.Error(0)
+}
+
+func (m *MockDepartmentRepository) GetByID(ctx context.Context, id uint) (*model.Department, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentRepository) Update(ctx context.Context, department *model.Department) error {
+	args := m.Called(ctx, department)
+	return args.Error(0)
+}
+
+func (m *MockDepartmentRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockDepartmentRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Department, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Department), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockDepartmentRepository) GetByName(ctx context.Context, name string) (*model.Department, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Department), args.Error(1)
+}
