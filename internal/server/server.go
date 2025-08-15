@@ -26,6 +26,7 @@ type Server struct {
 	articleHandler *handler.ArticleHandler
 	healthHandler  *handler.HealthHandler
 	dictHandler    *handler.DictHandler
+	productHandler *handler.ProductHandler
 	productcategoryHandler *handler.ProductCategoryHandler
 	departmentHandler *handler.DepartmentHandler
 }
@@ -39,6 +40,7 @@ func New(
 	articleHandler *handler.ArticleHandler,
 	healthHandler *handler.HealthHandler,
 	dictHandler *handler.DictHandler,
+	productHandler *handler.ProductHandler,
 	productcategoryHandler *handler.ProductCategoryHandler,
 	departmentHandler *handler.DepartmentHandler,
 ) *Server {
@@ -50,6 +52,7 @@ func New(
 		articleHandler: articleHandler,
 		healthHandler:  healthHandler,
 		dictHandler:    dictHandler,
+		productHandler: productHandler,
 		productcategoryHandler: productcategoryHandler,
 		departmentHandler: departmentHandler,
 	}
@@ -176,6 +179,9 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					adminArticles.PUT("/:id", s.articleHandler.Update)
 					adminArticles.DELETE("/:id", s.articleHandler.Delete)
 				}
+
+				// Product管理路由
+				s.productHandler.RegisterRoutes(admin)
 
 				// ProductCategory管理路由
 				s.productcategoryHandler.RegisterRoutes(admin)
