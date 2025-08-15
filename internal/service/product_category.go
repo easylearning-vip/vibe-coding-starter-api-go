@@ -18,6 +18,12 @@ type ProductCategoryService interface {
 	Update(ctx context.Context, id uint, req *UpdateProductCategoryRequest) (*model.ProductCategory, error)
 	Delete(ctx context.Context, id uint) error
 	List(ctx context.Context, opts *ListProductCategoryOptions) ([]*model.ProductCategory, int64, error)
+	GetCategoryTree(ctx context.Context) ([]*model.ProductCategory, error)
+	GetCategoryPath(ctx context.Context, categoryID uint) ([]*model.ProductCategory, error)
+	GetByParentID(ctx context.Context, parentID uint) ([]*model.ProductCategory, error)
+	BatchUpdateSortOrder(ctx context.Context, updates []*UpdateSortOrderRequest) error
+	ValidateParentChildRelationship(ctx context.Context, parentID, childID uint) error
+	CanDeleteCategory(ctx context.Context, categoryID uint) (bool, error)
 }
 
 // productCategoryService ProductCategory服务实现
@@ -75,6 +81,13 @@ func (s *productCategoryService) Create(ctx context.Context, req *CreateProductC
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
+	// 验证父子关系
+	if req.ParentId > 0 {
+		if err := s.ValidateParentChildRelationship(ctx, req.ParentId, 0); err != nil {
+			return nil, fmt.Errorf("invalid parent-child relationship: %w", err)
+		}
+	}
+
 	// 创建模型
 	entity := &model.ProductCategory{
 		Name: req.Name,
@@ -124,6 +137,13 @@ func (s *productCategoryService) Update(ctx context.Context, id uint, req *Updat
 		return nil, fmt.Errorf("failed to get productcategory: %w", err)
 	}
 
+	// 验证父子关系
+	if req.ParentId != nil {
+		if err := s.ValidateParentChildRelationship(ctx, *req.ParentId, id); err != nil {
+			return nil, fmt.Errorf("invalid parent-child relationship: %w", err)
+		}
+	}
+
 	// 更新字段
 	if req.Name != nil {
 		entity.Name = *req.Name
@@ -158,6 +178,16 @@ func (s *productCategoryService) Delete(ctx context.Context, id uint) error {
 	// 检查实体是否存在
 	if _, err := s.productCategoryRepo.GetByID(ctx, id); err != nil {
 		return fmt.Errorf("failed to get productcategory: %w", err)
+	}
+
+	// 检查是否可删除
+	canDelete, err := s.CanDeleteCategory(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to check if category can be deleted: %w", err)
+	}
+	
+	if !canDelete {
+		return fmt.Errorf("category cannot be deleted: it has subcategories or associated products")
 	}
 
 	// 删除实体
@@ -217,6 +247,112 @@ func (s *productCategoryService) validateUpdateRequest(req *UpdateProductCategor
 	// 使用 validate 标签进行验证
 	// 这里可以添加自定义验证逻辑
 	return nil
+}
+
+// UpdateSortOrderRequest 更新排序请求
+type UpdateSortOrderRequest struct {
+	CategoryID uint `json:"category_id" validate:"required"`
+	SortOrder  int  `json:"sort_order" validate:"required"`
+}
+
+// GetCategoryTree 获取分类树结构
+func (s *productCategoryService) GetCategoryTree(ctx context.Context) ([]*model.ProductCategory, error) {
+	tree, err := s.productCategoryRepo.GetCategoryTree(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get category tree", "error", err)
+		return nil, fmt.Errorf("failed to get category tree: %w", err)
+	}
+	return tree, nil
+}
+
+// GetCategoryPath 获取分类路径（面包屑导航）
+func (s *productCategoryService) GetCategoryPath(ctx context.Context, categoryID uint) ([]*model.ProductCategory, error) {
+	path, err := s.productCategoryRepo.GetCategoryPath(ctx, categoryID)
+	if err != nil {
+		s.logger.Error("Failed to get category path", "category_id", categoryID, "error", err)
+		return nil, fmt.Errorf("failed to get category path: %w", err)
+	}
+	return path, nil
+}
+
+// GetByParentID 根据父分类ID获取子分类
+func (s *productCategoryService) GetByParentID(ctx context.Context, parentID uint) ([]*model.ProductCategory, error) {
+	categories, err := s.productCategoryRepo.GetByParentID(ctx, parentID)
+	if err != nil {
+		s.logger.Error("Failed to get categories by parent ID", "parent_id", parentID, "error", err)
+		return nil, fmt.Errorf("failed to get categories by parent ID: %w", err)
+	}
+	return categories, nil
+}
+
+// BatchUpdateSortOrder 批量更新排序
+func (s *productCategoryService) BatchUpdateSortOrder(ctx context.Context, updates []*UpdateSortOrderRequest) error {
+	for _, update := range updates {
+		category, err := s.productCategoryRepo.GetByID(ctx, update.CategoryID)
+		if err != nil {
+			s.logger.Error("Failed to get category for sort update", "category_id", update.CategoryID, "error", err)
+			return fmt.Errorf("failed to get category %d: %w", update.CategoryID, err)
+		}
+		
+		category.SortOrder = update.SortOrder
+		if err := s.productCategoryRepo.Update(ctx, category); err != nil {
+			s.logger.Error("Failed to update category sort order", "category_id", update.CategoryID, "error", err)
+			return fmt.Errorf("failed to update category sort order: %w", err)
+		}
+	}
+	
+	s.logger.Info("Batch updated sort order successfully", "count", len(updates))
+	return nil
+}
+
+// ValidateParentChildRelationship 验证父子关系
+func (s *productCategoryService) ValidateParentChildRelationship(ctx context.Context, parentID, childID uint) error {
+	if parentID == 0 {
+		return nil // 根分类是允许的
+	}
+	
+	if parentID == childID {
+		return fmt.Errorf("category cannot be its own parent")
+	}
+	
+	// 检查是否会形成循环引用
+	path, err := s.productCategoryRepo.GetCategoryPath(ctx, parentID)
+	if err != nil {
+		return fmt.Errorf("failed to validate parent-child relationship: %w", err)
+	}
+	
+	for _, category := range path {
+		if category.ID == childID {
+			return fmt.Errorf("circular reference detected: category %d cannot be parent of category %d", childID, parentID)
+		}
+	}
+	
+	return nil
+}
+
+// CanDeleteCategory 检查分类是否可删除
+func (s *productCategoryService) CanDeleteCategory(ctx context.Context, categoryID uint) (bool, error) {
+	// 检查是否有子分类
+	hasChildren, err := s.productCategoryRepo.HasChildren(ctx, categoryID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check children categories: %w", err)
+	}
+	
+	if hasChildren {
+		return false, nil
+	}
+	
+	// 检查是否有关联产品
+	productCount, err := s.productCategoryRepo.CountProductsByCategory(ctx, categoryID)
+	if err != nil {
+		return false, fmt.Errorf("failed to count products: %w", err)
+	}
+	
+	if productCount > 0 {
+		return false, nil
+	}
+	
+	return true, nil
 }
 
 

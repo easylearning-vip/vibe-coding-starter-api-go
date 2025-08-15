@@ -121,6 +121,8 @@ func (suite *ProductCategoryServiceTestSuite) TestDelete_Success() {
 	
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existingProductCategory, nil)
+	suite.mockRepo.On("HasChildren", suite.ctx, uint(1)).Return(false, nil)
+	suite.mockRepo.On("CountProductsByCategory", suite.ctx, uint(1)).Return(int64(0), nil)
 	suite.mockRepo.On("Delete", suite.ctx, uint(1)).Return(nil)
 	
 	// 执行测试

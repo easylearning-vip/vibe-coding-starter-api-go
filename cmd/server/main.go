@@ -110,7 +110,9 @@ func main() {
 		),
 
 		// 服务器模块
-		fx.Provide(server.New),
+		fx.Provide(
+			server.New,
+		),
 
 		// 启动服务器
 		fx.Invoke(func(srv *server.Server) {

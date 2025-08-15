@@ -24,6 +24,7 @@ type Server struct {
 	middleware     *middleware.Middleware
 	userHandler    *handler.UserHandler
 	articleHandler *handler.ArticleHandler
+	fileHandler    *handler.FileHandler
 	healthHandler  *handler.HealthHandler
 	dictHandler    *handler.DictHandler
 	productHandler *handler.ProductHandler
@@ -38,6 +39,7 @@ func New(
 	middleware *middleware.Middleware,
 	userHandler *handler.UserHandler,
 	articleHandler *handler.ArticleHandler,
+	fileHandler *handler.FileHandler,
 	healthHandler *handler.HealthHandler,
 	dictHandler *handler.DictHandler,
 	productHandler *handler.ProductHandler,
@@ -50,6 +52,7 @@ func New(
 		middleware:     middleware,
 		userHandler:    userHandler,
 		articleHandler: articleHandler,
+		fileHandler:    fileHandler,
 		healthHandler:  healthHandler,
 		dictHandler:    dictHandler,
 		productHandler: productHandler,
@@ -145,6 +148,13 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 
 				// 数据字典路由（不需要认证，便于测试）
 				s.dictHandler.RegisterRoutes(public)
+
+				// 文件路由（部分公共功能）
+				files := public.Group("/files")
+				{
+					files.GET("", s.fileHandler.List)           // 公共：查看文件列表
+					files.GET("/:id", s.fileHandler.GetByID)    // 公共：查看文件详情
+				}
 			}
 
 			// 受保护的路由（需要认证）
@@ -162,6 +172,14 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					userArticles.PUT("/:id", s.articleHandler.Update)
 					userArticles.DELETE("/:id", s.articleHandler.Delete)
 				}
+
+				// 用户文件管理路由
+				userFiles := protected.Group("/user/files")
+				{
+					userFiles.GET("", s.fileHandler.List)            // 用户专用：只返回当前用户的文件
+					userFiles.POST("/upload", s.fileHandler.Upload)   // 上传文件
+					userFiles.DELETE("/:id", s.fileHandler.Delete)    // 删除文件
+				}
 			}
 
 			// 管理员路由
@@ -178,6 +196,14 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					adminArticles.POST("", s.articleHandler.Create)
 					adminArticles.PUT("/:id", s.articleHandler.Update)
 					adminArticles.DELETE("/:id", s.articleHandler.Delete)
+				}
+
+				// 管理员文件管理路由
+				adminFiles := admin.Group("/files")
+				{
+					adminFiles.GET("", s.fileHandler.List)            // 管理员专用：返回所有文件
+					adminFiles.POST("/upload", s.fileHandler.Upload)   // 上传文件
+					adminFiles.DELETE("/:id", s.fileHandler.Delete)    // 删除文件
 				}
 
 				// Product管理路由

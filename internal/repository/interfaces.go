@@ -121,6 +121,11 @@ type ProductCategoryRepository interface {
 	Repository[model.ProductCategory, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.ProductCategory, error)
+	GetByParentID(ctx context.Context, parentID uint) ([]*model.ProductCategory, error)
+	GetCategoryPath(ctx context.Context, categoryID uint) ([]*model.ProductCategory, error)
+	GetCategoryTree(ctx context.Context) ([]*model.ProductCategory, error)
+	CountProductsByCategory(ctx context.Context, categoryID uint) (int64, error)
+	HasChildren(ctx context.Context, categoryID uint) (bool, error)
 }
 
 // ProductRepository Product仓储接口
@@ -128,4 +133,12 @@ type ProductRepository interface {
 	Repository[model.Product, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Product, error)
+	GetBySKU(ctx context.Context, sku string) (*model.Product, error)
+	GetByCategoryID(ctx context.Context, categoryID uint, opts ListOptions) ([]*model.Product, int64, error)
+	GetByCategoryWithSubcategories(ctx context.Context, categoryID uint, opts ListOptions) ([]*model.Product, int64, error)
+	GetHotSellingProducts(ctx context.Context, limit int) ([]*model.Product, error)
+	GetByPriceRange(ctx context.Context, minPrice, maxPrice float64, opts ListOptions) ([]*model.Product, int64, error)
+	SearchProducts(ctx context.Context, query string, opts ListOptions) ([]*model.Product, int64, error)
+	GetLowStockProducts(ctx context.Context) ([]*model.Product, error)
+	GetProductsByStatus(ctx context.Context, isActive bool, opts ListOptions) ([]*model.Product, int64, error)
 }

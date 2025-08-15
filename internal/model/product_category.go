@@ -20,6 +20,8 @@ type ProductCategory struct {
 
 	IsActive bool `json:"is_active" gorm:"column:is_active;type:boolean;default:false"` // IsActive 布尔值
 
+	Children []*ProductCategory `json:"children,omitempty" gorm:"-"` // 子分类，用于树形结构
+
 }
 
 // TableName 获取表名
