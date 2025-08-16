@@ -136,4 +136,18 @@ type ProductRepository interface {
 	Repository[model.Product, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Product, error)
+	GetBySKU(ctx context.Context, sku string) (*model.Product, error)
+
+	// 高级查询方法
+	SearchProducts(ctx context.Context, keyword string, filters map[string]interface{}, opts ListOptions) ([]*model.Product, int64, error)
+	GetByCategory(ctx context.Context, categoryID uint, opts ListOptions) ([]*model.Product, error)
+	GetByCategoryWithSubCategories(ctx context.Context, categoryIDs []uint, opts ListOptions) ([]*model.Product, error)
+	GetByPriceRange(ctx context.Context, minPrice, maxPrice float64, opts ListOptions) ([]*model.Product, error)
+	GetLowStockProducts(ctx context.Context, threshold int, opts ListOptions) ([]*model.Product, error)
+	GetPopularProducts(ctx context.Context, limit int) ([]*model.Product, error)
+
+	// 批量操作
+	BatchUpdatePrices(ctx context.Context, updates map[uint]map[string]float64) error
+	UpdateStock(ctx context.Context, productID uint, quantity int) error
+	UpdateStatus(ctx context.Context, productID uint, isActive bool) error
 }
