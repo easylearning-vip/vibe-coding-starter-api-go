@@ -28,7 +28,7 @@ type DepartmentService interface {
 type departmentService struct {
 	departmentRepo repository.DepartmentRepository
 
-	logger      logger.Logger
+	logger logger.Logger
 }
 
 // NewDepartmentService 创建Department服务
@@ -40,30 +40,30 @@ func NewDepartmentService(
 	return &departmentService{
 		departmentRepo: departmentRepo,
 
-		logger:      logger,
+		logger: logger,
 	}
 }
 
 // CreateDepartmentRequest 创建Department请求
 type CreateDepartmentRequest struct {
-	Name string `json:"name" validate:"required,min=1,max=255"`
-	Code string `json:"code" validate:"required,min=1,max=255"`
+	Name        string `json:"name" validate:"required,min=1,max=255"`
+	Code        string `json:"code" validate:"required,min=1,max=255"`
 	Description string `json:"description" validate:"required,min=1,max=255"`
-	ParentId uint `json:"parent_id" validate:"required,min=0"`
-	Sort int `json:"sort" validate:"required,min=0"`
-	Status string `json:"status" validate:"required,min=1,max=255"`
-	ManagerId uint `json:"manager_id" validate:"required,min=0"`
+	ParentId    uint   `json:"parent_id" validate:"required,min=0"`
+	Sort        int    `json:"sort" validate:"required,min=0"`
+	Status      string `json:"status" validate:"required,min=1,max=255"`
+	ManagerId   uint   `json:"manager_id" validate:"required,min=0"`
 }
 
 // UpdateDepartmentRequest 更新Department请求
 type UpdateDepartmentRequest struct {
-	Name *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Code *string `json:"code,omitempty" validate:"omitempty,min=1,max=255"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Code        *string `json:"code,omitempty" validate:"omitempty,min=1,max=255"`
 	Description *string `json:"description,omitempty" validate:"omitempty,min=1,max=255"`
-	ParentId *uint `json:"parent_id,omitempty" validate:"omitempty,min=0"`
-	Sort *int `json:"sort,omitempty" validate:"omitempty,min=0"`
-	Status *string `json:"status,omitempty" validate:"omitempty,min=1,max=255"`
-	ManagerId *uint `json:"manager_id,omitempty" validate:"omitempty,min=0"`
+	ParentId    *uint   `json:"parent_id,omitempty" validate:"omitempty,min=0"`
+	Sort        *int    `json:"sort,omitempty" validate:"omitempty,min=0"`
+	Status      *string `json:"status,omitempty" validate:"omitempty,min=1,max=255"`
+	ManagerId   *uint   `json:"manager_id,omitempty" validate:"omitempty,min=0"`
 }
 
 // ListDepartmentOptions 列表查询选项
@@ -85,13 +85,13 @@ func (s *departmentService) Create(ctx context.Context, req *CreateDepartmentReq
 
 	// 创建模型
 	entity := &model.Department{
-		Name: req.Name,
-		Code: req.Code,
+		Name:        req.Name,
+		Code:        req.Code,
 		Description: req.Description,
-		ParentId: req.ParentId,
-		Sort: req.Sort,
-		Status: req.Status,
-		ManagerId: req.ManagerId,
+		ParentId:    req.ParentId,
+		Sort:        req.Sort,
+		Status:      req.Status,
+		ManagerId:   req.ManagerId,
 	}
 
 	// 保存到数据库
@@ -100,8 +100,6 @@ func (s *departmentService) Create(ctx context.Context, req *CreateDepartmentReq
 		return nil, fmt.Errorf("failed to create department: %w", err)
 	}
 
-
-
 	s.logger.Info("Department created successfully", "id", entity.ID)
 	return entity, nil
 }
@@ -109,14 +107,11 @@ func (s *departmentService) Create(ctx context.Context, req *CreateDepartmentReq
 // GetByID 根据ID获取Department
 func (s *departmentService) GetByID(ctx context.Context, id uint) (*model.Department, error) {
 
-
 	// 从数据库获取
 	entity, err := s.departmentRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get department: %w", err)
 	}
-
-
 
 	return entity, nil
 }
@@ -163,8 +158,6 @@ func (s *departmentService) Update(ctx context.Context, id uint, req *UpdateDepa
 		return nil, fmt.Errorf("failed to update department: %w", err)
 	}
 
-
-
 	s.logger.Info("Department updated successfully", "id", id)
 	return entity, nil
 }
@@ -181,8 +174,6 @@ func (s *departmentService) Delete(ctx context.Context, id uint) error {
 		s.logger.Error("Failed to delete department", "id", id, "error", err)
 		return fmt.Errorf("failed to delete department: %w", err)
 	}
-
-
 
 	s.logger.Info("Department deleted successfully", "id", id)
 	return nil
@@ -412,5 +403,3 @@ func (s *departmentService) updateChildrenPaths(ctx context.Context, parentId ui
 
 	return nil
 }
-
-

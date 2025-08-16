@@ -126,7 +126,7 @@ func (suite *CommentRepositoryTestSuite) TestGetByID() {
 	assert.Equal(suite.T(), comment.Content, foundComment.Content)
 	assert.Equal(suite.T(), comment.ArticleID, foundComment.ArticleID)
 	assert.Equal(suite.T(), comment.AuthorID, foundComment.AuthorID)
-	
+
 	// 验证预加载的关联数据
 	assert.NotNil(suite.T(), foundComment.Author)
 	assert.Equal(suite.T(), suite.testUser.ID, foundComment.Author.ID)

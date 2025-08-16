@@ -22,12 +22,12 @@ func TestLoggerLevels(t *testing.T) {
 
 	// 测试不同日志级别
 	t.Log("Testing different log levels:")
-	
+
 	log.Debug("This is a DEBUG message", "key1", "value1", "number", 123)
 	log.Info("This is an INFO message", "user", "admin", "action", "login")
 	log.Warn("This is a WARN message", "latency", 200, "threshold", 100)
 	log.Error("This is an ERROR message", "error", "test error", "request_id", "req-123")
-	
+
 	// 测试带字段的日志
 	contextLogger := log.With("service", "user-service", "version", "1.0.0")
 	contextLogger.Info("Service started successfully", "port", 8080)
@@ -46,25 +46,25 @@ func TestLoggerFormats(t *testing.T) {
 	t.Log("Testing JSON format:")
 	cfg, _ := config.New()
 	cfg.Logger.Format = "json"
-	
+
 	jsonLogger, err := logger.New(cfg)
 	if err != nil {
 		t.Fatalf("Failed to create JSON logger: %v", err)
 	}
-	
+
 	jsonLogger.Info("JSON format test", "format", "json", "readable", false)
-	
+
 	// 测试Console格式
 	t.Log("Testing Console format:")
 	cfg.Logger.Format = "console"
-	
+
 	consoleLogger, err := logger.New(cfg)
 	if err != nil {
 		t.Fatalf("Failed to create console logger: %v", err)
 	}
-	
+
 	consoleLogger.Info("Console format test", "format", "console", "readable", true)
-	
+
 	// 同步日志
 	jsonLogger.Sync()
 	consoleLogger.Sync()

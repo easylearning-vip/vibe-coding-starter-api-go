@@ -254,7 +254,7 @@ func (h *FileHandler) RegisterRoutes(r *gin.RouterGroup) {
 	{
 		files.GET("/:id", h.GetByID)
 		files.GET("/:id/download", h.Download)
-		
+
 		// 需要认证的路由
 		authenticated := files.Group("")
 		authenticated.Use(AuthMiddleware())

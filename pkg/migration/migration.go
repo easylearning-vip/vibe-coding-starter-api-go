@@ -12,8 +12,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"vibe-coding-starter/pkg/logger"
 	"gorm.io/gorm"
+	"vibe-coding-starter/pkg/logger"
 )
 
 // Migrator 数据库迁移管理器
