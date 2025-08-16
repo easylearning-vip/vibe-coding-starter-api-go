@@ -125,6 +125,103 @@ func (r *productCategoryRepository) List(ctx context.Context, opts ListOptions) 
 	return entities, total, nil
 }
 
+// GetByParentID 根据父级ID获取子分类
+func (r *productCategoryRepository) GetByParentID(ctx context.Context, parentID uint) ([]*model.ProductCategory, error) {
+	var categories []*model.ProductCategory
+
+	query := r.db.WithContext(ctx).Where("parent_id = ?", parentID).Order("sort_order ASC, id ASC")
+	if err := query.Find(&categories).Error; err != nil {
+		r.logger.Error("Failed to get categories by parent ID", "parent_id", parentID, "error", err)
+		return nil, fmt.Errorf("failed to get categories by parent ID: %w", err)
+	}
+
+	return categories, nil
+}
+
+// GetCategoryPath 获取分类路径（从根到当前分类）
+func (r *productCategoryRepository) GetCategoryPath(ctx context.Context, categoryID uint) ([]*model.ProductCategory, error) {
+	var path []*model.ProductCategory
+	currentID := categoryID
+
+	for currentID != 0 {
+		var category model.ProductCategory
+		if err := r.db.WithContext(ctx).First(&category, currentID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				break
+			}
+			r.logger.Error("Failed to get category in path", "category_id", currentID, "error", err)
+			return nil, fmt.Errorf("failed to get category in path: %w", err)
+		}
+
+		// 将分类添加到路径开头
+		path = append([]*model.ProductCategory{&category}, path...)
+		currentID = category.ParentId
+	}
+
+	return path, nil
+}
+
+// GetAllCategories 获取所有分类
+func (r *productCategoryRepository) GetAllCategories(ctx context.Context) ([]*model.ProductCategory, error) {
+	var categories []*model.ProductCategory
+
+	if err := r.db.WithContext(ctx).Order("sort_order ASC, id ASC").Find(&categories).Error; err != nil {
+		r.logger.Error("Failed to get all categories", "error", err)
+		return nil, fmt.Errorf("failed to get all categories: %w", err)
+	}
+
+	return categories, nil
+}
+
+// CountProductsByCategory 统计分类下的产品数量
+func (r *productCategoryRepository) CountProductsByCategory(ctx context.Context, categoryID uint) (int64, error) {
+	var count int64
+
+	if err := r.db.WithContext(ctx).Model(&model.Product{}).Where("category_id = ?", categoryID).Count(&count).Error; err != nil {
+		r.logger.Error("Failed to count products by category", "category_id", categoryID, "error", err)
+		return 0, fmt.Errorf("failed to count products by category: %w", err)
+	}
+
+	return count, nil
+}
+
+// HasChildren 检查分类是否有子分类
+func (r *productCategoryRepository) HasChildren(ctx context.Context, categoryID uint) (bool, error) {
+	var count int64
+
+	if err := r.db.WithContext(ctx).Model(&model.ProductCategory{}).Where("parent_id = ?", categoryID).Count(&count).Error; err != nil {
+		r.logger.Error("Failed to check if category has children", "category_id", categoryID, "error", err)
+		return false, fmt.Errorf("failed to check if category has children: %w", err)
+	}
+
+	return count > 0, nil
+}
+
+// BatchUpdateSortOrder 批量更新排序
+func (r *productCategoryRepository) BatchUpdateSortOrder(ctx context.Context, updates map[uint]int) error {
+	tx := r.db.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	for id, sortOrder := range updates {
+		if err := tx.Model(&model.ProductCategory{}).Where("id = ?", id).Update("sort_order", sortOrder).Error; err != nil {
+			tx.Rollback()
+			r.logger.Error("Failed to update sort order", "category_id", id, "sort_order", sortOrder, "error", err)
+			return fmt.Errorf("failed to update sort order for category %d: %w", id, err)
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		r.logger.Error("Failed to commit batch sort order update", "error", err)
+		return fmt.Errorf("failed to commit batch sort order update: %w", err)
+	}
+
+	return nil
+}
+
 // applyFilters 应用过滤器
 func (r *productCategoryRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
@@ -133,7 +230,15 @@ func (r *productCategoryRepository) applyFilters(query *gorm.DB, filters map[str
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
 			}
-		// 在这里添加更多过滤器
+		case "parent_id":
+			if v, ok := value.(uint); ok {
+				query = query.Where("parent_id = ?", v)
+			}
+		case "is_active":
+			if v, ok := value.(bool); ok {
+				query = query.Where("is_active = ?", v)
+			}
+			// 在这里添加更多过滤器
 		}
 	}
 	return query

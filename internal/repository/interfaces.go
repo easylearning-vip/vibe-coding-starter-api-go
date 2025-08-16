@@ -121,6 +121,14 @@ type ProductCategoryRepository interface {
 	Repository[model.ProductCategory, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.ProductCategory, error)
+
+	// 层级分类查询方法
+	GetByParentID(ctx context.Context, parentID uint) ([]*model.ProductCategory, error)
+	GetCategoryPath(ctx context.Context, categoryID uint) ([]*model.ProductCategory, error)
+	GetAllCategories(ctx context.Context) ([]*model.ProductCategory, error)
+	CountProductsByCategory(ctx context.Context, categoryID uint) (int64, error)
+	HasChildren(ctx context.Context, categoryID uint) (bool, error)
+	BatchUpdateSortOrder(ctx context.Context, updates map[uint]int) error
 }
 
 // ProductRepository Product仓储接口

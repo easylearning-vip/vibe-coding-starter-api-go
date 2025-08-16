@@ -14,7 +14,7 @@ import (
 // ProductCategoryHandler ProductCategory处理器
 type ProductCategoryHandler struct {
 	productCategoryService service.ProductCategoryService
-	logger         logger.Logger
+	logger                 logger.Logger
 }
 
 // NewProductCategoryHandler 创建ProductCategory处理器
@@ -24,7 +24,7 @@ func NewProductCategoryHandler(
 ) *ProductCategoryHandler {
 	return &ProductCategoryHandler{
 		productCategoryService: productCategoryService,
-		logger:         logger,
+		logger:                 logger,
 	}
 }
 
@@ -32,12 +32,18 @@ func NewProductCategoryHandler(
 func (h *ProductCategoryHandler) RegisterRoutes(r *gin.RouterGroup) {
 	productcategories := r.Group("/productcategories")
 	{
-
 		productcategories.POST("", h.Create)
 		productcategories.GET("", h.List)
 		productcategories.GET("/:id", h.GetByID)
 		productcategories.PUT("/:id", h.Update)
 		productcategories.DELETE("/:id", h.Delete)
+
+		// 层级分类管理路由
+		productcategories.GET("/tree", h.GetCategoryTree)
+		productcategories.GET("/:id/children", h.GetChildren)
+		productcategories.GET("/:id/path", h.GetCategoryPath)
+		productcategories.POST("/batch-sort", h.BatchUpdateSortOrder)
+		productcategories.GET("/:id/can-delete", h.CanDelete)
 	}
 }
 
@@ -267,4 +273,207 @@ type CreateProductCategoryRequest struct {
 type UpdateProductCategoryRequest struct {
 	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
 	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
+}
+
+// GetCategoryTree 获取分类树
+// @Summary 获取分类树
+// @Description 获取完整的分类树结构
+// @Tags productcategories
+// @Produce json
+// @Success 200 {object} Response{data=[]service.CategoryTreeNode} "分类树"
+// @Failure 500 {object} Response "服务器错误"
+// @Router /api/v1/productcategories/tree [get]
+func (h *ProductCategoryHandler) GetCategoryTree(c *gin.Context) {
+	tree, err := h.productCategoryService.GetCategoryTree(c.Request.Context())
+	if err != nil {
+		h.logger.Error("Failed to get category tree", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "获取分类树失败",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "获取分类树成功",
+		"data":    tree,
+	})
+}
+
+// GetChildren 获取子分类
+// @Summary 获取子分类
+// @Description 获取指定分类的子分类列表
+// @Tags productcategories
+// @Produce json
+// @Param id path int true "分类ID"
+// @Success 200 {object} Response{data=[]model.ProductCategory} "子分类列表"
+// @Failure 400 {object} Response "请求参数错误"
+// @Failure 500 {object} Response "服务器错误"
+// @Router /api/v1/productcategories/{id}/children [get]
+func (h *ProductCategoryHandler) GetChildren(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "无效的分类ID",
+			"data":    nil,
+		})
+		return
+	}
+
+	children, err := h.productCategoryService.GetChildren(c.Request.Context(), uint(id))
+	if err != nil {
+		h.logger.Error("Failed to get children categories", "category_id", id, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "获取子分类失败",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "获取子分类成功",
+		"data":    children,
+	})
+}
+
+// GetCategoryPath 获取分类路径
+// @Summary 获取分类路径
+// @Description 获取从根分类到指定分类的完整路径
+// @Tags productcategories
+// @Produce json
+// @Param id path int true "分类ID"
+// @Success 200 {object} Response{data=[]model.ProductCategory} "分类路径"
+// @Failure 400 {object} Response "请求参数错误"
+// @Failure 500 {object} Response "服务器错误"
+// @Router /api/v1/productcategories/{id}/path [get]
+func (h *ProductCategoryHandler) GetCategoryPath(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "无效的分类ID",
+			"data":    nil,
+		})
+		return
+	}
+
+	path, err := h.productCategoryService.GetCategoryPath(c.Request.Context(), uint(id))
+	if err != nil {
+		h.logger.Error("Failed to get category path", "category_id", id, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "获取分类路径失败",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "获取分类路径成功",
+		"data":    path,
+	})
+}
+
+// BatchUpdateSortOrderRequest 批量更新排序请求
+type BatchUpdateSortOrderRequest struct {
+	Updates []service.SortOrderUpdate `json:"updates" validate:"required"`
+}
+
+// BatchUpdateSortOrder 批量更新排序
+// @Summary 批量更新排序
+// @Description 批量更新分类的排序顺序
+// @Tags productcategories
+// @Accept json
+// @Produce json
+// @Param request body BatchUpdateSortOrderRequest true "批量更新排序请求"
+// @Success 200 {object} Response "更新成功"
+// @Failure 400 {object} Response "请求参数错误"
+// @Failure 500 {object} Response "服务器错误"
+// @Router /api/v1/productcategories/batch-sort [post]
+func (h *ProductCategoryHandler) BatchUpdateSortOrder(c *gin.Context) {
+	var req BatchUpdateSortOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "请求参数错误",
+			"data":    nil,
+		})
+		return
+	}
+
+	err := h.productCategoryService.BatchUpdateSortOrder(c.Request.Context(), req.Updates)
+	if err != nil {
+		h.logger.Error("Failed to batch update sort order", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "批量更新排序失败",
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "批量更新排序成功",
+		"data":    nil,
+	})
+}
+
+// CanDeleteResponse 删除检查响应
+type CanDeleteResponse struct {
+	CanDelete bool   `json:"can_delete"`
+	Reason    string `json:"reason,omitempty"`
+}
+
+// CanDelete 检查是否可以删除
+// @Summary 检查是否可以删除
+// @Description 检查指定分类是否可以删除
+// @Tags productcategories
+// @Produce json
+// @Param id path int true "分类ID"
+// @Success 200 {object} Response{data=CanDeleteResponse} "删除检查结果"
+// @Failure 400 {object} Response "请求参数错误"
+// @Failure 500 {object} Response "服务器错误"
+// @Router /api/v1/productcategories/{id}/can-delete [get]
+func (h *ProductCategoryHandler) CanDelete(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "无效的分类ID",
+			"data":    nil,
+		})
+		return
+	}
+
+	canDelete, reason, err := h.productCategoryService.CanDelete(c.Request.Context(), uint(id))
+	if err != nil {
+		h.logger.Error("Failed to check if category can be deleted", "category_id", id, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "检查删除条件失败",
+			"data":    nil,
+		})
+		return
+	}
+
+	response := CanDeleteResponse{
+		CanDelete: canDelete,
+		Reason:    reason,
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "检查删除条件成功",
+		"data":    response,
+	})
 }
