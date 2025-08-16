@@ -12,6 +12,21 @@ import (
 )
 
 // DepartmentHandler Department处理器
+// @Description Department部门管理处理器，提供完整的部门CRUD操作和树形结构管理功能
+// @Tags departments
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @BasePath /api/v1
+// @Schemes http https
+// @Host localhost:8081
+// @Contact.name API Support
+// @Contact.email support@example.com
+// @License.name MIT
+// @License.url https://opensource.org/licenses/MIT
+// @ExternalDocs.description 更多API文档
+// @ExternalDocs.url https://github.com/your-org/vibe-coding-starter-api-go
+// @TermsOfService http://example.com/terms/
 type DepartmentHandler struct {
 	departmentService service.DepartmentService
 	logger            logger.Logger
@@ -46,15 +61,58 @@ func (h *DepartmentHandler) RegisterRoutes(r *gin.RouterGroup) {
 
 // Create 创建Department
 // @Summary 创建Department
-// @Description 创建新的Department
+// @Description 创建新的Department部门信息，支持树形结构管理，可指定父部门
 // @Tags departments
 // @Accept json
 // @Produce json
-// @Param request body service.CreateDepartmentRequest true "创建Department请求"
-// @Success 201 {object} model.Department
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer token" default(Bearer <your-token>)
+// @Param request body service.CreateDepartmentRequest true "创建Department请求体"
+// @Success 201 {object} model.Department "创建成功的部门信息"
+// @Failure 400 {object} ErrorResponse "请求参数错误"
+// @Failure 401 {object} ErrorResponse "未授权访问"
+// @Failure 404 {object} ErrorResponse "父部门不存在"
+// @Failure 409 {object} ErrorResponse "部门已存在"
+// @Failure 422 {object} ErrorResponse "数据验证失败"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /api/v1/departments [post]
+// @Example {json} 请求示例（根部门）:
+// {
+//   "name": "技术部",
+//   "code": "TECH",
+//   "description": "负责公司技术开发和维护",
+//   "parent_id": 0,
+//   "sort": 1,
+//   "status": "active",
+//   "manager_id": 1
+// }
+// @Example {json} 请求示例（子部门）:
+// {
+//   "name": "前端开发组",
+//   "code": "FE-DEV",
+//   "description": "负责前端应用开发",
+//   "parent_id": 1,
+//   "sort": 1,
+//   "status": "active",
+//   "manager_id": 2
+// }
+// @Example {json} 成功响应示例:
+// {
+//   "id": 2,
+//   "name": "前端开发组",
+//   "code": "FE-DEV",
+//   "description": "负责前端应用开发",
+//   "parent_id": 1,
+//   "sort": 1,
+//   "status": "active",
+//   "manager_id": 2,
+//   "parent": null,
+//   "children": [],
+//   "path": "1",
+//   "level": 2,
+//   "created_at": "2024-01-15T10:30:00Z",
+//   "updated_at": "2024-01-15T10:30:00Z"
+// }
 func (h *DepartmentHandler) Create(c *gin.Context) {
 	var req service.CreateDepartmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -81,16 +139,47 @@ func (h *DepartmentHandler) Create(c *gin.Context) {
 
 // GetByID 根据ID获取Department
 // @Summary 获取Department详情
-// @Description 根据ID获取Department详情
+// @Description 根据ID获取Department详细信息，包含完整的树形结构和关联信息
 // @Tags departments
 // @Accept json
 // @Produce json
-// @Param id path int true "Department ID"
-// @Success 200 {object} model.Department
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer token" default(Bearer <your-token>)
+// @Param id path int true "Department ID" min(1) example(1)
+// @Success 200 {object} model.Department "部门详细信息"
+// @Failure 400 {object} ErrorResponse "无效的ID格式"
+// @Failure 401 {object} ErrorResponse "未授权访问"
+// @Failure 404 {object} ErrorResponse "部门不存在"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /api/v1/departments/{id} [get]
+// @Example {json} 成功响应示例:
+// {
+//   "id": 1,
+//   "name": "技术部",
+//   "code": "TECH",
+//   "description": "负责公司技术开发和维护",
+//   "parent_id": 0,
+//   "sort": 1,
+//   "status": "active",
+//   "manager_id": 1,
+//   "parent": null,
+//   "children": [
+//     {
+//       "id": 2,
+//       "name": "前端开发组",
+//       "code": "FE-DEV",
+//       "description": "负责前端应用开发",
+//       "parent_id": 1,
+//       "sort": 1,
+//       "status": "active",
+//       "manager_id": 2
+//     }
+//   ],
+//   "path": "",
+//   "level": 1,
+//   "created_at": "2024-01-15T10:30:00Z",
+//   "updated_at": "2024-01-15T10:30:00Z"
+// }
 func (h *DepartmentHandler) GetByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -116,17 +205,45 @@ func (h *DepartmentHandler) GetByID(c *gin.Context) {
 
 // Update 更新Department
 // @Summary 更新Department
-// @Description 更新Department信息
+// @Description 更新Department部门信息，支持部分字段更新，可修改部门层级关系
 // @Tags departments
 // @Accept json
 // @Produce json
-// @Param id path int true "Department ID"
-// @Param request body service.UpdateDepartmentRequest true "更新Department请求"
-// @Success 200 {object} model.Department
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer token" default(Bearer <your-token>)
+// @Param id path int true "Department ID" min(1) example(1)
+// @Param request body service.UpdateDepartmentRequest true "更新Department请求体"
+// @Success 200 {object} model.Department "更新后的部门信息"
+// @Failure 400 {object} ErrorResponse "无效的ID格式或请求参数"
+// @Failure 401 {object} ErrorResponse "未授权访问"
+// @Failure 404 {object} ErrorResponse "部门不存在或父部门不存在"
+// @Failure 409 {object} ErrorResponse "部门代码已存在"
+// @Failure 422 {object} ErrorResponse "数据验证失败"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /api/v1/departments/{id} [put]
+// @Example {json} 请求示例（部分更新）:
+// {
+//   "name": "技术研发部",
+//   "description": "负责公司技术研发和创新",
+//   "manager_id": 3
+// }
+// @Example {json} 成功响应示例:
+// {
+//   "id": 1,
+//   "name": "技术研发部",
+//   "code": "TECH",
+//   "description": "负责公司技术研发和创新",
+//   "parent_id": 0,
+//   "sort": 1,
+//   "status": "active",
+//   "manager_id": 3,
+//   "parent": null,
+//   "children": [],
+//   "path": "",
+//   "level": 1,
+//   "created_at": "2024-01-15T10:30:00Z",
+//   "updated_at": "2024-01-16T14:20:00Z"
+// }
 func (h *DepartmentHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -162,16 +279,29 @@ func (h *DepartmentHandler) Update(c *gin.Context) {
 
 // Delete 删除Department
 // @Summary 删除Department
-// @Description 删除Department
+// @Description 删除指定的Department部门信息，删除后无法恢复，如果存在子部门将无法删除
 // @Tags departments
 // @Accept json
 // @Produce json
-// @Param id path int true "Department ID"
-// @Success 200 {object} SuccessResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Security BearerAuth
+// @Param Authorization header string true "Bearer token" default(Bearer <your-token>)
+// @Param id path int true "Department ID" min(1) example(1)
+// @Success 200 {object} SuccessResponse "删除成功"
+// @Failure 400 {object} ErrorResponse "无效的ID格式"
+// @Failure 401 {object} ErrorResponse "未授权访问"
+// @Failure 404 {object} ErrorResponse "部门不存在"
+// @Failure 409 {object} ErrorResponse "存在子部门，无法删除"
+// @Failure 500 {object} ErrorResponse "服务器内部错误"
 // @Router /api/v1/departments/{id} [delete]
+// @Example {json} 成功响应示例:
+// {
+//   "message": "Department deleted successfully"
+// }
+// @Example {json} 409错误响应示例:
+// {
+//   "error": "delete_failed",
+//   "message": "Cannot delete department with child departments"
+// }
 func (h *DepartmentHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
