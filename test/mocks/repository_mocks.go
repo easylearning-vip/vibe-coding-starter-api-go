@@ -320,3 +320,47 @@ func (m *MockDepartmentRepository) GetByName(ctx context.Context, name string) (
 	}
 	return args.Get(0).(*model.Department), args.Error(1)
 }
+
+// MockProductCategoryRepository ProductCategory仓储模拟
+type MockProductCategoryRepository struct {
+	mock.Mock
+}
+
+func (m *MockProductCategoryRepository) Create(ctx context.Context, productCategory *model.ProductCategory) error {
+	args := m.Called(ctx, productCategory)
+	return args.Error(0)
+}
+
+func (m *MockProductCategoryRepository) GetByID(ctx context.Context, id uint) (*model.ProductCategory, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ProductCategory), args.Error(1)
+}
+
+func (m *MockProductCategoryRepository) Update(ctx context.Context, productCategory *model.ProductCategory) error {
+	args := m.Called(ctx, productCategory)
+	return args.Error(0)
+}
+
+func (m *MockProductCategoryRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockProductCategoryRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.ProductCategory, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.ProductCategory), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockProductCategoryRepository) GetByName(ctx context.Context, name string) (*model.ProductCategory, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ProductCategory), args.Error(1)
+}

@@ -115,3 +115,10 @@ type DepartmentRepository interface {
 	GetByCode(ctx context.Context, code string) (*model.Department, error)
 	GetChildrenTree(ctx context.Context, parentId uint) ([]*model.Department, error)
 }
+
+// ProductCategoryRepository ProductCategory仓储接口
+type ProductCategoryRepository interface {
+	Repository[model.ProductCategory, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.ProductCategory, error)
+}
