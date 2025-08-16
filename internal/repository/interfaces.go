@@ -122,3 +122,10 @@ type ProductCategoryRepository interface {
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.ProductCategory, error)
 }
+
+// ProductRepository Product仓储接口
+type ProductRepository interface {
+	Repository[model.Product, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Product, error)
+}
