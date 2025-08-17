@@ -1,5 +1,21 @@
 basePath: /api/v1
 definitions:
+  handler.BatchUpdateSortOrderRequest:
+    properties:
+      updates:
+        items:
+          $ref: '#/definitions/service.SortOrderUpdate'
+        type: array
+    required:
+    - updates
+    type: object
+  handler.CanDeleteResponse:
+    properties:
+      can_delete:
+        type: boolean
+      reason:
+        type: string
+    type: object
   handler.ErrorResponse:
     properties:
       error:
@@ -28,6 +44,12 @@ definitions:
       size:
         type: integer
       total:
+        type: integer
+    type: object
+  handler.MoveDepartmentRequest:
+    properties:
+      new_parent_id:
+        minimum: 0
         type: integer
     type: object
   handler.Response:
@@ -169,6 +191,51 @@ definitions:
     - author_id
     - content
     type: object
+  model.Department:
+    properties:
+      children:
+        description: 子部门
+        items:
+          $ref: '#/definitions/model.Department'
+        type: array
+      code:
+        description: Code 字符串
+        type: string
+      created_at:
+        type: string
+      description:
+        description: Description 字符串
+        type: string
+      id:
+        type: integer
+      level:
+        description: 部门层级
+        type: integer
+      manager_id:
+        description: ManagerId 32位无符号整数
+        type: integer
+      name:
+        description: Name 字符串
+        type: string
+      parent:
+        allOf:
+        - $ref: '#/definitions/model.Department'
+        description: 树形结构相关字段
+      parent_id:
+        description: ParentId 32位无符号整数
+        type: integer
+      path:
+        description: 部门路径，如 "1,2,3"
+        type: string
+      sort:
+        description: Sort 32位整数
+        type: integer
+      status:
+        description: Status 字符串
+        type: string
+      updated_at:
+        type: string
+    type: object
   model.DictCategory:
     properties:
       code:
@@ -273,6 +340,72 @@ definitions:
     - path
     - size
     type: object
+  model.Product:
+    properties:
+      category_id:
+        description: CategoryId 32位无符号整数
+        type: integer
+      cost_price:
+        description: CostPrice 64位浮点数
+        type: number
+      created_at:
+        type: string
+      description:
+        description: Description 字符串
+        type: string
+      dimensions:
+        description: Dimensions 字符串
+        type: string
+      id:
+        type: integer
+      is_active:
+        description: IsActive 布尔值
+        type: boolean
+      min_stock:
+        description: MinStock 32位整数
+        type: integer
+      name:
+        description: Name 字符串
+        type: string
+      price:
+        description: Price 64位浮点数
+        type: number
+      sku:
+        description: Sku 字符串
+        type: string
+      stock_quantity:
+        description: StockQuantity 32位整数
+        type: integer
+      updated_at:
+        type: string
+      weight:
+        description: Weight 64位浮点数
+        type: number
+    type: object
+  model.ProductCategory:
+    properties:
+      created_at:
+        type: string
+      description:
+        description: Description 字符串
+        type: string
+      id:
+        type: integer
+      is_active:
+        description: IsActive 布尔值
+        type: boolean
+      name:
+        description: Name 字符串
+        type: string
+      parent_id:
+        description: ParentId 32位无符号整数
+        type: integer
+      sort_order:
+        description: SortOrder 32位整数
+        type: integer
+      updated_at:
+        type: string
+    type: object
   model.PublicUser:
     properties:
       avatar:
@@ -361,6 +494,34 @@ definitions:
     - email
     - username
     type: object
+  service.CategoryTreeNode:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/service.CategoryTreeNode'
+        type: array
+      created_at:
+        type: string
+      description:
+        description: Description 字符串
+        type: string
+      id:
+        type: integer
+      is_active:
+        description: IsActive 布尔值
+        type: boolean
+      name:
+        description: Name 字符串
+        type: string
+      parent_id:
+        description: ParentId 32位无符号整数
+        type: integer
+      sort_order:
+        description: SortOrder 32位整数
+        type: integer
+      updated_at:
+        type: string
+    type: object
   service.ChangePasswordRequest:
     properties:
       new_password:
@@ -418,6 +579,42 @@ definitions:
     - code
     - name
     type: object
+  service.CreateDepartmentRequest:
+    properties:
+      code:
+        maxLength: 255
+        minLength: 1
+        type: string
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      manager_id:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      parent_id:
+        minimum: 0
+        type: integer
+      sort:
+        minimum: 0
+        type: integer
+      status:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - code
+    - description
+    - manager_id
+    - name
+    - parent_id
+    - sort
+    - status
+    type: object
   service.CreateItemRequest:
     properties:
       category_code:
@@ -439,6 +636,80 @@ definitions:
     - category_code
     - item_key
     - item_value
+    type: object
+  service.CreateProductCategoryRequest:
+    properties:
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      parent_id:
+        minimum: 0
+        type: integer
+      sort_order:
+        minimum: 0
+        type: integer
+    required:
+    - description
+    - name
+    - parent_id
+    - sort_order
+    type: object
+  service.CreateProductRequest:
+    properties:
+      category_id:
+        minimum: 0
+        type: integer
+      cost_price:
+        minimum: 0
+        type: number
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      dimensions:
+        maxLength: 255
+        minLength: 1
+        type: string
+      is_active:
+        type: boolean
+      min_stock:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      price:
+        minimum: 0
+        type: number
+      sku:
+        maxLength: 255
+        minLength: 1
+        type: string
+      stock_quantity:
+        minimum: 0
+        type: integer
+      weight:
+        minimum: 0
+        type: number
+    required:
+    - category_id
+    - cost_price
+    - description
+    - dimensions
+    - min_stock
+    - name
+    - price
+    - sku
+    - stock_quantity
+    - weight
     type: object
   service.LoginRequest:
     properties:
@@ -478,6 +749,13 @@ definitions:
     - password
     - username
     type: object
+  service.SortOrderUpdate:
+    properties:
+      id:
+        type: integer
+      sort_order:
+        type: integer
+    type: object
   service.UpdateArticleRequest:
     properties:
       category_id:
@@ -503,6 +781,34 @@ definitions:
         maxLength: 200
         type: string
     type: object
+  service.UpdateDepartmentRequest:
+    properties:
+      code:
+        maxLength: 255
+        minLength: 1
+        type: string
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      manager_id:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      parent_id:
+        minimum: 0
+        type: integer
+      sort:
+        minimum: 0
+        type: integer
+      status:
+        maxLength: 255
+        minLength: 1
+        type: string
+    type: object
   service.UpdateItemRequest:
     properties:
       description:
@@ -514,6 +820,64 @@ definitions:
         type: string
       sort_order:
         type: integer
+    type: object
+  service.UpdateProductCategoryRequest:
+    properties:
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      is_active:
+        type: boolean
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      parent_id:
+        minimum: 0
+        type: integer
+      sort_order:
+        minimum: 0
+        type: integer
+    type: object
+  service.UpdateProductRequest:
+    properties:
+      category_id:
+        minimum: 0
+        type: integer
+      cost_price:
+        minimum: 0
+        type: number
+      description:
+        maxLength: 255
+        minLength: 1
+        type: string
+      dimensions:
+        maxLength: 255
+        minLength: 1
+        type: string
+      is_active:
+        type: boolean
+      min_stock:
+        minimum: 0
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      price:
+        minimum: 0
+        type: number
+      sku:
+        maxLength: 255
+        minLength: 1
+        type: string
+      stock_quantity:
+        minimum: 0
+        type: integer
+      weight:
+        minimum: 0
+        type: number
     type: object
   service.UpdateProfileRequest:
     properties:
@@ -826,6 +1190,290 @@ paths:
       summary: 搜索文章
       tags:
       - articles
+  /api/v1/departments:
+    get:
+      consumes:
+      - application/json
+      description: 获取Department列表，支持分页、搜索和过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取Department列表
+      tags:
+      - departments
+    post:
+      consumes:
+      - application/json
+      description: 创建新的Department
+      parameters:
+      - description: 创建Department请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Department'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 创建Department
+      tags:
+      - departments
+  /api/v1/departments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除Department
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 删除Department
+      tags:
+      - departments
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取Department详情
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Department'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取Department详情
+      tags:
+      - departments
+    put:
+      consumes:
+      - application/json
+      description: 更新Department信息
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新Department请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Department'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 更新Department
+      tags:
+      - departments
+  /api/v1/departments/{id}/children:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定部门的直接子部门
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Department'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取子部门
+      tags:
+      - departments
+  /api/v1/departments/{id}/move:
+    put:
+      consumes:
+      - application/json
+      description: 将部门移动到新的父部门下
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 移动部门请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.MoveDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 移动部门
+      tags:
+      - departments
+  /api/v1/departments/{id}/path:
+    get:
+      consumes:
+      - application/json
+      description: 获取从根部门到指定部门的完整路径
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Department'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取部门路径
+      tags:
+      - departments
+  /api/v1/departments/tree:
+    get:
+      consumes:
+      - application/json
+      description: 获取完整的部门树结构
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Department'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取部门树结构
+      tags:
+      - departments
   /api/v1/dict/categories:
     get:
       consumes:
@@ -888,6 +1536,50 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: 创建字典分类
+      tags:
+      - dict
+  /api/v1/dict/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定ID的字典分类
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: 分类不存在
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: 分类下还有字典项，无法删除
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 删除字典分类
       tags:
       - dict
   /api/v1/dict/init:
@@ -1273,6 +1965,492 @@ paths:
       summary: 上传文件
       tags:
       - files
+  /api/v1/productcategories:
+    get:
+      consumes:
+      - application/json
+      description: 获取ProductCategory列表，支持分页、搜索和过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取ProductCategory列表
+      tags:
+      - productcategories
+    post:
+      consumes:
+      - application/json
+      description: 创建新的ProductCategory
+      parameters:
+      - description: 创建ProductCategory请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateProductCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 创建ProductCategory
+      tags:
+      - productcategories
+  /api/v1/productcategories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除ProductCategory
+      parameters:
+      - description: ProductCategory ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 删除ProductCategory
+      tags:
+      - productcategories
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取ProductCategory详情
+      parameters:
+      - description: ProductCategory ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取ProductCategory详情
+      tags:
+      - productcategories
+    put:
+      consumes:
+      - application/json
+      description: 更新ProductCategory信息
+      parameters:
+      - description: ProductCategory ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新ProductCategory请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateProductCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 更新ProductCategory
+      tags:
+      - productcategories
+  /api/v1/productcategories/{id}/can-delete:
+    get:
+      description: 检查指定分类是否可以删除
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除检查结果
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CanDeleteResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 检查是否可以删除
+      tags:
+      - productcategories
+  /api/v1/productcategories/{id}/children:
+    get:
+      description: 获取指定分类的子分类列表
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 子分类列表
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.ProductCategory'
+                  type: array
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取子分类
+      tags:
+      - productcategories
+  /api/v1/productcategories/{id}/path:
+    get:
+      description: 获取从根分类到指定分类的完整路径
+      parameters:
+      - description: 分类ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 分类路径
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.ProductCategory'
+                  type: array
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取分类路径
+      tags:
+      - productcategories
+  /api/v1/productcategories/batch-sort:
+    post:
+      consumes:
+      - application/json
+      description: 批量更新分类的排序顺序
+      parameters:
+      - description: 批量更新排序请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.BatchUpdateSortOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 批量更新排序
+      tags:
+      - productcategories
+  /api/v1/productcategories/tree:
+    get:
+      description: 获取完整的分类树结构
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 分类树
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/service.CategoryTreeNode'
+                  type: array
+              type: object
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取分类树
+      tags:
+      - productcategories
+  /api/v1/products:
+    get:
+      consumes:
+      - application/json
+      description: 获取Product列表，支持分页、搜索和过滤
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取Product列表
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: 创建新的Product
+      parameters:
+      - description: 创建Product请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 创建Product
+      tags:
+      - products
+  /api/v1/products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除Product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 删除Product
+      tags:
+      - products
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取Product详情
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 获取Product详情
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: 更新Product信息
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新Product请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: 更新Product
+      tags:
+      - products
   /api/v1/users:
     get:
       consumes:
