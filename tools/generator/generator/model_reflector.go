@@ -25,7 +25,7 @@ func NewModelReflector() *ModelReflector {
 func (r *ModelReflector) ReflectModelFields(modelName string) ([]*Field, error) {
 	// 构建模型文件路径
 	modelFile := filepath.Join("internal", "model", ToSnakeCase(modelName)+".go")
-	
+
 	// 解析 Go 文件
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, modelFile, nil, parser.ParseComments)
@@ -74,7 +74,7 @@ func (r *ModelReflector) extractFieldsFromStruct(structType *ast.StructType) []*
 
 			fieldName := name.Name
 			fieldType := r.extractTypeFromExpr(field.Type)
-			
+
 			// 跳过某些系统字段
 			if r.shouldSkipField(fieldName, fieldType) {
 				continue
@@ -137,7 +137,7 @@ func (r *ModelReflector) extractJSONNameFromTag(tag *ast.BasicLit) string {
 
 	// 移除引号
 	tagValue := strings.Trim(tag.Value, "`")
-	
+
 	// 查找 json 标签
 	parts := strings.Fields(tagValue)
 	for _, part := range parts {
@@ -145,12 +145,12 @@ func (r *ModelReflector) extractJSONNameFromTag(tag *ast.BasicLit) string {
 			// 提取 json 标签值
 			jsonTag := strings.TrimPrefix(part, "json:")
 			jsonTag = strings.Trim(jsonTag, `"`)
-			
+
 			// 处理 json 标签选项（如 omitempty）
 			if idx := strings.Index(jsonTag, ","); idx != -1 {
 				jsonTag = jsonTag[:idx]
 			}
-			
+
 			return jsonTag
 		}
 	}

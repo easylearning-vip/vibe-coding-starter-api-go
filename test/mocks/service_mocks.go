@@ -301,6 +301,35 @@ func (m *MockDepartmentService) List(ctx context.Context, opts *service.ListDepa
 	return args.Get(0).([]*model.Department), args.Get(1).(int64), args.Error(2)
 }
 
+func (m *MockDepartmentService) GetTree(ctx context.Context) ([]*model.Department, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) GetChildren(ctx context.Context, parentId uint) ([]*model.Department, error) {
+	args := m.Called(ctx, parentId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) GetPath(ctx context.Context, id uint) ([]*model.Department, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) Move(ctx context.Context, id uint, newParentId uint) error {
+	args := m.Called(ctx, id, newParentId)
+	return args.Error(0)
+}
+
 // MockProductCategoryService ProductCategory服务模拟
 type MockProductCategoryService struct {
 	mock.Mock
@@ -343,6 +372,45 @@ func (m *MockProductCategoryService) List(ctx context.Context, opts *service.Lis
 	return args.Get(0).([]*model.ProductCategory), args.Get(1).(int64), args.Error(2)
 }
 
+func (m *MockProductCategoryService) GetCategoryTree(ctx context.Context) ([]*service.CategoryTreeNode, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*service.CategoryTreeNode), args.Error(1)
+}
+
+func (m *MockProductCategoryService) GetChildren(ctx context.Context, parentID uint) ([]*model.ProductCategory, error) {
+	args := m.Called(ctx, parentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.ProductCategory), args.Error(1)
+}
+
+func (m *MockProductCategoryService) GetCategoryPath(ctx context.Context, categoryID uint) ([]*model.ProductCategory, error) {
+	args := m.Called(ctx, categoryID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.ProductCategory), args.Error(1)
+}
+
+func (m *MockProductCategoryService) ValidateParentChild(ctx context.Context, parentID, childID uint) error {
+	args := m.Called(ctx, parentID, childID)
+	return args.Error(0)
+}
+
+func (m *MockProductCategoryService) BatchUpdateSortOrder(ctx context.Context, updates []service.SortOrderUpdate) error {
+	args := m.Called(ctx, updates)
+	return args.Error(0)
+}
+
+func (m *MockProductCategoryService) CanDelete(ctx context.Context, categoryID uint) (bool, string, error) {
+	args := m.Called(ctx, categoryID)
+	return args.Bool(0), args.String(1), args.Error(2)
+}
+
 // MockProductService Product服务模拟
 type MockProductService struct {
 	mock.Mock
@@ -383,4 +451,72 @@ func (m *MockProductService) List(ctx context.Context, opts *service.ListProduct
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
 	return args.Get(0).([]*model.Product), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockProductService) SearchProducts(ctx context.Context, req *service.SearchProductRequest) ([]*model.Product, int64, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Product), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockProductService) GetProductsByCategory(ctx context.Context, categoryID uint, includeSubCategories bool, opts *service.ListProductOptions) ([]*model.Product, int64, error) {
+	args := m.Called(ctx, categoryID, includeSubCategories, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Product), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockProductService) GetProductsByPriceRange(ctx context.Context, minPrice, maxPrice float64, opts *service.ListProductOptions) ([]*model.Product, int64, error) {
+	args := m.Called(ctx, minPrice, maxPrice, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Product), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockProductService) GetLowStockProducts(ctx context.Context, opts *service.ListProductOptions) ([]*model.Product, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Product), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockProductService) GetPopularProducts(ctx context.Context, limit int) ([]*model.Product, error) {
+	args := m.Called(ctx, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Product), args.Error(1)
+}
+
+func (m *MockProductService) BatchUpdatePrices(ctx context.Context, updates []service.PriceUpdate) error {
+	args := m.Called(ctx, updates)
+	return args.Error(0)
+}
+
+func (m *MockProductService) UpdateProductStatus(ctx context.Context, productID uint, isActive bool) error {
+	args := m.Called(ctx, productID, isActive)
+	return args.Error(0)
+}
+
+func (m *MockProductService) UpdateStock(ctx context.Context, productID uint, quantity int, operation service.StockOperation) error {
+	args := m.Called(ctx, productID, quantity, operation)
+	return args.Error(0)
+}
+
+func (m *MockProductService) CheckStockAvailability(ctx context.Context, productID uint, requiredQuantity int) (bool, error) {
+	args := m.Called(ctx, productID, requiredQuantity)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockProductService) GetStockAlert(ctx context.Context) ([]*model.Product, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Product), args.Error(1)
 }

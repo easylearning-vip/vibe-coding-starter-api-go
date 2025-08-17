@@ -14,7 +14,7 @@ import (
 // DepartmentHandler Department处理器
 type DepartmentHandler struct {
 	departmentService service.DepartmentService
-	logger         logger.Logger
+	logger            logger.Logger
 }
 
 // NewDepartmentHandler 创建Department处理器
@@ -24,7 +24,7 @@ func NewDepartmentHandler(
 ) *DepartmentHandler {
 	return &DepartmentHandler{
 		departmentService: departmentService,
-		logger:         logger,
+		logger:            logger,
 	}
 }
 

@@ -103,7 +103,7 @@ func (m *Middleware) SetupAPIMiddleware() []gin.HandlerFunc {
 	middlewares := []gin.HandlerFunc{
 		// API 专用限流
 		m.rateLimit.UserRateLimit(60, 120), // 每分钟 60 次请求
-		
+
 		// 错误日志
 		m.logging.ErrorLogging(),
 	}
@@ -260,11 +260,11 @@ func (m *Middleware) WebhookAPI(allowedIPs []string) []gin.HandlerFunc {
 		m.rateLimit.IPRateLimit(100, 200),
 		m.security.NoCache(),
 	}
-	
+
 	if len(allowedIPs) > 0 {
 		middlewares = append(middlewares, m.security.IPWhitelist(allowedIPs))
 	}
-	
+
 	return middlewares
 }
 
@@ -273,7 +273,7 @@ func (m *Middleware) DevelopmentAPI() []gin.HandlerFunc {
 	if m.config.Server.Mode != "debug" {
 		return m.ProtectedAPI()
 	}
-	
+
 	return []gin.HandlerFunc{
 		m.auth.OptionalAuth(),
 		m.rateLimit.IPRateLimit(1000, 2000), // 开发环境更宽松的限流

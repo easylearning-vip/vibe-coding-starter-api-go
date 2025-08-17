@@ -42,22 +42,22 @@ func (suite *ProductCategoryServiceTestSuite) TestCreate_Success() {
 		Name:        "Test ProductCategory",
 		Description: "Test Description",
 	}
-	
+
 	expectedProductCategory := &model.ProductCategory{
 		BaseModel:   model.BaseModel{ID: 1},
 		Name:        req.Name,
 		Description: req.Description,
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("Create", suite.ctx, mock.AnythingOfType("*model.ProductCategory")).Return(nil).Run(func(args mock.Arguments) {
 		productCategory := args.Get(1).(*model.ProductCategory)
 		productCategory.ID = 1
 	})
-	
+
 	// 执行测试
 	result, err := suite.service.Create(suite.ctx, req)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -73,13 +73,13 @@ func (suite *ProductCategoryServiceTestSuite) TestGetByID_Success() {
 		Name:        "Test ProductCategory",
 		Description: "Test Description",
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(expectedProductCategory, nil)
-	
+
 	// 执行测试
 	result, err := suite.service.GetByID(suite.ctx, 1)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expectedProductCategory, result)
@@ -93,19 +93,19 @@ func (suite *ProductCategoryServiceTestSuite) TestUpdate_Success() {
 		Name:        "Old Name",
 		Description: "Old Description",
 	}
-	
+
 	newName := "New Name"
 	req := &service.UpdateProductCategoryRequest{
 		Name: &newName,
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existingProductCategory, nil)
 	suite.mockRepo.On("Update", suite.ctx, mock.AnythingOfType("*model.ProductCategory")).Return(nil)
-	
+
 	// 执行测试
 	result, err := suite.service.Update(suite.ctx, 1, req)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), newName, result.Name)
@@ -118,14 +118,14 @@ func (suite *ProductCategoryServiceTestSuite) TestDelete_Success() {
 		BaseModel: model.BaseModel{ID: 1},
 		Name:      "Test ProductCategory",
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existingProductCategory, nil)
 	suite.mockRepo.On("Delete", suite.ctx, uint(1)).Return(nil)
-	
+
 	// 执行测试
 	err := suite.service.Delete(suite.ctx, 1)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	suite.mockRepo.AssertExpectations(suite.T())
@@ -137,12 +137,12 @@ func (suite *ProductCategoryServiceTestSuite) TestList_Success() {
 		{BaseModel: model.BaseModel{ID: 1}, Name: "ProductCategory 1"},
 		{BaseModel: model.BaseModel{ID: 2}, Name: "ProductCategory 2"},
 	}
-	
+
 	opts := &service.ListProductCategoryOptions{
 		Page:     1,
 		PageSize: 10,
 	}
-	
+
 	repoOpts := repository.ListOptions{
 		Page:     1,
 		PageSize: 10,
@@ -151,13 +151,13 @@ func (suite *ProductCategoryServiceTestSuite) TestList_Success() {
 		Filters:  nil, // 使用nil而不是空map，与service实际传递的值一致
 		Search:   "",
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("List", suite.ctx, repoOpts).Return(expectedproductcategories, int64(2), nil)
-	
+
 	// 执行测试
 	result, total, err := suite.service.List(suite.ctx, opts)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expectedproductcategories, result)

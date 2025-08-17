@@ -24,10 +24,10 @@ type Department struct {
 	ManagerId uint `json:"manager_id" gorm:"column:manager_id;type:int unsigned"` // ManagerId 32位无符号整数
 
 	// 树形结构相关字段
-	Parent   *Department `json:"parent,omitempty" gorm:"foreignKey:ParentId;references:ID"` // 父级部门
-	Children []Department `json:"children,omitempty" gorm:"foreignKey:ParentId"` // 子部门
-	Path     string      `json:"path" gorm:"column:path;type:varchar(1000)"` // 部门路径，如 "1,2,3"
-	Level    int         `json:"level" gorm:"column:level;type:int;default:1"` // 部门层级
+	Parent   *Department  `json:"parent,omitempty" gorm:"foreignKey:ParentId;references:ID"` // 父级部门
+	Children []Department `json:"children,omitempty" gorm:"foreignKey:ParentId"`             // 子部门
+	Path     string       `json:"path" gorm:"column:path;type:varchar(1000)"`                // 部门路径，如 "1,2,3"
+	Level    int          `json:"level" gorm:"column:level;type:int;default:1"`              // 部门层级
 
 }
 

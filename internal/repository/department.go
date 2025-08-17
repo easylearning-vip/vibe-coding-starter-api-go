@@ -133,7 +133,7 @@ func (r *departmentRepository) applyFilters(query *gorm.DB, filters map[string]i
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
 			}
-		// 在这里添加更多过滤器
+			// 在这里添加更多过滤器
 		}
 	}
 	return query
@@ -143,12 +143,12 @@ func (r *departmentRepository) applyFilters(query *gorm.DB, filters map[string]i
 func (r *departmentRepository) GetByParentId(ctx context.Context, parentId uint) ([]*model.Department, error) {
 	var entities []*model.Department
 	query := r.db.WithContext(ctx).Where("parent_id = ?", parentId).Order("sort ASC, created_at ASC")
-	
+
 	if err := query.Find(&entities).Error; err != nil {
 		r.logger.Error("Failed to get departments by parent_id", "parent_id", parentId, "error", err)
 		return nil, fmt.Errorf("failed to get departments by parent_id: %w", err)
 	}
-	
+
 	return entities, nil
 }
 
@@ -169,11 +169,11 @@ func (r *departmentRepository) GetByCode(ctx context.Context, code string) (*mod
 func (r *departmentRepository) GetChildrenTree(ctx context.Context, parentId uint) ([]*model.Department, error) {
 	var entities []*model.Department
 	query := r.db.WithContext(ctx).Where("parent_id = ?", parentId).Order("sort ASC, created_at ASC")
-	
+
 	if err := query.Preload("Children").Find(&entities).Error; err != nil {
 		r.logger.Error("Failed to get children tree", "parent_id", parentId, "error", err)
 		return nil, fmt.Errorf("failed to get children tree: %w", err)
 	}
-	
+
 	return entities, nil
 }

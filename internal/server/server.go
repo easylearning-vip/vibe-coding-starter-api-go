@@ -18,17 +18,17 @@ import (
 
 // Server HTTP 服务器
 type Server struct {
-	config         *config.Config
-	logger         logger.Logger
-	httpServer     *http.Server
-	middleware     *middleware.Middleware
-	userHandler    *handler.UserHandler
-	articleHandler *handler.ArticleHandler
-	healthHandler  *handler.HealthHandler
-	dictHandler    *handler.DictHandler
-	productHandler *handler.ProductHandler
+	config                 *config.Config
+	logger                 logger.Logger
+	httpServer             *http.Server
+	middleware             *middleware.Middleware
+	userHandler            *handler.UserHandler
+	articleHandler         *handler.ArticleHandler
+	healthHandler          *handler.HealthHandler
+	dictHandler            *handler.DictHandler
+	productHandler         *handler.ProductHandler
 	productcategoryHandler *handler.ProductCategoryHandler
-	departmentHandler *handler.DepartmentHandler
+	departmentHandler      *handler.DepartmentHandler
 }
 
 // New 创建新的服务器实例
@@ -45,16 +45,16 @@ func New(
 	departmentHandler *handler.DepartmentHandler,
 ) *Server {
 	return &Server{
-		config:         config,
-		logger:         logger,
-		middleware:     middleware,
-		userHandler:    userHandler,
-		articleHandler: articleHandler,
-		healthHandler:  healthHandler,
-		dictHandler:    dictHandler,
-		productHandler: productHandler,
+		config:                 config,
+		logger:                 logger,
+		middleware:             middleware,
+		userHandler:            userHandler,
+		articleHandler:         articleHandler,
+		healthHandler:          healthHandler,
+		dictHandler:            dictHandler,
+		productHandler:         productHandler,
 		productcategoryHandler: productcategoryHandler,
-		departmentHandler: departmentHandler,
+		departmentHandler:      departmentHandler,
 	}
 }
 

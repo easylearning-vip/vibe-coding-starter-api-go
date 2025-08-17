@@ -14,12 +14,12 @@ import (
 
 // CORSConfig CORS 配置
 type CORSConfig struct {
-	AllowOrigins     []string      `json:"allow_origins"`      // 允许的源
-	AllowMethods     []string      `json:"allow_methods"`      // 允许的方法
-	AllowHeaders     []string      `json:"allow_headers"`      // 允许的请求头
-	ExposeHeaders    []string      `json:"expose_headers"`     // 暴露的响应头
-	AllowCredentials bool          `json:"allow_credentials"`  // 是否允许凭证
-	MaxAge           time.Duration `json:"max_age"`            // 预检请求缓存时间
+	AllowOrigins     []string      `json:"allow_origins"`     // 允许的源
+	AllowMethods     []string      `json:"allow_methods"`     // 允许的方法
+	AllowHeaders     []string      `json:"allow_headers"`     // 允许的请求头
+	ExposeHeaders    []string      `json:"expose_headers"`    // 暴露的响应头
+	AllowCredentials bool          `json:"allow_credentials"` // 是否允许凭证
+	MaxAge           time.Duration `json:"max_age"`           // 预检请求缓存时间
 }
 
 // CORSMiddleware CORS 中间件
@@ -104,7 +104,7 @@ func NewCORSMiddleware(
 func (m *CORSMiddleware) CORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		
+
 		// 检查是否允许该源
 		if m.isOriginAllowed(origin) {
 			c.Header("Access-Control-Allow-Origin", origin)
@@ -146,10 +146,10 @@ func (m *CORSMiddleware) CORS() gin.HandlerFunc {
 func (m *CORSMiddleware) DynamicCORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		
+
 		// 根据不同的 API 路径设置不同的 CORS 策略
 		corsConfig := m.getCORSConfigForPath(c.Request.URL.Path)
-		
+
 		// 检查是否允许该源
 		if m.isOriginAllowedForConfig(origin, corsConfig) {
 			c.Header("Access-Control-Allow-Origin", origin)
@@ -172,14 +172,14 @@ func (m *CORSMiddleware) DynamicCORS() gin.HandlerFunc {
 func (m *CORSMiddleware) StrictCORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		
+
 		// 严格检查源
 		if !m.isOriginAllowed(origin) {
-			m.logger.Warn("CORS: Origin not allowed", 
+			m.logger.Warn("CORS: Origin not allowed",
 				"origin", origin,
 				"path", c.Request.URL.Path,
 				"method", c.Request.Method)
-			
+
 			c.JSON(http.StatusForbidden, gin.H{
 				"error":   "cors_forbidden",
 				"message": "Origin not allowed",
@@ -293,7 +293,7 @@ func (m *CORSMiddleware) handlePreflightRequest(c *gin.Context) {
 	// 检查请求的方法是否被允许
 	requestMethod := c.Request.Header.Get("Access-Control-Request-Method")
 	if requestMethod != "" && !m.isMethodAllowed(requestMethod) {
-		m.logger.Warn("CORS: Method not allowed in preflight", 
+		m.logger.Warn("CORS: Method not allowed in preflight",
 			"method", requestMethod,
 			"origin", c.Request.Header.Get("Origin"))
 		c.AbortWithStatus(http.StatusMethodNotAllowed)
@@ -303,7 +303,7 @@ func (m *CORSMiddleware) handlePreflightRequest(c *gin.Context) {
 	// 检查请求的头是否被允许
 	requestHeaders := c.Request.Header.Get("Access-Control-Request-Headers")
 	if requestHeaders != "" && !m.areHeadersAllowed(requestHeaders) {
-		m.logger.Warn("CORS: Headers not allowed in preflight", 
+		m.logger.Warn("CORS: Headers not allowed in preflight",
 			"headers", requestHeaders,
 			"origin", c.Request.Header.Get("Origin"))
 		c.AbortWithStatus(http.StatusForbidden)

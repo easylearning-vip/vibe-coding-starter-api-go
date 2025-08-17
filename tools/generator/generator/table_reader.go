@@ -7,11 +7,11 @@ import (
 
 // DatabaseField 数据库字段信息（转换为生成器字段格式）
 type DatabaseField struct {
-	Name     string // Go字段名，如 CustomerName
-	Type     string // Go字段类型，如 string
-	JSONName string // JSON 名称，如 customer_name
-	GormTag  string // GORM 标签
-	Comment  string // 注释
+	Name     string      // Go字段名，如 CustomerName
+	Type     string      // Go字段类型，如 string
+	JSONName string      // JSON 名称，如 customer_name
+	GormTag  string      // GORM 标签
+	Comment  string      // 注释
 	Column   *ColumnInfo // 原始列信息
 }
 

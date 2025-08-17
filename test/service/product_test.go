@@ -16,14 +16,16 @@ import (
 
 type ProductServiceTestSuite struct {
 	suite.Suite
-	service    service.ProductService
-	mockRepo   *mocks.MockProductRepository
-	mockLogger *mocks.MockLogger
-	ctx        context.Context
+	service          service.ProductService
+	mockRepo         *mocks.MockProductRepository
+	mockCategoryRepo *mocks.MockProductCategoryRepository
+	mockLogger       *mocks.MockLogger
+	ctx              context.Context
 }
 
 func (suite *ProductServiceTestSuite) SetupTest() {
 	suite.mockRepo = &mocks.MockProductRepository{}
+	suite.mockCategoryRepo = &mocks.MockProductCategoryRepository{}
 	suite.mockLogger = &mocks.MockLogger{}
 	suite.ctx = context.Background()
 
@@ -32,6 +34,7 @@ func (suite *ProductServiceTestSuite) SetupTest() {
 
 	suite.service = service.NewProductService(
 		suite.mockRepo,
+		suite.mockCategoryRepo,
 		suite.mockLogger,
 	)
 }
@@ -42,22 +45,22 @@ func (suite *ProductServiceTestSuite) TestCreate_Success() {
 		Name:        "Test Product",
 		Description: "Test Description",
 	}
-	
+
 	expectedProduct := &model.Product{
 		BaseModel:   model.BaseModel{ID: 1},
 		Name:        req.Name,
 		Description: req.Description,
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("Create", suite.ctx, mock.AnythingOfType("*model.Product")).Return(nil).Run(func(args mock.Arguments) {
 		product := args.Get(1).(*model.Product)
 		product.ID = 1
 	})
-	
+
 	// 执行测试
 	result, err := suite.service.Create(suite.ctx, req)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -73,13 +76,13 @@ func (suite *ProductServiceTestSuite) TestGetByID_Success() {
 		Name:        "Test Product",
 		Description: "Test Description",
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(expectedProduct, nil)
-	
+
 	// 执行测试
 	result, err := suite.service.GetByID(suite.ctx, 1)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expectedProduct, result)
@@ -93,19 +96,19 @@ func (suite *ProductServiceTestSuite) TestUpdate_Success() {
 		Name:        "Old Name",
 		Description: "Old Description",
 	}
-	
+
 	newName := "New Name"
 	req := &service.UpdateProductRequest{
 		Name: &newName,
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existingProduct, nil)
 	suite.mockRepo.On("Update", suite.ctx, mock.AnythingOfType("*model.Product")).Return(nil)
-	
+
 	// 执行测试
 	result, err := suite.service.Update(suite.ctx, 1, req)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), newName, result.Name)
@@ -118,14 +121,14 @@ func (suite *ProductServiceTestSuite) TestDelete_Success() {
 		BaseModel: model.BaseModel{ID: 1},
 		Name:      "Test Product",
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("GetByID", suite.ctx, uint(1)).Return(existingProduct, nil)
 	suite.mockRepo.On("Delete", suite.ctx, uint(1)).Return(nil)
-	
+
 	// 执行测试
 	err := suite.service.Delete(suite.ctx, 1)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	suite.mockRepo.AssertExpectations(suite.T())
@@ -137,12 +140,12 @@ func (suite *ProductServiceTestSuite) TestList_Success() {
 		{BaseModel: model.BaseModel{ID: 1}, Name: "Product 1"},
 		{BaseModel: model.BaseModel{ID: 2}, Name: "Product 2"},
 	}
-	
+
 	opts := &service.ListProductOptions{
 		Page:     1,
 		PageSize: 10,
 	}
-	
+
 	repoOpts := repository.ListOptions{
 		Page:     1,
 		PageSize: 10,
@@ -151,13 +154,13 @@ func (suite *ProductServiceTestSuite) TestList_Success() {
 		Filters:  nil, // 使用nil而不是空map，与service实际传递的值一致
 		Search:   "",
 	}
-	
+
 	// 设置 mock 期望
 	suite.mockRepo.On("List", suite.ctx, repoOpts).Return(expectedproducts, int64(2), nil)
-	
+
 	// 执行测试
 	result, total, err := suite.service.List(suite.ctx, opts)
-	
+
 	// 验证结果
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), expectedproducts, result)
