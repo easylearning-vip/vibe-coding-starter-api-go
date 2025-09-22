@@ -26,6 +26,14 @@ type Server struct {
 	articleHandler *handler.ArticleHandler
 	healthHandler  *handler.HealthHandler
 	dictHandler    *handler.DictHandler
+	part4answeroptionHandler *handler.Part4AnswerOptionHandler
+	part4talkHandler *handler.Part4TalkHandler
+	part3answeroptionHandler *handler.Part3AnswerOptionHandler
+	part3conversationHandler *handler.Part3ConversationHandler
+	part2questionHandler *handler.Part2QuestionHandler
+	testHandler *handler.TestHandler
+	scenarioHandler *handler.ScenarioHandler
+	difficultylevelHandler *handler.DifficultyLevelHandler
 	departmentHandler *handler.DepartmentHandler
 }
 
@@ -38,6 +46,14 @@ func New(
 	articleHandler *handler.ArticleHandler,
 	healthHandler *handler.HealthHandler,
 	dictHandler *handler.DictHandler,
+	part4answeroptionHandler *handler.Part4AnswerOptionHandler,
+	part4talkHandler *handler.Part4TalkHandler,
+	part3answeroptionHandler *handler.Part3AnswerOptionHandler,
+	part3conversationHandler *handler.Part3ConversationHandler,
+	part2questionHandler *handler.Part2QuestionHandler,
+	testHandler *handler.TestHandler,
+	scenarioHandler *handler.ScenarioHandler,
+	difficultylevelHandler *handler.DifficultyLevelHandler,
 	departmentHandler *handler.DepartmentHandler,
 ) *Server {
 	return &Server{
@@ -48,6 +64,14 @@ func New(
 		articleHandler: articleHandler,
 		healthHandler:  healthHandler,
 		dictHandler:    dictHandler,
+		part4answeroptionHandler: part4answeroptionHandler,
+		part4talkHandler: part4talkHandler,
+		part3answeroptionHandler: part3answeroptionHandler,
+		part3conversationHandler: part3conversationHandler,
+		part2questionHandler: part2questionHandler,
+		testHandler: testHandler,
+		scenarioHandler: scenarioHandler,
+		difficultylevelHandler: difficultylevelHandler,
 		departmentHandler: departmentHandler,
 	}
 }
@@ -173,6 +197,30 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					adminArticles.PUT("/:id", s.articleHandler.Update)
 					adminArticles.DELETE("/:id", s.articleHandler.Delete)
 				}
+
+				// Part4AnswerOption管理路由
+				s.part4answeroptionHandler.RegisterRoutes(admin)
+
+				// Part4Talk管理路由
+				s.part4talkHandler.RegisterRoutes(admin)
+
+				// Part3AnswerOption管理路由
+				s.part3answeroptionHandler.RegisterRoutes(admin)
+
+				// Part3Conversation管理路由
+				s.part3conversationHandler.RegisterRoutes(admin)
+
+				// Part2Question管理路由
+				s.part2questionHandler.RegisterRoutes(admin)
+
+				// Test管理路由
+				s.testHandler.RegisterRoutes(admin)
+
+				// Scenario管理路由
+				s.scenarioHandler.RegisterRoutes(admin)
+
+				// DifficultyLevel管理路由
+				s.difficultylevelHandler.RegisterRoutes(admin)
 
 				// Department管理路由
 				s.departmentHandler.RegisterRoutes(admin)

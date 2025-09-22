@@ -74,6 +74,15 @@ func (td *TestDatabase) Migrate(t *testing.T) {
 		&model.DictCategory{},
 		&model.DictItem{},
 		&model.Department{},
+		// Generated TOEIC models
+		&model.DifficultyLevel{},
+		&model.Scenario{},
+		&model.Test{},
+		&model.Part2Question{},
+		&model.Part3Conversation{},
+		&model.Part3AnswerOption{},
+		&model.Part4Talk{},
+		&model.Part4AnswerOption{},
 	)
 	if err != nil {
 		t.Fatalf("Failed to migrate database: %v", err)
@@ -94,6 +103,15 @@ func (td *TestDatabase) Clean(t *testing.T) {
 		"dict_items",
 		"dict_categories",
 		"departments",
+		// Generated TOEIC tables
+		"part2_questions",
+		"part3_answer_options",
+		"part3_conversations",
+		"part4_answer_options",
+		"part4_talks",
+		"tests",
+		"scenarios",
+		"difficulty_levels",
 	}
 
 	for _, table := range tables {

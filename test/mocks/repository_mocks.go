@@ -320,3 +320,379 @@ func (m *MockDepartmentRepository) GetByName(ctx context.Context, name string) (
 	}
 	return args.Get(0).(*model.Department), args.Error(1)
 }
+
+func (m *MockDepartmentRepository) GetByParentId(ctx context.Context, parentId uint) ([]*model.Department, error) {
+	args := m.Called(ctx, parentId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentRepository) GetByCode(ctx context.Context, code string) (*model.Department, error) {
+	args := m.Called(ctx, code)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentRepository) GetChildrenTree(ctx context.Context, parentId uint) ([]*model.Department, error) {
+	args := m.Called(ctx, parentId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+// MockDifficultyLevelRepository DifficultyLevel仓储模拟
+type MockDifficultyLevelRepository struct {
+	mock.Mock
+}
+
+func (m *MockDifficultyLevelRepository) Create(ctx context.Context, difficultyLevel *model.DifficultyLevel) error {
+	args := m.Called(ctx, difficultyLevel)
+	return args.Error(0)
+}
+
+func (m *MockDifficultyLevelRepository) GetByID(ctx context.Context, id uint) (*model.DifficultyLevel, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.DifficultyLevel), args.Error(1)
+}
+
+func (m *MockDifficultyLevelRepository) Update(ctx context.Context, difficultyLevel *model.DifficultyLevel) error {
+	args := m.Called(ctx, difficultyLevel)
+	return args.Error(0)
+}
+
+func (m *MockDifficultyLevelRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockDifficultyLevelRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.DifficultyLevel, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.DifficultyLevel), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockDifficultyLevelRepository) GetByName(ctx context.Context, name string) (*model.DifficultyLevel, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.DifficultyLevel), args.Error(1)
+}
+
+// MockScenarioRepository Scenario仓储模拟
+type MockScenarioRepository struct {
+	mock.Mock
+}
+
+func (m *MockScenarioRepository) Create(ctx context.Context, scenario *model.Scenario) error {
+	args := m.Called(ctx, scenario)
+	return args.Error(0)
+}
+
+func (m *MockScenarioRepository) GetByID(ctx context.Context, id uint) (*model.Scenario, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Scenario), args.Error(1)
+}
+
+func (m *MockScenarioRepository) Update(ctx context.Context, scenario *model.Scenario) error {
+	args := m.Called(ctx, scenario)
+	return args.Error(0)
+}
+
+func (m *MockScenarioRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockScenarioRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Scenario, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Scenario), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockScenarioRepository) GetByName(ctx context.Context, name string) (*model.Scenario, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Scenario), args.Error(1)
+}
+
+// MockTestRepository Test仓储模拟
+type MockTestRepository struct {
+	mock.Mock
+}
+
+func (m *MockTestRepository) Create(ctx context.Context, test *model.Test) error {
+	args := m.Called(ctx, test)
+	return args.Error(0)
+}
+
+func (m *MockTestRepository) GetByID(ctx context.Context, id uint) (*model.Test, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Test), args.Error(1)
+}
+
+func (m *MockTestRepository) Update(ctx context.Context, test *model.Test) error {
+	args := m.Called(ctx, test)
+	return args.Error(0)
+}
+
+func (m *MockTestRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockTestRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Test, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Test), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockTestRepository) GetByName(ctx context.Context, name string) (*model.Test, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Test), args.Error(1)
+}
+
+// MockPart2QuestionRepository Part2Question仓储模拟
+type MockPart2QuestionRepository struct {
+	mock.Mock
+}
+
+func (m *MockPart2QuestionRepository) Create(ctx context.Context, part2Question *model.Part2Question) error {
+	args := m.Called(ctx, part2Question)
+	return args.Error(0)
+}
+
+func (m *MockPart2QuestionRepository) GetByID(ctx context.Context, id uint) (*model.Part2Question, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part2Question), args.Error(1)
+}
+
+func (m *MockPart2QuestionRepository) Update(ctx context.Context, part2Question *model.Part2Question) error {
+	args := m.Called(ctx, part2Question)
+	return args.Error(0)
+}
+
+func (m *MockPart2QuestionRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart2QuestionRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Part2Question, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part2Question), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockPart2QuestionRepository) GetByName(ctx context.Context, name string) (*model.Part2Question, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part2Question), args.Error(1)
+}
+
+// MockPart3ConversationRepository Part3Conversation仓储模拟
+type MockPart3ConversationRepository struct {
+	mock.Mock
+}
+
+func (m *MockPart3ConversationRepository) Create(ctx context.Context, part3Conversation *model.Part3Conversation) error {
+	args := m.Called(ctx, part3Conversation)
+	return args.Error(0)
+}
+
+func (m *MockPart3ConversationRepository) GetByID(ctx context.Context, id uint) (*model.Part3Conversation, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3Conversation), args.Error(1)
+}
+
+func (m *MockPart3ConversationRepository) Update(ctx context.Context, part3Conversation *model.Part3Conversation) error {
+	args := m.Called(ctx, part3Conversation)
+	return args.Error(0)
+}
+
+func (m *MockPart3ConversationRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart3ConversationRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Part3Conversation, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part3Conversation), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockPart3ConversationRepository) GetByName(ctx context.Context, name string) (*model.Part3Conversation, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3Conversation), args.Error(1)
+}
+
+// MockPart3AnswerOptionRepository Part3AnswerOption仓储模拟
+type MockPart3AnswerOptionRepository struct {
+	mock.Mock
+}
+
+func (m *MockPart3AnswerOptionRepository) Create(ctx context.Context, part3AnswerOption *model.Part3AnswerOption) error {
+	args := m.Called(ctx, part3AnswerOption)
+	return args.Error(0)
+}
+
+func (m *MockPart3AnswerOptionRepository) GetByID(ctx context.Context, id uint) (*model.Part3AnswerOption, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3AnswerOption), args.Error(1)
+}
+
+func (m *MockPart3AnswerOptionRepository) Update(ctx context.Context, part3AnswerOption *model.Part3AnswerOption) error {
+	args := m.Called(ctx, part3AnswerOption)
+	return args.Error(0)
+}
+
+func (m *MockPart3AnswerOptionRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart3AnswerOptionRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Part3AnswerOption, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part3AnswerOption), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockPart3AnswerOptionRepository) GetByName(ctx context.Context, name string) (*model.Part3AnswerOption, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3AnswerOption), args.Error(1)
+}
+
+// MockPart4TalkRepository Part4Talk仓储模拟
+type MockPart4TalkRepository struct {
+	mock.Mock
+}
+
+func (m *MockPart4TalkRepository) Create(ctx context.Context, part4Talk *model.Part4Talk) error {
+	args := m.Called(ctx, part4Talk)
+	return args.Error(0)
+}
+
+func (m *MockPart4TalkRepository) GetByID(ctx context.Context, id uint) (*model.Part4Talk, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4Talk), args.Error(1)
+}
+
+func (m *MockPart4TalkRepository) Update(ctx context.Context, part4Talk *model.Part4Talk) error {
+	args := m.Called(ctx, part4Talk)
+	return args.Error(0)
+}
+
+func (m *MockPart4TalkRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart4TalkRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Part4Talk, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part4Talk), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockPart4TalkRepository) GetByName(ctx context.Context, name string) (*model.Part4Talk, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4Talk), args.Error(1)
+}
+
+// MockPart4AnswerOptionRepository Part4AnswerOption仓储模拟
+type MockPart4AnswerOptionRepository struct {
+	mock.Mock
+}
+
+func (m *MockPart4AnswerOptionRepository) Create(ctx context.Context, part4AnswerOption *model.Part4AnswerOption) error {
+	args := m.Called(ctx, part4AnswerOption)
+	return args.Error(0)
+}
+
+func (m *MockPart4AnswerOptionRepository) GetByID(ctx context.Context, id uint) (*model.Part4AnswerOption, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4AnswerOption), args.Error(1)
+}
+
+func (m *MockPart4AnswerOptionRepository) Update(ctx context.Context, part4AnswerOption *model.Part4AnswerOption) error {
+	args := m.Called(ctx, part4AnswerOption)
+	return args.Error(0)
+}
+
+func (m *MockPart4AnswerOptionRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart4AnswerOptionRepository) List(ctx context.Context, opts repository.ListOptions) ([]*model.Part4AnswerOption, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part4AnswerOption), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockPart4AnswerOptionRepository) GetByName(ctx context.Context, name string) (*model.Part4AnswerOption, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4AnswerOption), args.Error(1)
+}

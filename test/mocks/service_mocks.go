@@ -300,3 +300,368 @@ func (m *MockDepartmentService) List(ctx context.Context, opts *service.ListDepa
 	}
 	return args.Get(0).([]*model.Department), args.Get(1).(int64), args.Error(2)
 }
+
+func (m *MockDepartmentService) GetTree(ctx context.Context) ([]*model.Department, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) GetChildren(ctx context.Context, parentId uint) ([]*model.Department, error) {
+	args := m.Called(ctx, parentId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) GetPath(ctx context.Context, id uint) ([]*model.Department, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Department), args.Error(1)
+}
+
+func (m *MockDepartmentService) Move(ctx context.Context, id uint, newParentId uint) error {
+	args := m.Called(ctx, id, newParentId)
+	return args.Error(0)
+}
+
+// MockDifficultyLevelService DifficultyLevel服务模拟
+type MockDifficultyLevelService struct {
+	mock.Mock
+}
+
+func (m *MockDifficultyLevelService) Create(ctx context.Context, req *service.CreateDifficultyLevelRequest) (*model.DifficultyLevel, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.DifficultyLevel), args.Error(1)
+}
+
+func (m *MockDifficultyLevelService) GetByID(ctx context.Context, id uint) (*model.DifficultyLevel, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.DifficultyLevel), args.Error(1)
+}
+
+func (m *MockDifficultyLevelService) Update(ctx context.Context, id uint, req *service.UpdateDifficultyLevelRequest) (*model.DifficultyLevel, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.DifficultyLevel), args.Error(1)
+}
+
+func (m *MockDifficultyLevelService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockDifficultyLevelService) List(ctx context.Context, opts *service.ListDifficultyLevelOptions) ([]*model.DifficultyLevel, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.DifficultyLevel), args.Get(1).(int64), args.Error(2)
+}
+
+// MockScenarioService Scenario服务模拟
+type MockScenarioService struct {
+	mock.Mock
+}
+
+func (m *MockScenarioService) Create(ctx context.Context, req *service.CreateScenarioRequest) (*model.Scenario, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Scenario), args.Error(1)
+}
+
+func (m *MockScenarioService) GetByID(ctx context.Context, id uint) (*model.Scenario, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Scenario), args.Error(1)
+}
+
+func (m *MockScenarioService) Update(ctx context.Context, id uint, req *service.UpdateScenarioRequest) (*model.Scenario, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Scenario), args.Error(1)
+}
+
+func (m *MockScenarioService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockScenarioService) List(ctx context.Context, opts *service.ListScenarioOptions) ([]*model.Scenario, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Scenario), args.Get(1).(int64), args.Error(2)
+}
+
+// MockTestService Test服务模拟
+type MockTestService struct {
+	mock.Mock
+}
+
+func (m *MockTestService) Create(ctx context.Context, req *service.CreateTestRequest) (*model.Test, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Test), args.Error(1)
+}
+
+func (m *MockTestService) GetByID(ctx context.Context, id uint) (*model.Test, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Test), args.Error(1)
+}
+
+func (m *MockTestService) Update(ctx context.Context, id uint, req *service.UpdateTestRequest) (*model.Test, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Test), args.Error(1)
+}
+
+func (m *MockTestService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockTestService) List(ctx context.Context, opts *service.ListTestOptions) ([]*model.Test, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Test), args.Get(1).(int64), args.Error(2)
+}
+
+// MockPart2QuestionService Part2Question服务模拟
+type MockPart2QuestionService struct {
+	mock.Mock
+}
+
+func (m *MockPart2QuestionService) Create(ctx context.Context, req *service.CreatePart2QuestionRequest) (*model.Part2Question, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part2Question), args.Error(1)
+}
+
+func (m *MockPart2QuestionService) GetByID(ctx context.Context, id uint) (*model.Part2Question, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part2Question), args.Error(1)
+}
+
+func (m *MockPart2QuestionService) Update(ctx context.Context, id uint, req *service.UpdatePart2QuestionRequest) (*model.Part2Question, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part2Question), args.Error(1)
+}
+
+func (m *MockPart2QuestionService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart2QuestionService) List(ctx context.Context, opts *service.ListPart2QuestionOptions) ([]*model.Part2Question, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part2Question), args.Get(1).(int64), args.Error(2)
+}
+
+// MockPart3ConversationService Part3Conversation服务模拟
+type MockPart3ConversationService struct {
+	mock.Mock
+}
+
+func (m *MockPart3ConversationService) Create(ctx context.Context, req *service.CreatePart3ConversationRequest) (*model.Part3Conversation, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3Conversation), args.Error(1)
+}
+
+func (m *MockPart3ConversationService) GetByID(ctx context.Context, id uint) (*model.Part3Conversation, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3Conversation), args.Error(1)
+}
+
+func (m *MockPart3ConversationService) Update(ctx context.Context, id uint, req *service.UpdatePart3ConversationRequest) (*model.Part3Conversation, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3Conversation), args.Error(1)
+}
+
+func (m *MockPart3ConversationService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart3ConversationService) List(ctx context.Context, opts *service.ListPart3ConversationOptions) ([]*model.Part3Conversation, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part3Conversation), args.Get(1).(int64), args.Error(2)
+}
+
+// MockPart3AnswerOptionService Part3AnswerOption服务模拟
+type MockPart3AnswerOptionService struct {
+	mock.Mock
+}
+
+func (m *MockPart3AnswerOptionService) Create(ctx context.Context, req *service.CreatePart3AnswerOptionRequest) (*model.Part3AnswerOption, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3AnswerOption), args.Error(1)
+}
+
+func (m *MockPart3AnswerOptionService) GetByID(ctx context.Context, id uint) (*model.Part3AnswerOption, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3AnswerOption), args.Error(1)
+}
+
+func (m *MockPart3AnswerOptionService) Update(ctx context.Context, id uint, req *service.UpdatePart3AnswerOptionRequest) (*model.Part3AnswerOption, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part3AnswerOption), args.Error(1)
+}
+
+func (m *MockPart3AnswerOptionService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart3AnswerOptionService) List(ctx context.Context, opts *service.ListPart3AnswerOptionOptions) ([]*model.Part3AnswerOption, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part3AnswerOption), args.Get(1).(int64), args.Error(2)
+}
+
+// MockPart4TalkService Part4Talk服务模拟
+type MockPart4TalkService struct {
+	mock.Mock
+}
+
+func (m *MockPart4TalkService) Create(ctx context.Context, req *service.CreatePart4TalkRequest) (*model.Part4Talk, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4Talk), args.Error(1)
+}
+
+func (m *MockPart4TalkService) GetByID(ctx context.Context, id uint) (*model.Part4Talk, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4Talk), args.Error(1)
+}
+
+func (m *MockPart4TalkService) Update(ctx context.Context, id uint, req *service.UpdatePart4TalkRequest) (*model.Part4Talk, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4Talk), args.Error(1)
+}
+
+func (m *MockPart4TalkService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart4TalkService) List(ctx context.Context, opts *service.ListPart4TalkOptions) ([]*model.Part4Talk, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part4Talk), args.Get(1).(int64), args.Error(2)
+}
+
+// MockPart4AnswerOptionService Part4AnswerOption服务模拟
+type MockPart4AnswerOptionService struct {
+	mock.Mock
+}
+
+func (m *MockPart4AnswerOptionService) Create(ctx context.Context, req *service.CreatePart4AnswerOptionRequest) (*model.Part4AnswerOption, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4AnswerOption), args.Error(1)
+}
+
+func (m *MockPart4AnswerOptionService) GetByID(ctx context.Context, id uint) (*model.Part4AnswerOption, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4AnswerOption), args.Error(1)
+}
+
+func (m *MockPart4AnswerOptionService) Update(ctx context.Context, id uint, req *service.UpdatePart4AnswerOptionRequest) (*model.Part4AnswerOption, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Part4AnswerOption), args.Error(1)
+}
+
+func (m *MockPart4AnswerOptionService) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPart4AnswerOptionService) List(ctx context.Context, opts *service.ListPart4AnswerOptionOptions) ([]*model.Part4AnswerOption, int64, error) {
+	args := m.Called(ctx, opts)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*model.Part4AnswerOption), args.Get(1).(int64), args.Error(2)
+}

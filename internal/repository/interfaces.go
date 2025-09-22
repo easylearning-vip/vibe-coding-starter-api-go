@@ -115,3 +115,59 @@ type DepartmentRepository interface {
 	GetByCode(ctx context.Context, code string) (*model.Department, error)
 	GetChildrenTree(ctx context.Context, parentId uint) ([]*model.Department, error)
 }
+
+// DifficultyLevelRepository DifficultyLevel仓储接口
+type DifficultyLevelRepository interface {
+	Repository[model.DifficultyLevel, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.DifficultyLevel, error)
+}
+
+// ScenarioRepository Scenario仓储接口
+type ScenarioRepository interface {
+	Repository[model.Scenario, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Scenario, error)
+}
+
+// TestRepository Test仓储接口
+type TestRepository interface {
+	Repository[model.Test, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Test, error)
+}
+
+// Part2QuestionRepository Part2Question仓储接口
+type Part2QuestionRepository interface {
+	Repository[model.Part2Question, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Part2Question, error)
+}
+
+// Part3ConversationRepository Part3Conversation仓储接口
+type Part3ConversationRepository interface {
+	Repository[model.Part3Conversation, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Part3Conversation, error)
+}
+
+// Part3AnswerOptionRepository Part3AnswerOption仓储接口
+type Part3AnswerOptionRepository interface {
+	Repository[model.Part3AnswerOption, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Part3AnswerOption, error)
+}
+
+// Part4TalkRepository Part4Talk仓储接口
+type Part4TalkRepository interface {
+	Repository[model.Part4Talk, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Part4Talk, error)
+}
+
+// Part4AnswerOptionRepository Part4AnswerOption仓储接口
+type Part4AnswerOptionRepository interface {
+	Repository[model.Part4AnswerOption, uint]
+	// 在这里添加特定的查询方法
+	GetByName(ctx context.Context, name string) (*model.Part4AnswerOption, error)
+}
