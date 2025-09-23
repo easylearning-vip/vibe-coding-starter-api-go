@@ -90,7 +90,8 @@ func (r *part3ConversationRepository) List(ctx context.Context, opts ListOptions
 
 	// 应用搜索
 	if opts.Search != "" {
-		query = query.Where("name LIKE ?", "%"+opts.Search+"%")
+		query = query.Where("title LIKE ? OR content LIKE ? OR question1 LIKE ? OR question2 LIKE ? OR question3 LIKE ?",
+			"%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%")
 	}
 
 	// 获取总数
@@ -129,11 +130,22 @@ func (r *part3ConversationRepository) List(ctx context.Context, opts ListOptions
 func (r *part3ConversationRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
 		switch key {
-		case "name":
-			if v, ok := value.(string); ok && v != "" {
-				query = query.Where("name = ?", v)
+		case "test_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("test_id = ?", v)
 			}
-		// 在这里添加更多过滤器
+		case "scenario_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("scenario_id = ?", v)
+			}
+		case "difficulty_level_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("difficulty_level_id = ?", v)
+			}
+		case "conversation_number":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("conversation_number = ?", v)
+			}
 		}
 	}
 	return query

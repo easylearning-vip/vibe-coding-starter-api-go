@@ -14,7 +14,7 @@ import (
 // Part4TalkHandler Part4Talk处理器
 type Part4TalkHandler struct {
 	part4TalkService service.Part4TalkService
-	logger         logger.Logger
+	logger           logger.Logger
 }
 
 // NewPart4TalkHandler 创建Part4Talk处理器
@@ -24,7 +24,7 @@ func NewPart4TalkHandler(
 ) *Part4TalkHandler {
 	return &Part4TalkHandler{
 		part4TalkService: part4TalkService,
-		logger:         logger,
+		logger:           logger,
 	}
 }
 

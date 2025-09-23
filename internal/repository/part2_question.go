@@ -47,14 +47,14 @@ func (r *part2QuestionRepository) GetByID(ctx context.Context, id uint) (*model.
 	return &entity, nil
 }
 
-// GetByName 根据名称获取Part2Question
-func (r *part2QuestionRepository) GetByName(ctx context.Context, name string) (*model.Part2Question, error) {
+// GetByQuestionText 根据问题文本获取Part2Question
+func (r *part2QuestionRepository) GetByQuestionText(ctx context.Context, questionText string) (*model.Part2Question, error) {
 	var entity model.Part2Question
-	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&entity).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("question_text = ?", questionText).First(&entity).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("Part2Question not found")
 		}
-		r.logger.Error("Failed to get Part2Question by name", "name", name, "error", err)
+		r.logger.Error("Failed to get Part2Question by question text", "question_text", questionText, "error", err)
 		return nil, fmt.Errorf("failed to get Part2Question: %w", err)
 	}
 	return &entity, nil
@@ -90,7 +90,7 @@ func (r *part2QuestionRepository) List(ctx context.Context, opts ListOptions) ([
 
 	// 应用搜索
 	if opts.Search != "" {
-		query = query.Where("name LIKE ?", "%"+opts.Search+"%")
+		query = query.Where("question_text LIKE ?", "%"+opts.Search+"%")
 	}
 
 	// 获取总数
@@ -129,11 +129,23 @@ func (r *part2QuestionRepository) List(ctx context.Context, opts ListOptions) ([
 func (r *part2QuestionRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
 		switch key {
-		case "name":
+		case "question_text":
 			if v, ok := value.(string); ok && v != "" {
-				query = query.Where("name = ?", v)
+				query = query.Where("question_text = ?", v)
 			}
-		// 在这里添加更多过滤器
+		case "test_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("test_id = ?", v)
+			}
+		case "scenario_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("scenario_id = ?", v)
+			}
+		case "difficulty_level_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("difficulty_level_id = ?", v)
+			}
+			// 在这里添加更多过滤器
 		}
 	}
 	return query

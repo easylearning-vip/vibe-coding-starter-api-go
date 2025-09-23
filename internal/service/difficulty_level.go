@@ -41,16 +41,16 @@ func NewDifficultyLevelService(
 
 // CreateDifficultyLevelRequest 创建DifficultyLevel请求
 type CreateDifficultyLevelRequest struct {
-	Name            string         `json:"name" validate:"required,min=1,max=255"`
-	Description     string         `json:"description" validate:"required,min=1,max=255"`
-	Characteristics sql.NullString `json:"characteristics" validate:"required"`
+	Name            string  `json:"name" validate:"required,min=1,max=255"`
+	Description     string  `json:"description" validate:"required,min=1,max=255"`
+	Characteristics *string `json:"characteristics,omitempty"`
 }
 
 // UpdateDifficultyLevelRequest 更新DifficultyLevel请求
 type UpdateDifficultyLevelRequest struct {
-	Name            *string         `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description     *string         `json:"description,omitempty" validate:"omitempty,min=1,max=255"`
-	Characteristics *sql.NullString `json:"characteristics,omitempty" validate:"omitempty"`
+	Name            *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description     *string `json:"description,omitempty" validate:"omitempty,min=1,max=255"`
+	Characteristics *string `json:"characteristics,omitempty"`
 }
 
 // ListDifficultyLevelOptions 列表查询选项
@@ -72,9 +72,20 @@ func (s *difficultyLevelService) Create(ctx context.Context, req *CreateDifficul
 
 	// 创建模型
 	entity := &model.DifficultyLevel{
-		Name:            req.Name,
-		Description:     req.Description,
-		Characteristics: req.Characteristics,
+		Name:        req.Name,
+		Description: req.Description,
+	}
+
+	// 处理可选的 Characteristics 字段
+	if req.Characteristics != nil {
+		entity.Characteristics = sql.NullString{
+			String: *req.Characteristics,
+			Valid:  true,
+		}
+	} else {
+		entity.Characteristics = sql.NullString{
+			Valid: false,
+		}
 	}
 
 	// 保存到数据库
@@ -120,7 +131,10 @@ func (s *difficultyLevelService) Update(ctx context.Context, id uint, req *Updat
 		entity.Description = *req.Description
 	}
 	if req.Characteristics != nil {
-		entity.Characteristics = *req.Characteristics
+		entity.Characteristics = sql.NullString{
+			String: *req.Characteristics,
+			Valid:  true,
+		}
 	}
 
 	// 保存更新

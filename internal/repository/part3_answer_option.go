@@ -90,7 +90,8 @@ func (r *part3AnswerOptionRepository) List(ctx context.Context, opts ListOptions
 
 	// 应用搜索
 	if opts.Search != "" {
-		query = query.Where("name LIKE ?", "%"+opts.Search+"%")
+		query = query.Where("option_a LIKE ? OR option_b LIKE ? OR option_c LIKE ? OR option_d LIKE ?",
+			"%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%", "%"+opts.Search+"%")
 	}
 
 	// 获取总数
@@ -129,11 +130,18 @@ func (r *part3AnswerOptionRepository) List(ctx context.Context, opts ListOptions
 func (r *part3AnswerOptionRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
 		switch key {
-		case "name":
-			if v, ok := value.(string); ok && v != "" {
-				query = query.Where("name = ?", v)
+		case "conversation_id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("conversation_id = ?", v)
 			}
-		// 在这里添加更多过滤器
+		case "question_number":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("question_number = ?", v)
+			}
+		case "correct_answer":
+			if v, ok := value.(string); ok && v != "" {
+				query = query.Where("correct_answer = ?", v)
+			}
 		}
 	}
 	return query

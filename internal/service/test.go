@@ -41,14 +41,14 @@ func NewTestService(
 
 // CreateTestRequest 创建Test请求
 type CreateTestRequest struct {
-	Name        string         `json:"name" validate:"required,min=1,max=255"`
-	Description sql.NullString `json:"description" validate:"required"`
+	Name        string  `json:"name" validate:"required,min=1,max=255"`
+	Description *string `json:"description,omitempty"`
 }
 
 // UpdateTestRequest 更新Test请求
 type UpdateTestRequest struct {
-	Name        *string         `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description *sql.NullString `json:"description,omitempty" validate:"omitempty"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description *string `json:"description,omitempty"`
 }
 
 // ListTestOptions 列表查询选项
@@ -70,8 +70,19 @@ func (s *testService) Create(ctx context.Context, req *CreateTestRequest) (*mode
 
 	// 创建模型
 	entity := &model.Test{
-		Name:        req.Name,
-		Description: req.Description,
+		Name: req.Name,
+	}
+
+	// 处理可选的 Description 字段
+	if req.Description != nil {
+		entity.Description = sql.NullString{
+			String: *req.Description,
+			Valid:  true,
+		}
+	} else {
+		entity.Description = sql.NullString{
+			Valid: false,
+		}
 	}
 
 	// 保存到数据库
@@ -114,7 +125,10 @@ func (s *testService) Update(ctx context.Context, id uint, req *UpdateTestReques
 		entity.Name = *req.Name
 	}
 	if req.Description != nil {
-		entity.Description = *req.Description
+		entity.Description = sql.NullString{
+			String: *req.Description,
+			Valid:  true,
+		}
 	}
 
 	// 保存更新

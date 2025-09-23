@@ -14,7 +14,7 @@ import (
 // Part3AnswerOptionHandler Part3AnswerOption处理器
 type Part3AnswerOptionHandler struct {
 	part3AnswerOptionService service.Part3AnswerOptionService
-	logger         logger.Logger
+	logger                   logger.Logger
 }
 
 // NewPart3AnswerOptionHandler 创建Part3AnswerOption处理器
@@ -24,7 +24,7 @@ func NewPart3AnswerOptionHandler(
 ) *Part3AnswerOptionHandler {
 	return &Part3AnswerOptionHandler{
 		part3AnswerOptionService: part3AnswerOptionService,
-		logger:         logger,
+		logger:                   logger,
 	}
 }
 
@@ -243,7 +243,25 @@ func (h *Part3AnswerOptionHandler) parseListOptions(c *gin.Context) repository.L
 
 	// 构建过滤器
 	filters := make(map[string]interface{})
-	// 在这里添加特定的过滤器逻辑
+
+	// 添加conversation_id过滤器
+	if conversationId := c.Query("conversation_id"); conversationId != "" {
+		if id, err := strconv.ParseInt(conversationId, 10, 32); err == nil {
+			filters["conversation_id"] = int32(id)
+		}
+	}
+
+	// 添加question_number过滤器
+	if questionNumber := c.Query("question_number"); questionNumber != "" {
+		if num, err := strconv.ParseInt(questionNumber, 10, 32); err == nil {
+			filters["question_number"] = int32(num)
+		}
+	}
+
+	// 添加correct_answer过滤器
+	if correctAnswer := c.Query("correct_answer"); correctAnswer != "" {
+		filters["correct_answer"] = correctAnswer
+	}
 
 	return repository.ListOptions{
 		Page:     page,

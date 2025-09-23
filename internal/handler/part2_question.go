@@ -14,7 +14,7 @@ import (
 // Part2QuestionHandler Part2Question处理器
 type Part2QuestionHandler struct {
 	part2QuestionService service.Part2QuestionService
-	logger         logger.Logger
+	logger               logger.Logger
 }
 
 // NewPart2QuestionHandler 创建Part2Question处理器
@@ -24,7 +24,7 @@ func NewPart2QuestionHandler(
 ) *Part2QuestionHandler {
 	return &Part2QuestionHandler{
 		part2QuestionService: part2QuestionService,
-		logger:         logger,
+		logger:               logger,
 	}
 }
 
@@ -51,7 +51,7 @@ func (h *Part2QuestionHandler) RegisterRoutes(r *gin.RouterGroup) {
 // @Success 201 {object} model.Part2Question
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part2questions [post]
+// @Router /api/v1/admin/part2questions [post]
 func (h *Part2QuestionHandler) Create(c *gin.Context) {
 	var req service.CreatePart2QuestionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -87,7 +87,7 @@ func (h *Part2QuestionHandler) Create(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part2questions/{id} [get]
+// @Router /api/v1/admin/part2questions/{id} [get]
 func (h *Part2QuestionHandler) GetByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -123,7 +123,7 @@ func (h *Part2QuestionHandler) GetByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part2questions/{id} [put]
+// @Router /api/v1/admin/part2questions/{id} [put]
 func (h *Part2QuestionHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -168,7 +168,7 @@ func (h *Part2QuestionHandler) Update(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part2questions/{id} [delete]
+// @Router /api/v1/admin/part2questions/{id} [delete]
 func (h *Part2QuestionHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -204,7 +204,7 @@ func (h *Part2QuestionHandler) Delete(c *gin.Context) {
 // @Param search query string false "搜索关键词"
 // @Success 200 {object} ListResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part2questions [get]
+// @Router /api/v1/admin/part2questions [get]
 func (h *Part2QuestionHandler) List(c *gin.Context) {
 	opts := h.parseListOptions(c)
 	serviceOpts := &service.ListPart2QuestionOptions{
@@ -253,18 +253,4 @@ func (h *Part2QuestionHandler) parseListOptions(c *gin.Context) repository.ListO
 		Order:    c.DefaultQuery("order", "desc"),
 		Filters:  filters,
 	}
-}
-
-// 请求结构体
-
-// CreatePart2QuestionRequest 创建Part2Question请求
-type CreatePart2QuestionRequest struct {
-	Name        string `json:"name" validate:"required,min=1,max=255"`
-	Description string `json:"description" validate:"max=1000"`
-}
-
-// UpdatePart2QuestionRequest 更新Part2Question请求
-type UpdatePart2QuestionRequest struct {
-	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
 }

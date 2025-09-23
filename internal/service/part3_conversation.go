@@ -43,26 +43,26 @@ func NewPart3ConversationService(
 type CreatePart3ConversationRequest struct {
 	TestId             int32          `json:"test_id" validate:"required,min=0"`
 	ConversationNumber int32          `json:"conversation_number" validate:"required,min=0"`
-	Title              sql.NullString `json:"title" validate:"required"`
-	Content            string         `json:"content" validate:"required,min=1,max=255"`
-	Question1          string         `json:"question1" validate:"required,min=1,max=255"`
-	Question2          string         `json:"question2" validate:"required,min=1,max=255"`
-	Question3          string         `json:"question3" validate:"required,min=1,max=255"`
-	ScenarioId         sql.NullInt32  `json:"scenario_id" validate:"required"`
-	DifficultyLevelId  sql.NullInt32  `json:"difficulty_level_id" validate:"required"`
+	Title              sql.NullString `json:"title"`
+	Content            string         `json:"content" validate:"required,min=1"`
+	Question1          string         `json:"question1" validate:"required,min=1"`
+	Question2          string         `json:"question2" validate:"required,min=1"`
+	Question3          string         `json:"question3" validate:"required,min=1"`
+	ScenarioId         sql.NullInt32  `json:"scenario_id"`
+	DifficultyLevelId  sql.NullInt32  `json:"difficulty_level_id"`
 }
 
 // UpdatePart3ConversationRequest 更新Part3Conversation请求
 type UpdatePart3ConversationRequest struct {
 	TestId             *int32          `json:"test_id,omitempty" validate:"omitempty,min=0"`
 	ConversationNumber *int32          `json:"conversation_number,omitempty" validate:"omitempty,min=0"`
-	Title              *sql.NullString `json:"title,omitempty" validate:"omitempty"`
-	Content            *string         `json:"content,omitempty" validate:"omitempty,min=1,max=255"`
-	Question1          *string         `json:"question1,omitempty" validate:"omitempty,min=1,max=255"`
-	Question2          *string         `json:"question2,omitempty" validate:"omitempty,min=1,max=255"`
-	Question3          *string         `json:"question3,omitempty" validate:"omitempty,min=1,max=255"`
-	ScenarioId         *sql.NullInt32  `json:"scenario_id,omitempty" validate:"omitempty"`
-	DifficultyLevelId  *sql.NullInt32  `json:"difficulty_level_id,omitempty" validate:"omitempty"`
+	Title              *sql.NullString `json:"title,omitempty"`
+	Content            *string         `json:"content,omitempty" validate:"omitempty,min=1"`
+	Question1          *string         `json:"question1,omitempty" validate:"omitempty,min=1"`
+	Question2          *string         `json:"question2,omitempty" validate:"omitempty,min=1"`
+	Question3          *string         `json:"question3,omitempty" validate:"omitempty,min=1"`
+	ScenarioId         *sql.NullInt32  `json:"scenario_id,omitempty"`
+	DifficultyLevelId  *sql.NullInt32  `json:"difficulty_level_id,omitempty"`
 }
 
 // ListPart3ConversationOptions 列表查询选项

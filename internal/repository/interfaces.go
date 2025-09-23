@@ -141,7 +141,7 @@ type TestRepository interface {
 type Part2QuestionRepository interface {
 	Repository[model.Part2Question, uint]
 	// 在这里添加特定的查询方法
-	GetByName(ctx context.Context, name string) (*model.Part2Question, error)
+	GetByQuestionText(ctx context.Context, questionText string) (*model.Part2Question, error)
 }
 
 // Part3ConversationRepository Part3Conversation仓储接口

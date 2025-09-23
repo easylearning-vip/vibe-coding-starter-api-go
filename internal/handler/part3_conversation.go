@@ -14,7 +14,7 @@ import (
 // Part3ConversationHandler Part3Conversation处理器
 type Part3ConversationHandler struct {
 	part3ConversationService service.Part3ConversationService
-	logger         logger.Logger
+	logger                   logger.Logger
 }
 
 // NewPart3ConversationHandler 创建Part3Conversation处理器
@@ -24,7 +24,7 @@ func NewPart3ConversationHandler(
 ) *Part3ConversationHandler {
 	return &Part3ConversationHandler{
 		part3ConversationService: part3ConversationService,
-		logger:         logger,
+		logger:                   logger,
 	}
 }
 
@@ -51,7 +51,7 @@ func (h *Part3ConversationHandler) RegisterRoutes(r *gin.RouterGroup) {
 // @Success 201 {object} model.Part3Conversation
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part3conversations [post]
+// @Router /api/v1/admin/part3conversations [post]
 func (h *Part3ConversationHandler) Create(c *gin.Context) {
 	var req service.CreatePart3ConversationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -123,7 +123,7 @@ func (h *Part3ConversationHandler) GetByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /api/v1/part3conversations/{id} [put]
+// @Router /api/v1/admin/part3conversations/{id} [put]
 func (h *Part3ConversationHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -243,7 +243,34 @@ func (h *Part3ConversationHandler) parseListOptions(c *gin.Context) repository.L
 
 	// 构建过滤器
 	filters := make(map[string]interface{})
-	// 在这里添加特定的过滤器逻辑
+
+	// 添加测试ID过滤器
+	if testId := c.Query("test_id"); testId != "" {
+		if id, err := strconv.ParseInt(testId, 10, 32); err == nil {
+			filters["test_id"] = int32(id)
+		}
+	}
+
+	// 添加场景ID过滤器
+	if scenarioId := c.Query("scenario_id"); scenarioId != "" {
+		if id, err := strconv.ParseInt(scenarioId, 10, 32); err == nil {
+			filters["scenario_id"] = int32(id)
+		}
+	}
+
+	// 添加难度级别ID过滤器
+	if difficultyId := c.Query("difficulty_level_id"); difficultyId != "" {
+		if id, err := strconv.ParseInt(difficultyId, 10, 32); err == nil {
+			filters["difficulty_level_id"] = int32(id)
+		}
+	}
+
+	// 添加对话编号过滤器
+	if conversationNumber := c.Query("conversation_number"); conversationNumber != "" {
+		if num, err := strconv.ParseInt(conversationNumber, 10, 32); err == nil {
+			filters["conversation_number"] = int32(num)
+		}
+	}
 
 	return repository.ListOptions{
 		Page:     page,
@@ -255,16 +282,4 @@ func (h *Part3ConversationHandler) parseListOptions(c *gin.Context) repository.L
 	}
 }
 
-// 请求结构体
-
-// CreatePart3ConversationRequest 创建Part3Conversation请求
-type CreatePart3ConversationRequest struct {
-	Name        string `json:"name" validate:"required,min=1,max=255"`
-	Description string `json:"description" validate:"max=1000"`
-}
-
-// UpdatePart3ConversationRequest 更新Part3Conversation请求
-type UpdatePart3ConversationRequest struct {
-	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
-}
+// 请求结构体 - 这些结构体已经在service层定义，这里不需要重复定义

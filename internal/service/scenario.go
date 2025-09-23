@@ -41,16 +41,16 @@ func NewScenarioService(
 
 // CreateScenarioRequest 创建Scenario请求
 type CreateScenarioRequest struct {
-	Name        string         `json:"name" validate:"required,min=1,max=255"`
-	Description string         `json:"description" validate:"required,min=1,max=255"`
-	Examples    sql.NullString `json:"examples" validate:"required"`
+	Name        string  `json:"name" validate:"required,min=1,max=255"`
+	Description string  `json:"description" validate:"required,min=1,max=255"`
+	Examples    *string `json:"examples,omitempty"`
 }
 
 // UpdateScenarioRequest 更新Scenario请求
 type UpdateScenarioRequest struct {
-	Name        *string         `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description *string         `json:"description,omitempty" validate:"omitempty,min=1,max=255"`
-	Examples    *sql.NullString `json:"examples,omitempty" validate:"omitempty"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,min=1,max=255"`
+	Examples    *string `json:"examples,omitempty"`
 }
 
 // ListScenarioOptions 列表查询选项
@@ -74,7 +74,18 @@ func (s *scenarioService) Create(ctx context.Context, req *CreateScenarioRequest
 	entity := &model.Scenario{
 		Name:        req.Name,
 		Description: req.Description,
-		Examples:    req.Examples,
+	}
+
+	// 处理可选的 Examples 字段
+	if req.Examples != nil {
+		entity.Examples = sql.NullString{
+			String: *req.Examples,
+			Valid:  true,
+		}
+	} else {
+		entity.Examples = sql.NullString{
+			Valid: false,
+		}
 	}
 
 	// 保存到数据库
@@ -120,7 +131,10 @@ func (s *scenarioService) Update(ctx context.Context, id uint, req *UpdateScenar
 		entity.Description = *req.Description
 	}
 	if req.Examples != nil {
-		entity.Examples = *req.Examples
+		entity.Examples = sql.NullString{
+			String: *req.Examples,
+			Valid:  true,
+		}
 	}
 
 	// 保存更新

@@ -41,28 +41,28 @@ func NewPart2QuestionService(
 
 // CreatePart2QuestionRequest 创建Part2Question请求
 type CreatePart2QuestionRequest struct {
-	TestId            int32          `json:"test_id" validate:"required,min=0"`
-	QuestionNumber    int32          `json:"question_number" validate:"required,min=0"`
-	QuestionText      string         `json:"question_text" validate:"required,min=1,max=255"`
-	OptionA           string         `json:"option_a" validate:"required,min=1,max=255"`
-	OptionB           string         `json:"option_b" validate:"required,min=1,max=255"`
-	OptionC           string         `json:"option_c" validate:"required,min=1,max=255"`
-	CorrectAnswer     sql.NullString `json:"correct_answer" validate:"required"`
-	ScenarioId        sql.NullInt32  `json:"scenario_id" validate:"required"`
-	DifficultyLevelId sql.NullInt32  `json:"difficulty_level_id" validate:"required"`
+	TestId            int32  `json:"test_id" validate:"required,min=0"`
+	QuestionNumber    int32  `json:"question_number" validate:"required,min=0"`
+	QuestionText      string `json:"question_text" validate:"required,min=1,max=255"`
+	OptionA           string `json:"option_a" validate:"required,min=1,max=255"`
+	OptionB           string `json:"option_b" validate:"required,min=1,max=255"`
+	OptionC           string `json:"option_c" validate:"required,min=1,max=255"`
+	CorrectAnswer     string `json:"correct_answer" validate:"required,min=1,max=1"`
+	ScenarioId        int32  `json:"scenario_id" validate:"required,min=0"`
+	DifficultyLevelId int32  `json:"difficulty_level_id" validate:"required,min=0"`
 }
 
 // UpdatePart2QuestionRequest 更新Part2Question请求
 type UpdatePart2QuestionRequest struct {
-	TestId            *int32          `json:"test_id,omitempty" validate:"omitempty,min=0"`
-	QuestionNumber    *int32          `json:"question_number,omitempty" validate:"omitempty,min=0"`
-	QuestionText      *string         `json:"question_text,omitempty" validate:"omitempty,min=1,max=255"`
-	OptionA           *string         `json:"option_a,omitempty" validate:"omitempty,min=1,max=255"`
-	OptionB           *string         `json:"option_b,omitempty" validate:"omitempty,min=1,max=255"`
-	OptionC           *string         `json:"option_c,omitempty" validate:"omitempty,min=1,max=255"`
-	CorrectAnswer     *sql.NullString `json:"correct_answer,omitempty" validate:"omitempty"`
-	ScenarioId        *sql.NullInt32  `json:"scenario_id,omitempty" validate:"omitempty"`
-	DifficultyLevelId *sql.NullInt32  `json:"difficulty_level_id,omitempty" validate:"omitempty"`
+	TestId            *int32  `json:"test_id,omitempty" validate:"omitempty,min=0"`
+	QuestionNumber    *int32  `json:"question_number,omitempty" validate:"omitempty,min=0"`
+	QuestionText      *string `json:"question_text,omitempty" validate:"omitempty,min=1,max=255"`
+	OptionA           *string `json:"option_a,omitempty" validate:"omitempty,min=1,max=255"`
+	OptionB           *string `json:"option_b,omitempty" validate:"omitempty,min=1,max=255"`
+	OptionC           *string `json:"option_c,omitempty" validate:"omitempty,min=1,max=255"`
+	CorrectAnswer     *string `json:"correct_answer,omitempty" validate:"omitempty,min=1,max=1"`
+	ScenarioId        *int32  `json:"scenario_id,omitempty" validate:"omitempty,min=0"`
+	DifficultyLevelId *int32  `json:"difficulty_level_id,omitempty" validate:"omitempty,min=0"`
 }
 
 // ListPart2QuestionOptions 列表查询选项
@@ -84,15 +84,24 @@ func (s *part2QuestionService) Create(ctx context.Context, req *CreatePart2Quest
 
 	// 创建模型
 	entity := &model.Part2Question{
-		TestId:            req.TestId,
-		QuestionNumber:    req.QuestionNumber,
-		QuestionText:      req.QuestionText,
-		OptionA:           req.OptionA,
-		OptionB:           req.OptionB,
-		OptionC:           req.OptionC,
-		CorrectAnswer:     req.CorrectAnswer,
-		ScenarioId:        req.ScenarioId,
-		DifficultyLevelId: req.DifficultyLevelId,
+		TestId:         req.TestId,
+		QuestionNumber: req.QuestionNumber,
+		QuestionText:   req.QuestionText,
+		OptionA:        req.OptionA,
+		OptionB:        req.OptionB,
+		OptionC:        req.OptionC,
+		CorrectAnswer: sql.NullString{
+			String: req.CorrectAnswer,
+			Valid:  req.CorrectAnswer != "",
+		},
+		ScenarioId: sql.NullInt32{
+			Int32: req.ScenarioId,
+			Valid: req.ScenarioId != 0,
+		},
+		DifficultyLevelId: sql.NullInt32{
+			Int32: req.DifficultyLevelId,
+			Valid: req.DifficultyLevelId != 0,
+		},
 	}
 
 	// 保存到数据库
@@ -150,13 +159,22 @@ func (s *part2QuestionService) Update(ctx context.Context, id uint, req *UpdateP
 		entity.OptionC = *req.OptionC
 	}
 	if req.CorrectAnswer != nil {
-		entity.CorrectAnswer = *req.CorrectAnswer
+		entity.CorrectAnswer = sql.NullString{
+			String: *req.CorrectAnswer,
+			Valid:  *req.CorrectAnswer != "",
+		}
 	}
 	if req.ScenarioId != nil {
-		entity.ScenarioId = *req.ScenarioId
+		entity.ScenarioId = sql.NullInt32{
+			Int32: *req.ScenarioId,
+			Valid: *req.ScenarioId != 0,
+		}
 	}
 	if req.DifficultyLevelId != nil {
-		entity.DifficultyLevelId = *req.DifficultyLevelId
+		entity.DifficultyLevelId = sql.NullInt32{
+			Int32: *req.DifficultyLevelId,
+			Valid: *req.DifficultyLevelId != 0,
+		}
 	}
 
 	// 保存更新
