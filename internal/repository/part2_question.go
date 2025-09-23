@@ -150,3 +150,12 @@ func (r *part2QuestionRepository) applyFilters(query *gorm.DB, filters map[strin
 	}
 	return query
 }
+
+// DeleteByTestID 根据测试ID删除Part2Question
+func (r *part2QuestionRepository) DeleteByTestID(ctx context.Context, testID uint) error {
+	if err := r.db.WithContext(ctx).Unscoped().Where("test_id = ?", testID).Delete(&model.Part2Question{}).Error; err != nil {
+		r.logger.Error("Failed to delete Part2Question by test ID", "testID", testID, "error", err)
+		return fmt.Errorf("failed to delete Part2Question by test ID: %w", err)
+	}
+	return nil
+}

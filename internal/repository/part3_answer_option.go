@@ -146,3 +146,15 @@ func (r *part3AnswerOptionRepository) applyFilters(query *gorm.DB, filters map[s
 	}
 	return query
 }
+
+// DeleteByConversationIDs 根据对话ID列表删除Part3AnswerOption
+func (r *part3AnswerOptionRepository) DeleteByConversationIDs(ctx context.Context, conversationIDs []uint) error {
+	if len(conversationIDs) == 0 {
+		return nil
+	}
+	if err := r.db.WithContext(ctx).Unscoped().Where("conversation_id IN ?", conversationIDs).Delete(&model.Part3AnswerOption{}).Error; err != nil {
+		r.logger.Error("Failed to delete Part3AnswerOption by conversation IDs", "conversationIDs", conversationIDs, "error", err)
+		return fmt.Errorf("failed to delete Part3AnswerOption by conversation IDs: %w", err)
+	}
+	return nil
+}

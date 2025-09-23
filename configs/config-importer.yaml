@@ -1,0 +1,121 @@
+# TOEIC Importer Configuration File
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8081
+  mode: "debug"
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 60
+
+# 数据库配置 - 测试数据库
+database:
+  driver: "mysql"
+  host: "127.0.0.1"
+  port: 3306
+  username: "vibe_user"
+  password: "vibe_password"
+  database: "vibe_coding_starter"
+  charset: "utf8mb4"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600
+
+# 缓存配置 - 禁用缓存
+cache:
+  driver: "memory"
+  host: "localhost"
+  port: 6379
+  password: ""
+  database: 0
+  pool_size: 10
+
+# 日志配置
+logger:
+  level: "info"
+  format: "console"
+  output: "stdout"
+  filename: "logs/importer.log"
+  max_size: 100
+  max_age: 30
+  max_backups: 10
+  compress: true
+
+# JWT 配置 - 导入器不需要
+jwt:
+  secret: "importer-secret-key"
+  issuer: "toeic-importer"
+  expiration: 86400
+
+# AI 配置 - 禁用
+ai:
+  enabled: false
+  provider: "openai"
+  api_key: ""
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 1000
+
+# 文件上传配置 - 导入器不需要
+upload:
+  max_size: 10485760
+  allowed_types:
+    - "text/plain"
+    - "text/markdown"
+  storage_type: "local"
+  local_path: "uploads"
+
+# CORS 配置 - 导入器不需要
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "GET"
+    - "POST"
+  allow_headers:
+    - "Content-Type"
+  allow_credentials: false
+  max_age: 43200
+
+# 限流配置 - 禁用
+rate_limit:
+  enabled: false
+  requests_per_minute: 1000
+  burst: 100
+
+# 安全配置 - 最小化
+security:
+  enable_https: false
+  tls_cert_file: ""
+  tls_key_file: ""
+  max_request_size: 10485760
+  request_timeout: 30
+  bcrypt_cost: 12
+  password_min_length: 6
+  session_timeout: 3600
+  max_login_attempts: 100
+  lockout_duration: 300
+
+# 邮件配置 - 禁用
+email:
+  enabled: false
+  smtp_host: ""
+  smtp_port: 587
+  username: ""
+  password: ""
+  from_email: ""
+  from_name: ""
+
+# 监控配置 - 禁用
+monitoring:
+  enabled: false
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+# 开发配置
+development:
+  auto_migrate: false
+  seed_data: false
+  debug_sql: false
+  hot_reload: false

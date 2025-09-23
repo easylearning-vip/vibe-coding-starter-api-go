@@ -147,3 +147,10 @@ type UpdateItemRequest struct {
 	SortOrder   int    `json:"sort_order"`
 	IsActive    *bool  `json:"is_active"`
 }
+
+// ToeicImporterService TOEIC文件导入服务接口
+type ToeicImporterService interface {
+	ImportFile(ctx context.Context, filename string) (*ImportResult, error)
+	CleanupTestData(ctx context.Context, testName string) error
+	ValidateFile(filename string) error
+}

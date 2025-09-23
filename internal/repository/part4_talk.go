@@ -133,8 +133,17 @@ func (r *part4TalkRepository) applyFilters(query *gorm.DB, filters map[string]in
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
 			}
-		// 在这里添加更多过滤器
+			// 在这里添加更多过滤器
 		}
 	}
 	return query
+}
+
+// DeleteByTestID 根据测试ID删除Part4Talk
+func (r *part4TalkRepository) DeleteByTestID(ctx context.Context, testID uint) error {
+	if err := r.db.WithContext(ctx).Unscoped().Where("test_id = ?", testID).Delete(&model.Part4Talk{}).Error; err != nil {
+		r.logger.Error("Failed to delete Part4Talk by test ID", "testID", testID, "error", err)
+		return fmt.Errorf("failed to delete Part4Talk by test ID: %w", err)
+	}
+	return nil
 }

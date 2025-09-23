@@ -142,6 +142,7 @@ type Part2QuestionRepository interface {
 	Repository[model.Part2Question, uint]
 	// 在这里添加特定的查询方法
 	GetByQuestionText(ctx context.Context, questionText string) (*model.Part2Question, error)
+	DeleteByTestID(ctx context.Context, testID uint) error
 }
 
 // Part3ConversationRepository Part3Conversation仓储接口
@@ -149,6 +150,7 @@ type Part3ConversationRepository interface {
 	Repository[model.Part3Conversation, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Part3Conversation, error)
+	DeleteByTestID(ctx context.Context, testID uint) error
 }
 
 // Part3AnswerOptionRepository Part3AnswerOption仓储接口
@@ -156,6 +158,7 @@ type Part3AnswerOptionRepository interface {
 	Repository[model.Part3AnswerOption, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Part3AnswerOption, error)
+	DeleteByConversationIDs(ctx context.Context, conversationIDs []uint) error
 }
 
 // Part4TalkRepository Part4Talk仓储接口
@@ -163,6 +166,7 @@ type Part4TalkRepository interface {
 	Repository[model.Part4Talk, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Part4Talk, error)
+	DeleteByTestID(ctx context.Context, testID uint) error
 }
 
 // Part4AnswerOptionRepository Part4AnswerOption仓储接口
@@ -170,4 +174,5 @@ type Part4AnswerOptionRepository interface {
 	Repository[model.Part4AnswerOption, uint]
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Part4AnswerOption, error)
+	DeleteByTalkIDs(ctx context.Context, talkIDs []uint) error
 }

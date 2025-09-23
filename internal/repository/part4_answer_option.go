@@ -133,8 +133,20 @@ func (r *part4AnswerOptionRepository) applyFilters(query *gorm.DB, filters map[s
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
 			}
-		// 在这里添加更多过滤器
+			// 在这里添加更多过滤器
 		}
 	}
 	return query
+}
+
+// DeleteByTalkIDs 根据演讲ID列表删除Part4AnswerOption
+func (r *part4AnswerOptionRepository) DeleteByTalkIDs(ctx context.Context, talkIDs []uint) error {
+	if len(talkIDs) == 0 {
+		return nil
+	}
+	if err := r.db.WithContext(ctx).Unscoped().Where("talk_id IN ?", talkIDs).Delete(&model.Part4AnswerOption{}).Error; err != nil {
+		r.logger.Error("Failed to delete Part4AnswerOption by talk IDs", "talkIDs", talkIDs, "error", err)
+		return fmt.Errorf("failed to delete Part4AnswerOption by talk IDs: %w", err)
+	}
+	return nil
 }
