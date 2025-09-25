@@ -1,9 +1,7 @@
 package model
 
 import (
-
 	"database/sql"
-
 
 	"gorm.io/gorm"
 )
@@ -30,6 +28,8 @@ type Part3Conversation struct {
 
 	DifficultyLevelId sql.NullInt32 `json:"difficulty_level_id" gorm:"column:difficulty_level_id;type:int"` // DifficultyLevelId 可空自定义类型
 
+	// 关联的答案选项
+	AnswerOptions []Part3AnswerOption `json:"answer_options,omitempty" gorm:"foreignKey:ConversationId;references:ID"`
 }
 
 // TableName 获取表名

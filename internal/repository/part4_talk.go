@@ -125,6 +125,56 @@ func (r *part4TalkRepository) List(ctx context.Context, opts ListOptions) ([]*mo
 	return entities, total, nil
 }
 
+// ListWithAnswerOptions 获取Part4Talk列表并预加载答案选项
+func (r *part4TalkRepository) ListWithAnswerOptions(ctx context.Context, opts ListOptions) ([]*model.Part4Talk, int64, error) {
+	var entities []*model.Part4Talk
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&model.Part4Talk{})
+
+	// 应用过滤器
+	query = r.applyFilters(query, opts.Filters)
+
+	// 应用搜索
+	if opts.Search != "" {
+		query = query.Where("name LIKE ?", "%"+opts.Search+"%")
+	}
+
+	// 获取总数
+	if err := query.Count(&total).Error; err != nil {
+		r.logger.Error("Failed to count Part4Talk", "error", err)
+		return nil, 0, fmt.Errorf("failed to count Part4Talk: %w", err)
+	}
+
+	// 应用排序
+	if opts.Sort != "" {
+		order := "ASC"
+		if opts.Order == "desc" {
+			order = "DESC"
+		}
+		query = query.Order(fmt.Sprintf("%s %s", opts.Sort, order))
+	} else {
+		query = query.Order("created_at DESC")
+	}
+
+	// 应用分页
+	if opts.Page > 0 && opts.PageSize > 0 {
+		offset := (opts.Page - 1) * opts.PageSize
+		query = query.Offset(offset).Limit(opts.PageSize)
+	}
+
+	// 预加载答案选项
+	query = query.Preload("AnswerOptions")
+
+	// 执行查询
+	if err := query.Find(&entities).Error; err != nil {
+		r.logger.Error("Failed to list Part4Talk with answer options", "error", err)
+		return nil, 0, fmt.Errorf("failed to list Part4Talk with answer options: %w", err)
+	}
+
+	return entities, total, nil
+}
+
 // applyFilters 应用过滤器
 func (r *part4TalkRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
@@ -133,7 +183,18 @@ func (r *part4TalkRepository) applyFilters(query *gorm.DB, filters map[string]in
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
 			}
-			// 在这里添加更多过滤器
+		case "test_id":
+			if v, ok := value.(int); ok && v > 0 {
+				query = query.Where("test_id = ?", v)
+			}
+		case "scenario_id":
+			if v, ok := value.(int); ok && v > 0 {
+				query = query.Where("scenario_id = ?", v)
+			}
+		case "difficulty_level_id":
+			if v, ok := value.(int); ok && v > 0 {
+				query = query.Where("difficulty_level_id = ?", v)
+			}
 		}
 	}
 	return query

@@ -90,8 +90,10 @@ func (m *Middleware) SetupGlobalMiddleware(engine *gin.Engine) {
 		engine.Use(m.cors.CORS())
 	}
 
-	// 全局限流
-	engine.Use(m.rateLimit.IPRateLimit(100, 200)) // 每分钟 100 次请求
+	// 全局限流 - 开发环境完全禁用
+	if m.config.Server.Mode != "debug" {
+		engine.Use(m.rateLimit.IPRateLimit(300, 600)) // 仅生产模式启用限流
+	}
 
 	// 安全检查
 	engine.Use(m.security.RequestSizeLimit(10 * 1024 * 1024)) // 10MB 限制
@@ -101,11 +103,13 @@ func (m *Middleware) SetupGlobalMiddleware(engine *gin.Engine) {
 // SetupAPIMiddleware 设置 API 中间件
 func (m *Middleware) SetupAPIMiddleware() []gin.HandlerFunc {
 	middlewares := []gin.HandlerFunc{
-		// API 专用限流
-		m.rateLimit.UserRateLimit(60, 120), // 每分钟 60 次请求
-		
 		// 错误日志
 		m.logging.ErrorLogging(),
+	}
+
+	// API 专用限流 - 开发环境完全禁用
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.UserRateLimit(120, 240)) // 仅生产模式启用限流
 	}
 
 	return middlewares
@@ -129,10 +133,16 @@ func (m *Middleware) SetupAdminMiddleware() []gin.HandlerFunc {
 
 // SetupPublicMiddleware 设置公共接口中间件组
 func (m *Middleware) SetupPublicMiddleware() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
+	middlewares := []gin.HandlerFunc{
 		m.auth.OptionalAuth(),
-		m.rateLimit.IPRateLimit(30, 60), // 更严格的限流
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.IPRateLimit(30, 60))
+	}
+
+	return middlewares
 }
 
 // 便捷方法
@@ -206,65 +216,105 @@ func (m *Middleware) BasicAuth(username, password string) gin.HandlerFunc {
 
 // PublicAPI 公共 API 中间件组合
 func (m *Middleware) PublicAPI() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
+	middlewares := []gin.HandlerFunc{
 		m.auth.OptionalAuth(),
-		m.rateLimit.IPRateLimit(30, 60),
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.IPRateLimit(30, 60))
+	}
+
+	return middlewares
 }
 
 // ProtectedAPI 受保护的 API 中间件组合
 func (m *Middleware) ProtectedAPI() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
+	middlewares := []gin.HandlerFunc{
 		m.auth.RequireAuth(),
-		m.rateLimit.UserRateLimit(60, 120),
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.UserRateLimit(60, 120))
+	}
+
+	return middlewares
 }
 
 // AdminAPI 管理员 API 中间件组合
 func (m *Middleware) AdminAPI() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
+	middlewares := []gin.HandlerFunc{
 		m.auth.RequireAuth(),
 		m.auth.RequireRole("admin"),
-		m.rateLimit.AdminRateLimit(),
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.AdminRateLimit()) // 仅生产模式启用限流
+	}
+
+	return middlewares
 }
 
 // FileUploadAPI 文件上传 API 中间件组合
 func (m *Middleware) FileUploadAPI() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
+	middlewares := []gin.HandlerFunc{
 		m.auth.RequireAuth(),
-		m.rateLimit.UploadRateLimit(),
 		m.security.RequestSizeLimit(50 * 1024 * 1024), // 50MB
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.UploadRateLimit())
+	}
+
+	return middlewares
 }
 
 // AuthAPI 认证相关 API 中间件组合
 func (m *Middleware) AuthAPI() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
-		m.rateLimit.LoginRateLimit(),
+	middlewares := []gin.HandlerFunc{
 		m.security.NoCache(),
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.LoginRateLimit())
+	}
+
+	return middlewares
 }
 
 // HealthCheckAPI 健康检查 API 中间件组合
 func (m *Middleware) HealthCheckAPI() []gin.HandlerFunc {
-	return []gin.HandlerFunc{
-		m.rateLimit.IPRateLimit(10, 20),
+	middlewares := []gin.HandlerFunc{
 		m.security.NoCache(),
 	}
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.IPRateLimit(10, 20))
+	}
+
+	return middlewares
 }
 
 // WebhookAPI Webhook API 中间件组合
 func (m *Middleware) WebhookAPI(allowedIPs []string) []gin.HandlerFunc {
 	middlewares := []gin.HandlerFunc{
-		m.rateLimit.IPRateLimit(100, 200),
 		m.security.NoCache(),
 	}
-	
+
+	// 开发环境禁用限流
+	if m.config.Server.Mode != "debug" {
+		middlewares = append(middlewares, m.rateLimit.IPRateLimit(100, 200))
+	}
+
 	if len(allowedIPs) > 0 {
 		middlewares = append(middlewares, m.security.IPWhitelist(allowedIPs))
 	}
-	
+
 	return middlewares
 }
 
@@ -273,10 +323,10 @@ func (m *Middleware) DevelopmentAPI() []gin.HandlerFunc {
 	if m.config.Server.Mode != "debug" {
 		return m.ProtectedAPI()
 	}
-	
+
 	return []gin.HandlerFunc{
 		m.auth.OptionalAuth(),
-		m.rateLimit.IPRateLimit(1000, 2000), // 开发环境更宽松的限流
+		// 开发环境完全禁用限流
 	}
 }
 

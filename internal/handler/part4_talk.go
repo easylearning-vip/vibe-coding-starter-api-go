@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"vibe-coding-starter/internal/model"
 	"vibe-coding-starter/internal/repository"
 	"vibe-coding-starter/internal/service"
 	"vibe-coding-starter/pkg/logger"
@@ -195,13 +196,14 @@ func (h *Part4TalkHandler) Delete(c *gin.Context) {
 
 // List 获取Part4Talk列表
 // @Summary 获取Part4Talk列表
-// @Description 获取Part4Talk列表，支持分页、搜索和过滤
+// @Description 获取Part4Talk列表，支持分页、搜索和过滤。如果包含include_answer_options=true参数，则预加载答案选项
 // @Tags part4talks
 // @Accept json
 // @Produce json
 // @Param page query int false "页码" default(1)
 // @Param page_size query int false "每页数量" default(10)
 // @Param search query string false "搜索关键词"
+// @Param include_answer_options query bool false "是否包含答案选项" default(false)
 // @Success 200 {object} ListResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /api/v1/part4talks [get]
@@ -216,7 +218,19 @@ func (h *Part4TalkHandler) List(c *gin.Context) {
 		Filters:  opts.Filters,
 	}
 
-	part4talks, total, err := h.part4TalkService.List(c.Request.Context(), serviceOpts)
+	// 检查是否需要预加载答案选项
+	includeAnswerOptions := c.Query("include_answer_options") == "true"
+
+	var part4talks []*model.Part4Talk
+	var total int64
+	var err error
+
+	if includeAnswerOptions {
+		part4talks, total, err = h.part4TalkService.ListWithAnswerOptions(c.Request.Context(), serviceOpts)
+	} else {
+		part4talks, total, err = h.part4TalkService.List(c.Request.Context(), serviceOpts)
+	}
+
 	if err != nil {
 		h.logger.Error("Failed to get part4talks", "error", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
@@ -243,7 +257,27 @@ func (h *Part4TalkHandler) parseListOptions(c *gin.Context) repository.ListOptio
 
 	// 构建过滤器
 	filters := make(map[string]interface{})
-	// 在这里添加特定的过滤器逻辑
+
+	// 添加 test_id 过滤器
+	if testID := c.Query("test_id"); testID != "" {
+		if id, err := strconv.Atoi(testID); err == nil {
+			filters["test_id"] = id
+		}
+	}
+
+	// 添加 scenario_id 过滤器
+	if scenarioID := c.Query("scenario_id"); scenarioID != "" {
+		if id, err := strconv.Atoi(scenarioID); err == nil {
+			filters["scenario_id"] = id
+		}
+	}
+
+	// 添加 difficulty_level_id 过滤器
+	if difficultyLevelID := c.Query("difficulty_level_id"); difficultyLevelID != "" {
+		if id, err := strconv.Atoi(difficultyLevelID); err == nil {
+			filters["difficulty_level_id"] = id
+		}
+	}
 
 	return repository.ListOptions{
 		Page:     page,

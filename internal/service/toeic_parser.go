@@ -344,17 +344,12 @@ func (s *toeicImporterService) parseConversationContent(lines []string, startInd
 		j++
 	}
 
-	// Parse conversation dialogue
+	// Parse conversation dialogue and embedded questions
+	var allContent strings.Builder
 	for ; j < len(lines); j++ {
 		line := strings.TrimSpace(lines[j])
 		if line == "" {
 			continue
-		}
-
-		// Stop if we hit a question
-		if regexp.MustCompile(`^\*\*(\d+)\.\s*(.+)\*\*$`).MatchString(line) ||
-			regexp.MustCompile(`^\*\*Question (\d+):\*\*`).MatchString(line) {
-			break
 		}
 
 		// Stop if we hit next conversation or part
@@ -362,23 +357,78 @@ func (s *toeicImporterService) parseConversationContent(lines []string, startInd
 			break
 		}
 
-		// Add dialogue line
-		if strings.HasPrefix(line, "**") && strings.Contains(line, ":**") {
-			content.WriteString(line + "\n")
-		} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") {
-			content.WriteString(line + "\n")
-		} else if content.Len() > 0 {
-			content.WriteString(line + "\n")
-		}
+		allContent.WriteString(line + "\n")
 	}
 
-	// Parse questions
-	for qNum := startQ; qNum <= endQ && j < len(lines); qNum++ {
-		question, nextJ := s.parseQuestion(lines, j, qNum)
-		if question != nil {
-			questions = append(questions, *question)
+	// Now parse the content to separate dialogue from questions
+	contentStr := allContent.String()
+
+	// Check if questions are embedded in the content (format: **Q32:** or **Question 32:**)
+	if strings.Contains(contentStr, "**Q"+fmt.Sprintf("%d", startQ)+":**") ||
+		strings.Contains(contentStr, "**Question "+fmt.Sprintf("%d", startQ)+":**") {
+		// Parse embedded questions format
+		questions = s.parseEmbeddedQuestions(contentStr, startQ, endQ)
+		// Extract only dialogue content (everything before first question)
+		content.WriteString(s.extractDialogueFromEmbeddedContent(contentStr, startQ))
+	} else {
+		// Traditional format - questions are separate from dialogue
+		// First, separate dialogue from questions in the content
+		contentLines := strings.Split(contentStr, "\n")
+		var dialogueLines []string
+		var questionStartIdx = -1
+
+		for i, line := range contentLines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			// Check if this line starts a question (multiple patterns)
+			questionPatterns := []string{
+				`^\*\*Question (\d+):\*\*`,
+				`^\*\*Question (\d+)\*\*\s*$`,
+				`^\*\*(\d+)\.\s*(.+)\*\*$`,
+			}
+
+			isQuestion := false
+			for _, pattern := range questionPatterns {
+				if matched, _ := regexp.MatchString(pattern, line); matched {
+					questionStartIdx = i
+					isQuestion = true
+					break
+				}
+			}
+
+			if isQuestion {
+				break
+			}
+
+			// Add to dialogue if it's conversation content
+			if strings.HasPrefix(line, "**") && strings.Contains(line, ":**") {
+				// Speaker lines like **Woman:** or **Man:**
+				dialogueLines = append(dialogueLines, line)
+			} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") && !strings.Contains(line, "Question") {
+				// Other bold text that's not a question
+				dialogueLines = append(dialogueLines, line)
+			} else if len(dialogueLines) > 0 && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ") {
+				// Regular dialogue content (but not answer options)
+				dialogueLines = append(dialogueLines, line)
+			}
 		}
-		j = nextJ
+
+		// Set dialogue content
+		content.WriteString(strings.Join(dialogueLines, "\n"))
+
+		// Parse questions from the remaining content lines
+		if questionStartIdx >= 0 {
+			questionLines := contentLines[questionStartIdx:]
+			for qNum := startQ; qNum <= endQ; qNum++ {
+				question, _ := s.parseQuestion(questionLines, 0, qNum)
+				if question != nil {
+					questions = append(questions, *question)
+				}
+			}
+		}
 	}
 
 	return &ParsedConversation{
@@ -491,17 +541,12 @@ func (s *toeicImporterService) parseTalkContent(lines []string, startIndex, talk
 		j++
 	}
 
-	// Parse talk content
+	// Parse talk content and embedded questions
+	var allContent strings.Builder
 	for ; j < len(lines); j++ {
 		line := strings.TrimSpace(lines[j])
 		if line == "" {
 			continue
-		}
-
-		// Stop if we hit a question
-		if regexp.MustCompile(`^\*\*(\d+)\.\s*(.+)\*\*$`).MatchString(line) ||
-			regexp.MustCompile(`^\*\*Question (\d+):\*\*`).MatchString(line) {
-			break
 		}
 
 		// Stop if we hit next talk or part
@@ -509,25 +554,78 @@ func (s *toeicImporterService) parseTalkContent(lines []string, startIndex, talk
 			break
 		}
 
-		// Add content line
-		if strings.HasPrefix(line, "**") && strings.Contains(line, ":**") {
-			content.WriteString(line + "\n")
-		} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") {
-			content.WriteString(line + "\n")
-		} else if content.Len() > 0 {
-			content.WriteString(line + "\n")
-		} else if !strings.HasPrefix(line, "**") {
-			content.WriteString(line + "\n")
-		}
+		allContent.WriteString(line + "\n")
 	}
 
-	// Parse questions
-	for qNum := startQ; qNum <= endQ && j < len(lines); qNum++ {
-		question, nextJ := s.parseQuestion(lines, j, qNum)
-		if question != nil {
-			questions = append(questions, *question)
+	// Now parse the content to separate talk content from questions
+	contentStr := allContent.String()
+
+	// Check if questions are embedded in the content (format: **Q71:** or **Question 71:**)
+	if strings.Contains(contentStr, "**Q"+fmt.Sprintf("%d", startQ)+":**") ||
+		strings.Contains(contentStr, "**Question "+fmt.Sprintf("%d", startQ)+":**") {
+		// Parse embedded questions format
+		questions = s.parseEmbeddedQuestions(contentStr, startQ, endQ)
+		// Extract only talk content (everything before first question)
+		content.WriteString(s.extractDialogueFromEmbeddedContent(contentStr, startQ))
+	} else {
+		// Traditional format - questions are separate from talk content
+		// First, separate talk content from questions
+		contentLines := strings.Split(contentStr, "\n")
+		var talkLines []string
+		var questionStartIdx = -1
+
+		for i, line := range contentLines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			// Check if this line starts a question (multiple patterns)
+			questionPatterns := []string{
+				`^\*\*Question (\d+):\*\*`,
+				`^\*\*Question (\d+)\*\*\s*$`,
+				`^\*\*(\d+)\.\s*(.+)\*\*$`,
+			}
+
+			isQuestion := false
+			for _, pattern := range questionPatterns {
+				if matched, _ := regexp.MatchString(pattern, line); matched {
+					questionStartIdx = i
+					isQuestion = true
+					break
+				}
+			}
+
+			if isQuestion {
+				break
+			}
+
+			// Add to talk content
+			if strings.HasPrefix(line, "**") && strings.Contains(line, ":**") {
+				// Speaker lines like **Host:** or **Announcer:**
+				talkLines = append(talkLines, line)
+			} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") && !strings.Contains(line, "Question") {
+				// Other bold text that's not a question
+				talkLines = append(talkLines, line)
+			} else if len(talkLines) > 0 || (!strings.HasPrefix(line, "**") && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ")) {
+				// Regular talk content (but not answer options)
+				talkLines = append(talkLines, line)
+			}
 		}
-		j = nextJ
+
+		// Set talk content
+		content.WriteString(strings.Join(talkLines, "\n"))
+
+		// Parse questions from the remaining content lines
+		if questionStartIdx >= 0 {
+			questionLines := contentLines[questionStartIdx:]
+			for qNum := startQ; qNum <= endQ; qNum++ {
+				question, _ := s.parseQuestion(questionLines, 0, qNum)
+				if question != nil {
+					questions = append(questions, *question)
+				}
+			}
+		}
 	}
 
 	return &ParsedTalk{
@@ -553,6 +651,34 @@ func (s *toeicImporterService) parseQuestion(lines []string, startIndex int, exp
 		if len(matches) == 0 {
 			altQuestionRegex := regexp.MustCompile(`^\*\*Question (\d+):\*\*\s*(.+)$`)
 			matches = altQuestionRegex.FindStringSubmatch(line)
+		}
+
+		// Also look for pattern: **Question 32:** (question text on same line or next line)
+		if len(matches) == 0 {
+			altQuestionRegex2 := regexp.MustCompile(`^\*\*Question (\d+):\*\*(.*)$`)
+			matches = altQuestionRegex2.FindStringSubmatch(line)
+			if len(matches) == 3 && strings.TrimSpace(matches[2]) == "" {
+				// Question text is on next line
+				if i+1 < len(lines) {
+					nextLine := strings.TrimSpace(lines[i+1])
+					matches[2] = nextLine
+				}
+			}
+		}
+
+		// Also look for pattern: **Question 32** (without colon, used in test09)
+		if len(matches) == 0 {
+			altQuestionRegex3 := regexp.MustCompile(`^\*\*Question (\d+)\*\*\s*$`)
+			matches = altQuestionRegex3.FindStringSubmatch(line)
+			if len(matches) == 2 {
+				// Question text is on next line
+				if i+1 < len(lines) {
+					nextLine := strings.TrimSpace(lines[i+1])
+					if nextLine != "" && !strings.HasPrefix(nextLine, "A. ") {
+						matches = []string{line, matches[1], nextLine}
+					}
+				}
+			}
 		}
 
 		if len(matches) == 3 {
@@ -607,4 +733,149 @@ func (s *toeicImporterService) parseQuestion(lines []string, startIndex int, exp
 	}
 
 	return nil, len(lines)
+}
+
+// parseEmbeddedQuestions 解析嵌入在内容中的问题
+func (s *toeicImporterService) parseEmbeddedQuestions(content string, startQ, endQ int) []ParsedQuestion {
+	var questions []ParsedQuestion
+	lines := strings.Split(content, "\n")
+
+	for qNum := startQ; qNum <= endQ; qNum++ {
+		// Look for question patterns: **Q32:** or **Question 32:**
+		var questionText string
+		var questionStartIdx = -1
+
+		for i, line := range lines {
+			line = strings.TrimSpace(line)
+
+			// Pattern 1: **Q32:** question text
+			qPattern1 := regexp.MustCompile(`^\*\*Q(\d+):\*\*\s*(.+)$`)
+			matches := qPattern1.FindStringSubmatch(line)
+
+			if len(matches) == 3 {
+				if num, err := strconv.Atoi(matches[1]); err == nil && num == qNum {
+					questionText = strings.TrimSpace(matches[2])
+					questionStartIdx = i
+					break
+				}
+			}
+
+			// Pattern 2: **Question 32:** question text
+			qPattern2 := regexp.MustCompile(`^\*\*Question (\d+):\*\*\s*(.+)$`)
+			matches = qPattern2.FindStringSubmatch(line)
+
+			if len(matches) == 3 {
+				if num, err := strconv.Atoi(matches[1]); err == nil && num == qNum {
+					questionText = strings.TrimSpace(matches[2])
+					questionStartIdx = i
+					break
+				}
+			}
+
+			// Pattern 3: **Question 32** (without colon, used in test09)
+			qPattern3 := regexp.MustCompile(`^\*\*Question (\d+)\*\*\s*$`)
+			matches = qPattern3.FindStringSubmatch(line)
+
+			if len(matches) == 2 {
+				if num, err := strconv.Atoi(matches[1]); err == nil && num == qNum {
+					// Question text is on the next line
+					if i+1 < len(lines) {
+						nextLine := strings.TrimSpace(lines[i+1])
+						if nextLine != "" && !strings.HasPrefix(nextLine, "A. ") {
+							questionText = nextLine
+							questionStartIdx = i
+							break
+						}
+					}
+				}
+			}
+		}
+
+		if questionStartIdx == -1 {
+			s.logger.Warn("Question not found", "questionNumber", qNum)
+			continue
+		}
+
+		// Parse answer options A, B, C, D
+		var optionA, optionB, optionC, optionD string
+
+		// Start looking for options from the line after the question
+		startIdx := questionStartIdx + 1
+		if questionText == "" && questionStartIdx+2 < len(lines) {
+			// If question text was on next line, start from line after that
+			startIdx = questionStartIdx + 2
+		}
+
+		for i := startIdx; i < len(lines) && i < startIdx+8; i++ {
+			line := strings.TrimSpace(lines[i])
+			if line == "" {
+				continue
+			}
+
+			if strings.HasPrefix(line, "A. ") || strings.HasPrefix(line, "A.  ") {
+				optionA = strings.TrimSpace(line[3:])
+			} else if strings.HasPrefix(line, "B. ") || strings.HasPrefix(line, "B.  ") {
+				optionB = strings.TrimSpace(line[3:])
+			} else if strings.HasPrefix(line, "C. ") || strings.HasPrefix(line, "C.  ") {
+				optionC = strings.TrimSpace(line[3:])
+			} else if strings.HasPrefix(line, "D. ") || strings.HasPrefix(line, "D.  ") {
+				optionD = strings.TrimSpace(line[3:])
+			} else if strings.HasPrefix(line, "**Q") || strings.HasPrefix(line, "**Question") || strings.HasPrefix(line, "###") {
+				// Hit next question or section
+				break
+			}
+		}
+
+		if optionA != "" && optionB != "" && optionC != "" && optionD != "" {
+			questions = append(questions, ParsedQuestion{
+				Number:        qNum,
+				Text:          questionText,
+				OptionA:       optionA,
+				OptionB:       optionB,
+				OptionC:       optionC,
+				OptionD:       optionD,
+				CorrectAnswer: "", // Will be determined later or left empty
+			})
+		} else {
+			s.logger.Warn("Incomplete question options", "questionNumber", qNum, "optionA", optionA, "optionB", optionB, "optionC", optionC, "optionD", optionD)
+		}
+	}
+
+	return questions
+}
+
+// extractDialogueFromEmbeddedContent 从嵌入问题的内容中提取对话部分
+func (s *toeicImporterService) extractDialogueFromEmbeddedContent(content string, startQ int) string {
+	lines := strings.Split(content, "\n")
+	var dialogue strings.Builder
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Stop when we hit the first question
+		qPattern1 := regexp.MustCompile(`^\*\*Q(\d+):\*\*`)
+		qPattern2 := regexp.MustCompile(`^\*\*Question (\d+):\*\*`)
+		qPattern3 := regexp.MustCompile(`^\*\*Question (\d+)\*\*\s*$`)
+
+		if qPattern1.MatchString(line) || qPattern2.MatchString(line) || qPattern3.MatchString(line) {
+			break
+		}
+
+		// Add dialogue lines (speaker lines and regular content)
+		if strings.HasPrefix(line, "**") && strings.Contains(line, ":**") {
+			// Speaker lines like **Woman:** or **Man:**
+			dialogue.WriteString(line + "\n")
+		} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") && !strings.Contains(line, ":") {
+			// Other bold text that's not a question
+			dialogue.WriteString(line + "\n")
+		} else if dialogue.Len() > 0 && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ") {
+			// Regular dialogue content (but not answer options)
+			dialogue.WriteString(line + "\n")
+		}
+	}
+
+	return strings.TrimSpace(dialogue.String())
 }

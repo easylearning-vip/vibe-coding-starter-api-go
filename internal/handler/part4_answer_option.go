@@ -14,7 +14,7 @@ import (
 // Part4AnswerOptionHandler Part4AnswerOption处理器
 type Part4AnswerOptionHandler struct {
 	part4AnswerOptionService service.Part4AnswerOptionService
-	logger         logger.Logger
+	logger                   logger.Logger
 }
 
 // NewPart4AnswerOptionHandler 创建Part4AnswerOption处理器
@@ -24,7 +24,7 @@ func NewPart4AnswerOptionHandler(
 ) *Part4AnswerOptionHandler {
 	return &Part4AnswerOptionHandler{
 		part4AnswerOptionService: part4AnswerOptionService,
-		logger:         logger,
+		logger:                   logger,
 	}
 }
 
@@ -243,7 +243,13 @@ func (h *Part4AnswerOptionHandler) parseListOptions(c *gin.Context) repository.L
 
 	// 构建过滤器
 	filters := make(map[string]interface{})
-	// 在这里添加特定的过滤器逻辑
+
+	// 添加 talk_id 过滤器
+	if talkID := c.Query("talk_id"); talkID != "" {
+		if id, err := strconv.Atoi(talkID); err == nil {
+			filters["talk_id"] = id
+		}
+	}
 
 	return repository.ListOptions{
 		Page:     page,

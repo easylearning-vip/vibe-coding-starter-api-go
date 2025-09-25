@@ -133,6 +133,10 @@ func (r *part4AnswerOptionRepository) applyFilters(query *gorm.DB, filters map[s
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
 			}
+		case "talk_id":
+			if v, ok := value.(int); ok && v > 0 {
+				query = query.Where("talk_id = ?", v)
+			}
 			// 在这里添加更多过滤器
 		}
 	}

@@ -151,6 +151,8 @@ type Part3ConversationRepository interface {
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Part3Conversation, error)
 	DeleteByTestID(ctx context.Context, testID uint) error
+	// 预加载答案选项的列表查询
+	ListWithAnswerOptions(ctx context.Context, opts ListOptions) ([]*model.Part3Conversation, int64, error)
 }
 
 // Part3AnswerOptionRepository Part3AnswerOption仓储接口
@@ -167,6 +169,8 @@ type Part4TalkRepository interface {
 	// 在这里添加特定的查询方法
 	GetByName(ctx context.Context, name string) (*model.Part4Talk, error)
 	DeleteByTestID(ctx context.Context, testID uint) error
+	// 预加载答案选项的列表查询
+	ListWithAnswerOptions(ctx context.Context, opts ListOptions) ([]*model.Part4Talk, int64, error)
 }
 
 // Part4AnswerOptionRepository Part4AnswerOption仓储接口

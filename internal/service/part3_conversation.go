@@ -17,6 +17,8 @@ type Part3ConversationService interface {
 	Update(ctx context.Context, id uint, req *UpdatePart3ConversationRequest) (*model.Part3Conversation, error)
 	Delete(ctx context.Context, id uint) error
 	List(ctx context.Context, opts *ListPart3ConversationOptions) ([]*model.Part3Conversation, int64, error)
+	// 预加载答案选项的列表查询
+	ListWithAnswerOptions(ctx context.Context, opts *ListPart3ConversationOptions) ([]*model.Part3Conversation, int64, error)
 }
 
 // part3ConversationService Part3Conversation服务实现
@@ -214,6 +216,39 @@ func (s *part3ConversationService) List(ctx context.Context, opts *ListPart3Conv
 	if err != nil {
 		s.logger.Error("Failed to list part3conversations", "error", err)
 		return nil, 0, fmt.Errorf("failed to list part3conversations: %w", err)
+	}
+
+	return entities, total, nil
+}
+
+// ListWithAnswerOptions 获取Part3Conversation列表并预加载答案选项
+func (s *part3ConversationService) ListWithAnswerOptions(ctx context.Context, opts *ListPart3ConversationOptions) ([]*model.Part3Conversation, int64, error) {
+	// 设置默认值
+	if opts.Page <= 0 {
+		opts.Page = 1
+	}
+	if opts.PageSize <= 0 {
+		opts.PageSize = 20
+	}
+	if opts.PageSize > 100 {
+		opts.PageSize = 100
+	}
+
+	// 转换为仓储选项
+	repoOpts := repository.ListOptions{
+		Page:     opts.Page,
+		PageSize: opts.PageSize,
+		Sort:     opts.Sort,
+		Order:    opts.Order,
+		Filters:  opts.Filters,
+		Search:   opts.Search,
+	}
+
+	// 获取列表并预加载答案选项
+	entities, total, err := s.part3ConversationRepo.ListWithAnswerOptions(ctx, repoOpts)
+	if err != nil {
+		s.logger.Error("Failed to list part3conversations with answer options", "error", err)
+		return nil, 0, fmt.Errorf("failed to list part3conversations with answer options: %w", err)
 	}
 
 	return entities, total, nil

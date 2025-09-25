@@ -119,7 +119,7 @@ cors:
 
 # 限流配置
 rate_limit:
-  enabled: true
+  enabled: false  # 禁用限流以便开发测试
   requests_per_minute: 120  # 开发环境放宽限制
   burst: 20
 
