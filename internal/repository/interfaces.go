@@ -180,3 +180,43 @@ type Part4AnswerOptionRepository interface {
 	GetByName(ctx context.Context, name string) (*model.Part4AnswerOption, error)
 	DeleteByTalkIDs(ctx context.Context, talkIDs []uint) error
 }
+
+// Part2PracticeItemRepository 个人Part2练习记录仓储接口
+type Part2PracticeItemRepository interface {
+	Repository[model.Part2PracticeItem, uint]
+}
+
+// Part3PracticeItemRepository 个人Part3练习记录仓储接口
+type Part3PracticeItemRepository interface {
+	Repository[model.Part3PracticeItem, uint]
+}
+
+// Part4PracticeItemRepository 个人Part4练习记录仓储接口
+type Part4PracticeItemRepository interface {
+	Repository[model.Part4PracticeItem, uint]
+}
+
+// Practice Set repositories (Master/Detail) for Part2/Part3/Part4
+// Part2
+type Part2PracticeSetRepository interface {
+	Repository[model.Part2PracticeSet, uint]
+}
+type Part2PracticeSetItemRepository interface {
+	Repository[model.Part2PracticeSetItem, uint]
+}
+
+// Part3
+type Part3PracticeSetRepository interface {
+	Repository[model.Part3PracticeSet, uint]
+}
+type Part3PracticeSetItemRepository interface {
+	Repository[model.Part3PracticeSetItem, uint]
+}
+
+// Part4
+type Part4PracticeSetRepository interface {
+	Repository[model.Part4PracticeSet, uint]
+}
+type Part4PracticeSetItemRepository interface {
+	Repository[model.Part4PracticeSetItem, uint]
+}

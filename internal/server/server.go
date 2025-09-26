@@ -18,23 +18,32 @@ import (
 
 // Server HTTP 服务器
 type Server struct {
-	config         *config.Config
-	logger         logger.Logger
-	httpServer     *http.Server
-	middleware     *middleware.Middleware
-	userHandler    *handler.UserHandler
-	articleHandler *handler.ArticleHandler
-	healthHandler  *handler.HealthHandler
-	dictHandler    *handler.DictHandler
+	config                   *config.Config
+	logger                   logger.Logger
+	httpServer               *http.Server
+	middleware               *middleware.Middleware
+	userHandler              *handler.UserHandler
+	articleHandler           *handler.ArticleHandler
+	healthHandler            *handler.HealthHandler
+	dictHandler              *handler.DictHandler
 	part4answeroptionHandler *handler.Part4AnswerOptionHandler
-	part4talkHandler *handler.Part4TalkHandler
+	part4talkHandler         *handler.Part4TalkHandler
 	part3answeroptionHandler *handler.Part3AnswerOptionHandler
 	part3conversationHandler *handler.Part3ConversationHandler
-	part2questionHandler *handler.Part2QuestionHandler
-	testHandler *handler.TestHandler
-	scenarioHandler *handler.ScenarioHandler
-	difficultylevelHandler *handler.DifficultyLevelHandler
-	departmentHandler *handler.DepartmentHandler
+	part2questionHandler     *handler.Part2QuestionHandler
+	testHandler              *handler.TestHandler
+	scenarioHandler          *handler.ScenarioHandler
+	difficultylevelHandler   *handler.DifficultyLevelHandler
+	departmentHandler        *handler.DepartmentHandler
+
+	// user practice handlers
+	part2PracticeItemHandler *handler.Part2PracticeItemHandler
+	part3PracticeItemHandler *handler.Part3PracticeItemHandler
+	part4PracticeItemHandler *handler.Part4PracticeItemHandler
+	// practice set handlers (Master/Detail)
+	part2PracticeSetHandler *handler.Part2PracticeSetHandler
+	part3PracticeSetHandler *handler.Part3PracticeSetHandler
+	part4PracticeSetHandler *handler.Part4PracticeSetHandler
 }
 
 // New 创建新的服务器实例
@@ -55,24 +64,37 @@ func New(
 	scenarioHandler *handler.ScenarioHandler,
 	difficultylevelHandler *handler.DifficultyLevelHandler,
 	departmentHandler *handler.DepartmentHandler,
+	part2PracticeItemHandler *handler.Part2PracticeItemHandler,
+	part3PracticeItemHandler *handler.Part3PracticeItemHandler,
+	part4PracticeItemHandler *handler.Part4PracticeItemHandler,
+	part2PracticeSetHandler *handler.Part2PracticeSetHandler,
+	part3PracticeSetHandler *handler.Part3PracticeSetHandler,
+	part4PracticeSetHandler *handler.Part4PracticeSetHandler,
 ) *Server {
 	return &Server{
-		config:         config,
-		logger:         logger,
-		middleware:     middleware,
-		userHandler:    userHandler,
-		articleHandler: articleHandler,
-		healthHandler:  healthHandler,
-		dictHandler:    dictHandler,
+		config:                   config,
+		logger:                   logger,
+		middleware:               middleware,
+		userHandler:              userHandler,
+		articleHandler:           articleHandler,
+		healthHandler:            healthHandler,
+		dictHandler:              dictHandler,
 		part4answeroptionHandler: part4answeroptionHandler,
-		part4talkHandler: part4talkHandler,
+		part4talkHandler:         part4talkHandler,
 		part3answeroptionHandler: part3answeroptionHandler,
 		part3conversationHandler: part3conversationHandler,
-		part2questionHandler: part2questionHandler,
-		testHandler: testHandler,
-		scenarioHandler: scenarioHandler,
-		difficultylevelHandler: difficultylevelHandler,
-		departmentHandler: departmentHandler,
+		part2questionHandler:     part2questionHandler,
+		testHandler:              testHandler,
+		scenarioHandler:          scenarioHandler,
+		difficultylevelHandler:   difficultylevelHandler,
+		departmentHandler:        departmentHandler,
+
+		part2PracticeItemHandler: part2PracticeItemHandler,
+		part3PracticeItemHandler: part3PracticeItemHandler,
+		part4PracticeItemHandler: part4PracticeItemHandler,
+		part2PracticeSetHandler:  part2PracticeSetHandler,
+		part3PracticeSetHandler:  part3PracticeSetHandler,
+		part4PracticeSetHandler:  part4PracticeSetHandler,
 	}
 }
 
@@ -171,6 +193,16 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 			{
 				// 用户路由
 				s.userHandler.RegisterRoutes(protected)
+
+				// 用户个人练习记录路由（历史作答）
+				s.part2PracticeItemHandler.RegisterRoutes(protected)
+				s.part3PracticeItemHandler.RegisterRoutes(protected)
+				s.part4PracticeItemHandler.RegisterRoutes(protected)
+
+				// 用户个人练习题集路由（Master/Detail）
+				s.part2PracticeSetHandler.RegisterRoutes(protected)
+				s.part3PracticeSetHandler.RegisterRoutes(protected)
+				s.part4PracticeSetHandler.RegisterRoutes(protected)
 
 				// 用户文章管理路由（只能操作自己的文章）
 				userArticles := protected.Group("/user/articles")

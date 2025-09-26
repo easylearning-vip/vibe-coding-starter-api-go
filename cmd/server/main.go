@@ -92,6 +92,23 @@ func main() {
 			repository.NewDepartmentRepository,
 		),
 
+		// 个人练习仓储模块
+		fx.Provide(
+			repository.NewPart2PracticeItemRepository,
+			repository.NewPart3PracticeItemRepository,
+			repository.NewPart4PracticeItemRepository,
+		),
+
+		// 个人练习题集（Master/Detail）仓储模块
+		fx.Provide(
+			repository.NewPart2PracticeSetRepository,
+			repository.NewPart2PracticeSetItemRepository,
+			repository.NewPart3PracticeSetRepository,
+			repository.NewPart3PracticeSetItemRepository,
+			repository.NewPart4PracticeSetRepository,
+			repository.NewPart4PracticeSetItemRepository,
+		),
+
 		// 服务模块
 		fx.Provide(
 			service.NewUserService,
@@ -105,8 +122,28 @@ func main() {
 			service.NewPart2QuestionService,
 			service.NewTestService,
 			service.NewScenarioService,
+
+			// 个人练习题集（Master/Detail）服务模块
+			service.NewPart2PracticeSetService,
+			service.NewPart3PracticeSetService,
+			service.NewPart4PracticeSetService,
+
 			service.NewDifficultyLevelService,
 			service.NewDepartmentService,
+		),
+
+		// 个人练习服务模块
+		fx.Provide(
+			service.NewPart2PracticeItemService,
+			service.NewPart3PracticeItemService,
+			service.NewPart4PracticeItemService,
+		),
+
+		// 个人练习题集（Master/Detail）处理器模块
+		fx.Provide(
+			handler.NewPart2PracticeSetHandler,
+			handler.NewPart3PracticeSetHandler,
+			handler.NewPart4PracticeSetHandler,
 		),
 
 		// 处理器模块
@@ -119,6 +156,7 @@ func main() {
 			handler.NewPart4AnswerOptionHandler,
 			handler.NewPart4TalkHandler,
 			handler.NewPart3AnswerOptionHandler,
+
 			handler.NewPart3ConversationHandler,
 			handler.NewPart2QuestionHandler,
 			handler.NewTestHandler,
@@ -130,9 +168,17 @@ func main() {
 		// 服务器模块
 		fx.Provide(server.New),
 
+		// 个人练习处理器模块
+		fx.Provide(
+			handler.NewPart2PracticeItemHandler,
+			handler.NewPart3PracticeItemHandler,
+			handler.NewPart4PracticeItemHandler,
+		),
+
 		// 启动服务器
 		fx.Invoke(func(srv *server.Server) {
 			// 服务器启动在 OnStart hook 中处理
+
 		}),
 
 		// 优雅关闭
