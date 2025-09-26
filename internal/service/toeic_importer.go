@@ -297,7 +297,7 @@ func (s *toeicImporterService) CleanupTestData(ctx context.Context, testName str
 
 	// 获取Part3对话ID列表，用于删除相关的答案选项
 	part3Conversations, _, err := s.part3ConversationRepo.List(ctx, repository.ListOptions{
-		Filters:  map[string]interface{}{"test_id": int32(test.ID)},
+		Filters:  map[string]interface{}{"test_id": int(test.ID)},
 		PageSize: 1000,
 	})
 	if err != nil {
@@ -318,7 +318,7 @@ func (s *toeicImporterService) CleanupTestData(ctx context.Context, testName str
 
 	// 获取Part4演讲ID列表，用于删除相关的答案选项
 	part4Talks, _, err := s.part4TalkRepo.List(ctx, repository.ListOptions{
-		Filters:  map[string]interface{}{"test_id": int32(test.ID)},
+		Filters:  map[string]interface{}{"test_id": int(test.ID)},
 		PageSize: 1000,
 	})
 	if err != nil {

@@ -534,9 +534,10 @@ func (s *toeicImporterService) parsePart4(lines []string) ([]ParsedTalk, error) 
 func (s *toeicImporterService) parseTalkContent(lines []string, startIndex, talkNum, startQ, endQ int, scenarioID, difficultyID *uint) *ParsedTalk {
 	var content strings.Builder
 	var questions []ParsedQuestion
-	j := startIndex + 2
+	// Start from the line after the talk header
+	j := startIndex + 1
 
-	// Skip scenario/difficulty line if it exists
+	// Skip scenario/difficulty line if it exists on its own line
 	if j < len(lines) && strings.Contains(lines[j], "*") && strings.Contains(lines[j], "Difficulty:") {
 		j++
 	}
@@ -585,6 +586,7 @@ func (s *toeicImporterService) parseTalkContent(lines []string, startIndex, talk
 				`^\*\*Question (\d+):\*\*`,
 				`^\*\*Question (\d+)\*\*\s*$`,
 				`^\*\*(\d+)\.\s*(.+)\*\*$`,
+				`^(\d+)\.\s*(.+)$`, // plain number-dot format like "71. question"
 			}
 
 			isQuestion := false
@@ -607,7 +609,7 @@ func (s *toeicImporterService) parseTalkContent(lines []string, startIndex, talk
 			} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") && !strings.Contains(line, "Question") {
 				// Other bold text that's not a question
 				talkLines = append(talkLines, line)
-			} else if len(talkLines) > 0 || (!strings.HasPrefix(line, "**") && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ")) {
+			} else if len(talkLines) > 0 || (!strings.HasPrefix(line, "**") && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ") && !strings.HasPrefix(line, "- A. ") && !strings.HasPrefix(line, "- B. ") && !strings.HasPrefix(line, "- C. ") && !strings.HasPrefix(line, "- D. ")) {
 				// Regular talk content (but not answer options)
 				talkLines = append(talkLines, line)
 			}
@@ -681,6 +683,23 @@ func (s *toeicImporterService) parseQuestion(lines []string, startIndex int, exp
 			}
 		}
 
+		// Also look for plain number-dot format: "71. question" (non-bold)
+		if len(matches) == 0 {
+			altQuestionRegex4 := regexp.MustCompile(`^(\d+)\.\s*(.*)$`)
+			n := altQuestionRegex4.FindStringSubmatch(line)
+			if len(n) == 3 {
+				// If question text is empty or continues on next line, try to append next line
+				qText := strings.TrimSpace(n[2])
+				if qText == "" && i+1 < len(lines) {
+					nextLine := strings.TrimSpace(lines[i+1])
+					if nextLine != "" && !strings.HasPrefix(nextLine, "A. ") && !strings.HasPrefix(nextLine, "- A. ") {
+						qText = nextLine
+					}
+				}
+				matches = []string{line, n[1], qText}
+			}
+		}
+
 		if len(matches) == 3 {
 			questionNum, err := strconv.Atoi(matches[1])
 			if err != nil {
@@ -702,6 +721,11 @@ func (s *toeicImporterService) parseQuestion(lines []string, startIndex int, exp
 				optLine := strings.TrimSpace(lines[j])
 				if optLine == "" {
 					continue
+				}
+
+				// Normalize markdown list bullets like "- A. ..." or "* A. ..."
+				if strings.HasPrefix(optLine, "- ") || strings.HasPrefix(optLine, "* ") {
+					optLine = strings.TrimSpace(optLine[2:])
 				}
 
 				if strings.HasPrefix(optLine, "A. ") || strings.HasPrefix(optLine, "a. ") {
@@ -812,6 +836,11 @@ func (s *toeicImporterService) parseEmbeddedQuestions(content string, startQ, en
 				continue
 			}
 
+			// Normalize markdown list bullets like "- A. ..." or "* A. ..."
+			if strings.HasPrefix(line, "- ") || strings.HasPrefix(line, "* ") {
+				line = strings.TrimSpace(line[2:])
+			}
+
 			if strings.HasPrefix(line, "A. ") || strings.HasPrefix(line, "A.  ") {
 				optionA = strings.TrimSpace(line[3:])
 			} else if strings.HasPrefix(line, "B. ") || strings.HasPrefix(line, "B.  ") {
@@ -871,7 +900,7 @@ func (s *toeicImporterService) extractDialogueFromEmbeddedContent(content string
 		} else if strings.HasPrefix(line, "**") && strings.HasSuffix(line, "**") && !strings.Contains(line, ":") {
 			// Other bold text that's not a question
 			dialogue.WriteString(line + "\n")
-		} else if dialogue.Len() > 0 && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ") {
+		} else if dialogue.Len() > 0 && !strings.HasPrefix(line, "A. ") && !strings.HasPrefix(line, "B. ") && !strings.HasPrefix(line, "C. ") && !strings.HasPrefix(line, "D. ") && !strings.HasPrefix(line, "- A. ") && !strings.HasPrefix(line, "- B. ") && !strings.HasPrefix(line, "- C. ") && !strings.HasPrefix(line, "- D. ") {
 			// Regular dialogue content (but not answer options)
 			dialogue.WriteString(line + "\n")
 		}
