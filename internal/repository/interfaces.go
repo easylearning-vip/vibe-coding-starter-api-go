@@ -31,6 +31,9 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	UpdateLastLogin(ctx context.Context, userID uint) error
+	// Token-based operations
+	GetByToken(ctx context.Context, token string) (*model.User, error)
+	UpdateToken(ctx context.Context, userID uint, token *string) error
 }
 
 // ArticleRepository 文章仓储接口

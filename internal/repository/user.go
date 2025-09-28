@@ -19,6 +19,8 @@ type userRepository struct {
 
 // NewUserRepository 创建用户仓储
 func NewUserRepository(db database.Database, logger logger.Logger) UserRepository {
+	// Ensure user table is up to date (adds new columns like token)
+	_ = db.AutoMigrate(&model.User{})
 	return &userRepository{
 		db:     db.GetDB(),
 		logger: logger,
@@ -146,6 +148,29 @@ func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uint) error
 		Update("last_login", gorm.Expr("CURRENT_TIMESTAMP")).Error; err != nil {
 		r.logger.Error("Failed to update last login", "user_id", userID, "error", err)
 		return fmt.Errorf("failed to update last login: %w", err)
+	}
+	return nil
+}
+
+// GetByToken 根据用户自定义Token获取用户
+func (r *userRepository) GetByToken(ctx context.Context, token string) (*model.User, error) {
+	var user model.User
+	if err := r.db.WithContext(ctx).Where("token = ?", token).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, gorm.ErrRecordNotFound
+		}
+		r.logger.Error("Failed to get user by token", "error", err)
+		return nil, fmt.Errorf("failed to get user by token: %w", err)
+	}
+	return &user, nil
+}
+
+// UpdateToken 更新或清空用户自定义Token
+func (r *userRepository) UpdateToken(ctx context.Context, userID uint, token *string) error {
+	updates := map[string]interface{}{"token": token}
+	if err := r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
+		r.logger.Error("Failed to update user token", "user_id", userID, "error", err)
+		return fmt.Errorf("failed to update user token: %w", err)
 	}
 	return nil
 }

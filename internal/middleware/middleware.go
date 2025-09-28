@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"vibe-coding-starter/internal/config"
+	"vibe-coding-starter/internal/repository"
 	"vibe-coding-starter/pkg/cache"
 	"vibe-coding-starter/pkg/logger"
 )
@@ -28,12 +29,13 @@ func NewMiddleware(
 	config *config.Config,
 	logger logger.Logger,
 	cache cache.Cache,
+	userRepo repository.UserRepository,
 ) *Middleware {
 	return &Middleware{
 		config:     config,
 		logger:     logger,
 		cache:      cache,
-		auth:       NewAuthMiddleware(config, cache, logger),
+		auth:       NewAuthMiddleware(config, cache, logger, userRepo),
 		permission: NewPermissionMiddleware(config, cache, logger),
 		rateLimit:  NewRateLimitMiddleware(config, cache, logger),
 		logging:    NewLoggingMiddleware(config, logger),

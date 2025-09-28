@@ -234,6 +234,94 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	c.JSON(http.StatusOK, SuccessResponse{
 		Message: "Password changed successfully",
 	})
+	return
+
+}
+
+// GetUserToken 获取指定用户的API Token（管理员）
+// @Summary 获取指定用户的API Token
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "用户ID"
+// @Success 200 {object} map[string]*string
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v1/users/{id}/token [get]
+func (h *UserHandler) GetUserToken(c *gin.Context) {
+	if !h.isAdmin(c) {
+		c.JSON(http.StatusForbidden, ErrorResponse{Error: "forbidden", Message: "Admin access required"})
+		return
+	}
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid_id", Message: "Invalid user ID"})
+		return
+	}
+	token, err := h.userService.GetUserToken(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{Error: "user_not_found", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// GenerateUserToken 为指定用户生成新的API Token（管理员）
+// @Summary 生成指定用户的API Token
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "用户ID"
+// @Success 200 {object} map[string]string
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v1/users/{id}/token/generate [post]
+func (h *UserHandler) GenerateUserToken(c *gin.Context) {
+	if !h.isAdmin(c) {
+		c.JSON(http.StatusForbidden, ErrorResponse{Error: "forbidden", Message: "Admin access required"})
+		return
+	}
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid_id", Message: "Invalid user ID"})
+		return
+	}
+	token, err := h.userService.GenerateUserToken(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "token_generate_failed", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// ClearUserToken 清空指定用户的API Token（管理员）
+// @Summary 清空指定用户的API Token
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "用户ID"
+// @Success 200 {object} SuccessResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /api/v1/users/{id}/token [delete]
+func (h *UserHandler) ClearUserToken(c *gin.Context) {
+	if !h.isAdmin(c) {
+		c.JSON(http.StatusForbidden, ErrorResponse{Error: "forbidden", Message: "Admin access required"})
+		return
+	}
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "invalid_id", Message: "Invalid user ID"})
+		return
+	}
+	if err := h.userService.ClearUserToken(c.Request.Context(), uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "token_clear_failed", Message: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, SuccessResponse{Message: "Token cleared successfully"})
 }
 
 // GetUsers 获取用户列表
@@ -346,6 +434,12 @@ func (h *UserHandler) RegisterRoutes(r *gin.RouterGroup) {
 		users.GET("", h.GetUsers)
 		users.DELETE("/:id", h.DeleteUser)
 	}
+
+	// Token 管理（管理员）
+	users.GET("/:id/token", h.GetUserToken)
+	users.POST("/:id/token/generate", h.GenerateUserToken)
+	users.DELETE("/:id/token", h.ClearUserToken)
+
 }
 
 // 辅助方法

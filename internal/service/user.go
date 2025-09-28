@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -217,6 +219,55 @@ func (s *userService) GetUsers(ctx context.Context, opts repository.ListOptions)
 	}
 
 	return users, total, nil
+}
+
+// GenerateUserToken 生成并保存用户Token
+func (s *userService) GenerateUserToken(ctx context.Context, userID uint) (string, error) {
+	// 确认用户存在
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		s.logger.Error("Failed to get user for token generation", "user_id", userID, "error", err)
+		return "", fmt.Errorf("user not found: %w", err)
+	}
+	if user == nil {
+		return "", fmt.Errorf("user not found")
+	}
+
+	token, err := s.generateSecureToken()
+	if err != nil {
+		s.logger.Error("Failed to generate user token", "user_id", userID, "error", err)
+		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	if err := s.userRepo.UpdateToken(ctx, userID, &token); err != nil {
+		s.logger.Error("Failed to persist user token", "user_id", userID, "error", err)
+		return "", fmt.Errorf("failed to save token: %w", err)
+	}
+	return token, nil
+}
+
+// GetUserToken 获取用户当前Token
+func (s *userService) GetUserToken(ctx context.Context, userID uint) (*string, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return user.Token, nil
+}
+
+// ClearUserToken 清空用户Token
+func (s *userService) ClearUserToken(ctx context.Context, userID uint) error {
+	return s.userRepo.UpdateToken(ctx, userID, nil)
+}
+
+// generateSecureToken 生成安全随机Token
+func (s *userService) generateSecureToken() (string, error) {
+	// 32字节 = 64个hex字符
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 // DeleteUser 删除用户

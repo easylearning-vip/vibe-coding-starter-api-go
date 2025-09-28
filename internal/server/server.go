@@ -176,10 +176,17 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 				// 数据字典路由（不需要认证，便于测试）
 				s.dictHandler.RegisterRoutes(public)
 
+				// TOEIC 公共接口：使用用户自定义Token进行鉴权
+				toeic := public.Group("")
+				toeic.Use(s.middleware.Auth().RequireUserToken())
+				{
+					s.part2PracticeSetHandler.RegisterPublicRoutes(toeic)
+					s.part3PracticeSetHandler.RegisterPublicRoutes(toeic)
+					s.part4PracticeSetHandler.RegisterPublicRoutes(toeic)
+				}
+
 				// TOEIC 相关公开只读接口（匿名访问）
-				s.part2PracticeSetHandler.RegisterPublicRoutes(public)
-				s.part3PracticeSetHandler.RegisterPublicRoutes(public)
-				s.part4PracticeSetHandler.RegisterPublicRoutes(public)
+
 			}
 
 			// 受保护的路由（需要认证）

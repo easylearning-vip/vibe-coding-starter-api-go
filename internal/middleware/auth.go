@@ -12,15 +12,17 @@ import (
 
 	"vibe-coding-starter/internal/config"
 	"vibe-coding-starter/internal/model"
+	"vibe-coding-starter/internal/repository"
 	"vibe-coding-starter/pkg/cache"
 	"vibe-coding-starter/pkg/logger"
 )
 
 // AuthMiddleware JWT 认证中间件
 type AuthMiddleware struct {
-	config *config.Config
-	cache  cache.Cache
-	logger logger.Logger
+	config   *config.Config
+	cache    cache.Cache
+	logger   logger.Logger
+	userRepo repository.UserRepository
 }
 
 // NewAuthMiddleware 创建认证中间件
@@ -28,11 +30,13 @@ func NewAuthMiddleware(
 	config *config.Config,
 	cache cache.Cache,
 	logger logger.Logger,
+	userRepo repository.UserRepository,
 ) *AuthMiddleware {
 	return &AuthMiddleware{
-		config: config,
-		cache:  cache,
-		logger: logger,
+		config:   config,
+		cache:    cache,
+		logger:   logger,
+		userRepo: userRepo,
 	}
 }
 
@@ -187,6 +191,59 @@ func (m *AuthMiddleware) OptionalAuth() gin.HandlerFunc {
 			c.Set("token", token)
 		}
 
+		c.Next()
+	}
+}
+
+// RequireUserToken 要求使用用户自定义Token进行认证（用于公开TOEIC接口）
+func (m *AuthMiddleware) RequireUserToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 优先从自定义Header中读取
+		token := c.GetHeader("X-User-Token")
+		if token == "" {
+			// 兼容 Authorization: Token <token>
+			authHeader := c.GetHeader("Authorization")
+			if strings.HasPrefix(authHeader, "Token ") {
+				token = strings.TrimPrefix(authHeader, "Token ")
+			}
+		}
+		if token == "" {
+			// 兼容查询参数
+			token = c.Query("user_token")
+			if token == "" {
+				token = c.Query("token")
+			}
+		}
+
+		if token == "" {
+			m.logger.Warn("Missing user token for public API", "path", c.Request.URL.Path)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error":   "unauthorized",
+				"message": "User token required. Provide via X-User-Token header or Authorization: Token <token>",
+			})
+			c.Abort()
+			return
+		}
+
+		user, err := m.userRepo.GetByToken(c.Request.Context(), token)
+		if err != nil || user == nil || !user.IsActive() {
+			m.logger.Warn("Invalid user token", "error", err)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error":   "unauthorized",
+				"message": "Invalid or inactive user token",
+			})
+			c.Abort()
+			return
+		}
+
+		// 将用户信息注入上下文
+		c.Set("user_id", user.ID)
+		c.Set("username", user.Username)
+		c.Set("email", user.Email)
+		c.Set("user_role", user.Role)
+		c.Set("user_token", token)
+
+		m.logger.Debug("Public API token authenticated", "user_id", user.ID, "path", c.Request.URL.Path)
 		c.Next()
 	}
 }

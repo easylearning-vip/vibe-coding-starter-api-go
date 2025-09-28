@@ -10,9 +10,11 @@ import (
 // User 用户模型
 type User struct {
 	BaseModel
-	Username  string     `gorm:"uniqueIndex;size:50;not null" json:"username" validate:"required,min=3,max=50"`
-	Email     string     `gorm:"uniqueIndex;size:100;not null" json:"email" validate:"required,email"`
-	Password  string     `gorm:"size:255;not null" json:"-" validate:"required,min=6"`
+	Username string `gorm:"uniqueIndex;size:50;not null" json:"username" validate:"required,min=3,max=50"`
+	Email    string `gorm:"uniqueIndex;size:100;not null" json:"email" validate:"required,email"`
+	Password string `gorm:"size:255;not null" json:"-" validate:"required,min=6"`
+	// API access token for public TOEIC endpoints (nullable). Keep plaintext for simplicity; rotate/regenerate via service.
+	Token     *string    `gorm:"size:128;index" json:"token,omitempty"`
 	Nickname  string     `gorm:"size:50" json:"nickname" validate:"max=50"`
 	Avatar    string     `gorm:"size:255" json:"avatar" validate:"url"`
 	Role      string     `gorm:"size:20;default:user" json:"role" validate:"oneof=admin user"`

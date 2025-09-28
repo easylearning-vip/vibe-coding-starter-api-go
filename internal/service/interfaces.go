@@ -16,6 +16,11 @@ type UserService interface {
 	ChangePassword(ctx context.Context, userID uint, req *ChangePasswordRequest) error
 	GetUsers(ctx context.Context, opts repository.ListOptions) ([]*model.User, int64, error)
 	DeleteUser(ctx context.Context, userID uint) error
+
+	// 用户Token管理
+	GenerateUserToken(ctx context.Context, userID uint) (string, error)
+	GetUserToken(ctx context.Context, userID uint) (*string, error)
+	ClearUserToken(ctx context.Context, userID uint) error
 }
 
 // ArticleService 文章服务接口
