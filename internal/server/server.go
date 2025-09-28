@@ -35,6 +35,7 @@ type Server struct {
 	scenarioHandler          *handler.ScenarioHandler
 	difficultylevelHandler   *handler.DifficultyLevelHandler
 	departmentHandler        *handler.DepartmentHandler
+	toeicAiPromptHandler     *handler.ToeicAiPromptHandler
 
 	// user practice handlers
 	// practice set handlers (Master/Detail)
@@ -61,6 +62,7 @@ func New(
 	scenarioHandler *handler.ScenarioHandler,
 	difficultylevelHandler *handler.DifficultyLevelHandler,
 	departmentHandler *handler.DepartmentHandler,
+	toeicAiPromptHandler *handler.ToeicAiPromptHandler,
 	part2PracticeSetHandler *handler.Part2PracticeSetHandler,
 	part3PracticeSetHandler *handler.Part3PracticeSetHandler,
 	part4PracticeSetHandler *handler.Part4PracticeSetHandler,
@@ -82,6 +84,7 @@ func New(
 		scenarioHandler:          scenarioHandler,
 		difficultylevelHandler:   difficultylevelHandler,
 		departmentHandler:        departmentHandler,
+		toeicAiPromptHandler:     toeicAiPromptHandler,
 		part2PracticeSetHandler:  part2PracticeSetHandler,
 		part3PracticeSetHandler:  part3PracticeSetHandler,
 		part4PracticeSetHandler:  part4PracticeSetHandler,
@@ -253,6 +256,9 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 
 				// Department管理路由
 				s.departmentHandler.RegisterRoutes(admin)
+
+				// ToeicAiPrompt管理路由
+				s.toeicAiPromptHandler.RegisterRoutes(admin)
 
 			}
 		}

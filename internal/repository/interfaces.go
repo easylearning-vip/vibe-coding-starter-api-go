@@ -214,3 +214,9 @@ type Part4PracticeSetRepository interface {
 type Part4PracticeSetItemRepository interface {
 	Repository[model.Part4PracticeSetItem, uint]
 }
+
+// ToeicAiPromptRepository ToeicAiPrompt仓储接口
+type ToeicAiPromptRepository interface {
+	Repository[model.ToeicAiPrompt, uint]
+	// 在这里添加特定的查询方法
+}

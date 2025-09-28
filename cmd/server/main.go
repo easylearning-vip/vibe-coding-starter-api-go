@@ -90,6 +90,7 @@ func main() {
 			repository.NewScenarioRepository,
 			repository.NewDifficultyLevelRepository,
 			repository.NewDepartmentRepository,
+			repository.NewToeicAiPromptRepository,
 		),
 
 		// 个人练习题集（Master/Detail）仓储模块
@@ -123,6 +124,7 @@ func main() {
 
 			service.NewDifficultyLevelService,
 			service.NewDepartmentService,
+			service.NewToeicAiPromptService,
 		),
 
 		// 个人练习题集（Master/Detail）处理器模块
@@ -149,6 +151,7 @@ func main() {
 			handler.NewScenarioHandler,
 			handler.NewDifficultyLevelHandler,
 			handler.NewDepartmentHandler,
+			handler.NewToeicAiPromptHandler,
 		),
 
 		// 服务器模块
