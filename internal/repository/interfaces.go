@@ -182,19 +182,10 @@ type Part4AnswerOptionRepository interface {
 }
 
 // Part2PracticeItemRepository 个人Part2练习记录仓储接口
-type Part2PracticeItemRepository interface {
-	Repository[model.Part2PracticeItem, uint]
-}
 
 // Part3PracticeItemRepository 个人Part3练习记录仓储接口
-type Part3PracticeItemRepository interface {
-	Repository[model.Part3PracticeItem, uint]
-}
 
 // Part4PracticeItemRepository 个人Part4练习记录仓储接口
-type Part4PracticeItemRepository interface {
-	Repository[model.Part4PracticeItem, uint]
-}
 
 // Practice Set repositories (Master/Detail) for Part2/Part3/Part4
 // Part2

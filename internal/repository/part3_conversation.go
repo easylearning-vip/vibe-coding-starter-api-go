@@ -181,6 +181,10 @@ func (r *part3ConversationRepository) ListWithAnswerOptions(ctx context.Context,
 func (r *part3ConversationRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
 		switch key {
+		case "id":
+			if v, ok := value.(int32); ok && v > 0 {
+				query = query.Where("id = ?", v)
+			}
 		case "test_id":
 			if v, ok := value.(int32); ok && v > 0 {
 				query = query.Where("test_id = ?", v)

@@ -37,9 +37,6 @@ type Server struct {
 	departmentHandler        *handler.DepartmentHandler
 
 	// user practice handlers
-	part2PracticeItemHandler *handler.Part2PracticeItemHandler
-	part3PracticeItemHandler *handler.Part3PracticeItemHandler
-	part4PracticeItemHandler *handler.Part4PracticeItemHandler
 	// practice set handlers (Master/Detail)
 	part2PracticeSetHandler *handler.Part2PracticeSetHandler
 	part3PracticeSetHandler *handler.Part3PracticeSetHandler
@@ -64,9 +61,6 @@ func New(
 	scenarioHandler *handler.ScenarioHandler,
 	difficultylevelHandler *handler.DifficultyLevelHandler,
 	departmentHandler *handler.DepartmentHandler,
-	part2PracticeItemHandler *handler.Part2PracticeItemHandler,
-	part3PracticeItemHandler *handler.Part3PracticeItemHandler,
-	part4PracticeItemHandler *handler.Part4PracticeItemHandler,
 	part2PracticeSetHandler *handler.Part2PracticeSetHandler,
 	part3PracticeSetHandler *handler.Part3PracticeSetHandler,
 	part4PracticeSetHandler *handler.Part4PracticeSetHandler,
@@ -88,10 +82,6 @@ func New(
 		scenarioHandler:          scenarioHandler,
 		difficultylevelHandler:   difficultylevelHandler,
 		departmentHandler:        departmentHandler,
-
-		part2PracticeItemHandler: part2PracticeItemHandler,
-		part3PracticeItemHandler: part3PracticeItemHandler,
-		part4PracticeItemHandler: part4PracticeItemHandler,
 		part2PracticeSetHandler:  part2PracticeSetHandler,
 		part3PracticeSetHandler:  part3PracticeSetHandler,
 		part4PracticeSetHandler:  part4PracticeSetHandler,
@@ -185,6 +175,11 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 
 				// 数据字典路由（不需要认证，便于测试）
 				s.dictHandler.RegisterRoutes(public)
+
+				// TOEIC 相关公开只读接口（匿名访问）
+				s.part2PracticeSetHandler.RegisterPublicRoutes(public)
+				s.part3PracticeSetHandler.RegisterPublicRoutes(public)
+				s.part4PracticeSetHandler.RegisterPublicRoutes(public)
 			}
 
 			// 受保护的路由（需要认证）
@@ -193,11 +188,6 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 			{
 				// 用户路由
 				s.userHandler.RegisterRoutes(protected)
-
-				// 用户个人练习记录路由（历史作答）
-				s.part2PracticeItemHandler.RegisterRoutes(protected)
-				s.part3PracticeItemHandler.RegisterRoutes(protected)
-				s.part4PracticeItemHandler.RegisterRoutes(protected)
 
 				// 用户个人练习题集路由（Master/Detail）
 				s.part2PracticeSetHandler.RegisterRoutes(protected)

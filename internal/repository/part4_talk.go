@@ -179,6 +179,10 @@ func (r *part4TalkRepository) ListWithAnswerOptions(ctx context.Context, opts Li
 func (r *part4TalkRepository) applyFilters(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	for key, value := range filters {
 		switch key {
+		case "id":
+			if v, ok := value.(int); ok && v > 0 {
+				query = query.Where("id = ?", v)
+			}
 		case "name":
 			if v, ok := value.(string); ok && v != "" {
 				query = query.Where("name = ?", v)
