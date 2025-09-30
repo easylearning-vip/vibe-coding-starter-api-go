@@ -84,12 +84,20 @@ func main() {
 			repository.NewPart2PracticeSetRepository,
 			repository.NewPart2PracticeSetItemRepository,
 			repository.NewPart2QuestionRepository,
+			repository.NewPart3PracticeSetRepository,
+			repository.NewPart3PracticeSetItemRepository,
+			repository.NewPart3ConversationRepository,
+			repository.NewPart4PracticeSetRepository,
+			repository.NewPart4PracticeSetItemRepository,
+			repository.NewPart4TalkRepository,
 			repository.NewToeicAiPromptRepository,
 		),
 
 		// 服务层
 		fx.Provide(
 			service.NewPart2PracticeSetService,
+			service.NewPart3PracticeSetService,
+			service.NewPart4PracticeSetService,
 			service.NewToeicAiPromptService,
 		),
 

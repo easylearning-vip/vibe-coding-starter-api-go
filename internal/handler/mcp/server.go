@@ -16,6 +16,8 @@ type MCPHandler struct {
 	logger        logger.Logger
 	userRepo      repository.UserRepository
 	p2Service     service.Part2PracticeSetService
+	p3Service     service.Part3PracticeSetService
+	p4Service     service.Part4PracticeSetService
 	promptService service.ToeicAiPromptService
 }
 
@@ -24,12 +26,16 @@ func NewMCPHandler(
 	logger logger.Logger,
 	userRepo repository.UserRepository,
 	p2Service service.Part2PracticeSetService,
+	p3Service service.Part3PracticeSetService,
+	p4Service service.Part4PracticeSetService,
 	promptService service.ToeicAiPromptService,
 ) *MCPHandler {
 	return &MCPHandler{
 		logger:        logger,
 		userRepo:      userRepo,
 		p2Service:     p2Service,
+		p3Service:     p3Service,
+		p4Service:     p4Service,
 		promptService: promptService,
 	}
 }
@@ -81,4 +87,22 @@ func (h *MCPHandler) registerTools(server *mcp.Server, user *model.User) {
 	mcp.AddTool(server, AutoGeneratePart2SetTool(), HandleAutoGeneratePart2Set(user, h.p2Service))
 	mcp.AddTool(server, GetPart2SetDetailsTool(), HandleGetPart2SetDetails(user, h.p2Service))
 	mcp.AddTool(server, SubmitPart2AnswerTool(), HandleSubmitPart2Answer(user, h.p2Service))
+
+	// 注册Part3 AI提示词工具
+	mcp.AddTool(server, Part3PromptTool(), HandlePart3Prompt(user, h.promptService))
+
+	// 注册Part3练习集相关工具
+	mcp.AddTool(server, ListPart3SetsTool(), HandleListPart3Sets(user, h.p3Service))
+	mcp.AddTool(server, AutoGeneratePart3SetTool(), HandleAutoGeneratePart3Set(user, h.p3Service))
+	mcp.AddTool(server, GetPart3SetDetailsTool(), HandleGetPart3SetDetails(user, h.p3Service))
+	mcp.AddTool(server, SubmitPart3AnswerTool(), HandleSubmitPart3Answer(user, h.p3Service))
+
+	// 注册Part4 AI提示词工具
+	mcp.AddTool(server, Part4PromptTool(), HandlePart4Prompt(user, h.promptService))
+
+	// 注册Part4练习集相关工具
+	mcp.AddTool(server, ListPart4SetsTool(), HandleListPart4Sets(user, h.p4Service))
+	mcp.AddTool(server, AutoGeneratePart4SetTool(), HandleAutoGeneratePart4Set(user, h.p4Service))
+	mcp.AddTool(server, GetPart4SetDetailsTool(), HandleGetPart4SetDetails(user, h.p4Service))
+	mcp.AddTool(server, SubmitPart4AnswerTool(), HandleSubmitPart4Answer(user, h.p4Service))
 }
