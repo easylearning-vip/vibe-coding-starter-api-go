@@ -13,9 +13,10 @@ import (
 
 // MCPHandler MCP服务处理器
 type MCPHandler struct {
-	logger    logger.Logger
-	userRepo  repository.UserRepository
-	p2Service service.Part2PracticeSetService
+	logger        logger.Logger
+	userRepo      repository.UserRepository
+	p2Service     service.Part2PracticeSetService
+	promptService service.ToeicAiPromptService
 }
 
 // NewMCPHandler 创建MCP处理器
@@ -23,11 +24,13 @@ func NewMCPHandler(
 	logger logger.Logger,
 	userRepo repository.UserRepository,
 	p2Service service.Part2PracticeSetService,
+	promptService service.ToeicAiPromptService,
 ) *MCPHandler {
 	return &MCPHandler{
-		logger:    logger,
-		userRepo:  userRepo,
-		p2Service: p2Service,
+		logger:        logger,
+		userRepo:      userRepo,
+		p2Service:     p2Service,
+		promptService: promptService,
 	}
 }
 
@@ -69,6 +72,9 @@ func (h *MCPHandler) BuildHTTPHandler() http.Handler {
 func (h *MCPHandler) registerTools(server *mcp.Server, user *model.User) {
 	// 注册获取用户信息工具
 	mcp.AddTool(server, GetUserInfoTool(), HandleGetUserInfo(user))
+
+	// 注册Part2 AI提示词工具
+	mcp.AddTool(server, Part2PromptTool(), HandlePart2Prompt(user, h.promptService))
 
 	// 注册Part2练习集相关工具
 	mcp.AddTool(server, ListPart2SetsTool(), HandleListPart2Sets(user, h.p2Service))

@@ -84,11 +84,13 @@ func main() {
 			repository.NewPart2PracticeSetRepository,
 			repository.NewPart2PracticeSetItemRepository,
 			repository.NewPart2QuestionRepository,
+			repository.NewToeicAiPromptRepository,
 		),
 
 		// 服务层
 		fx.Provide(
 			service.NewPart2PracticeSetService,
+			service.NewToeicAiPromptService,
 		),
 
 		// MCP处理器层

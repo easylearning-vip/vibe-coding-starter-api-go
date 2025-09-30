@@ -28,4 +28,10 @@ type SubmitPart2AnswerParams struct {
 	SetID      uint   `json:"set_id" jsonschema:"Practice set ID (required)"`
 	ItemID     uint   `json:"item_id" jsonschema:"Practice set item ID (required)"`
 	UserAnswer string `json:"user_answer" jsonschema:"User's answer choice (required, e.g., A, B, or C)"`
+	IsCorrect  *bool  `json:"is_correct" jsonschema:"Whether the answer is correct (optional, if not provided, will compare with correct answer in database)"`
+}
+
+// Part2PromptParams 获取Part2 AI提示词参数
+type Part2PromptParams struct {
+	// No parameters needed - always returns the latest prompt
 }

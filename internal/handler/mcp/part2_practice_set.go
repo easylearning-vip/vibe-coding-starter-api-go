@@ -186,7 +186,7 @@ func HandleGetPart2SetDetails(user *model.User, p2Service service.Part2PracticeS
 func SubmitPart2AnswerTool() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "submit_part2_answer",
-		Description: "Submit Part2 practice answer",
+		Description: "Submit Part2 practice answer. Optionally provide is_correct parameter for AI assistant to judge answer correctness instead of comparing with database.",
 	}
 }
 
@@ -226,10 +226,23 @@ func HandleSubmitPart2Answer(user *model.User, p2Service service.Part2PracticeSe
 
 		// Determine if answer is correct
 		var correctAnswer string
+		var isCorrect bool
+
+		if params.IsCorrect != nil {
+			// Use AI assistant's judgment if provided
+			isCorrect = *params.IsCorrect
+		} else {
+			// Compare with correct answer in database
+			if itemDetail.Question.CorrectAnswer.Valid {
+				correctAnswer = strings.ToUpper(strings.TrimSpace(itemDetail.Question.CorrectAnswer.String))
+			}
+			isCorrect = answer == correctAnswer
+		}
+
+		// Get correct answer for display (if available)
 		if itemDetail.Question.CorrectAnswer.Valid {
 			correctAnswer = strings.ToUpper(strings.TrimSpace(itemDetail.Question.CorrectAnswer.String))
 		}
-		isCorrect := answer == correctAnswer
 
 		// Submit answer
 		submitReq := &service.SubmitPart2AnswerRequest{
