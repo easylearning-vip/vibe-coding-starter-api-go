@@ -12,18 +12,18 @@ import (
 	"vibe-coding-starter/internal/service"
 )
 
-// ListPart2SetsTool 创建列出Part2练习集的MCP工具定义
+// ListPart2SetsTool creates the MCP tool definition for listing Part2 practice sets
 func ListPart2SetsTool() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "list_part2_sets",
-		Description: "查看个人 Part2 练习集列表（支持分页）",
+		Description: "List personal Part2 practice sets (with pagination support)",
 	}
 }
 
-// HandleListPart2Sets 处理列出Part2练习集的请求
+// HandleListPart2Sets handles the request to list Part2 practice sets
 func HandleListPart2Sets(user *model.User, p2Service service.Part2PracticeSetService) func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.Part2ListParams) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.Part2ListParams) (*mcp.CallToolResult, any, error) {
-		// 设置默认分页参数
+		// Set default pagination parameters
 		page, size := 1, 20
 		if params != nil {
 			if params.Page > 0 {
@@ -33,12 +33,12 @@ func HandleListPart2Sets(user *model.User, p2Service service.Part2PracticeSetSer
 				size = params.PageSize
 			}
 		}
-		// 限制最大页面大小
+		// Limit maximum page size
 		if size > 100 {
 			size = 100
 		}
 
-		// 调用服务层获取练习集列表
+		// Call service layer to get practice set list
 		sets, total, err := p2Service.ListSets(ctx, user.ID, &service.ListPracticeSetOptions{
 			Page:     page,
 			PageSize: size,
@@ -46,17 +46,17 @@ func HandleListPart2Sets(user *model.User, p2Service service.Part2PracticeSetSer
 			Order:    "desc",
 		})
 		if err != nil {
-			return nil, nil, fmt.Errorf("查询失败: %v", err)
+			return nil, nil, fmt.Errorf("query failed: %v", err)
 		}
 
-		// 处理空结果
+		// Handle empty results
 		if len(sets) == 0 {
 			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "暂无练习集"}},
+				Content: []mcp.Content{&mcp.TextContent{Text: "No practice sets available"}},
 			}, nil, nil
 		}
 
-		// 格式化输出结果
+		// Format output results
 		var b strings.Builder
 		fmt.Fprintf(&b, "total=%d page=%d size=%d\n", total, page, size)
 		for _, s := range sets {
@@ -70,27 +70,27 @@ func HandleListPart2Sets(user *model.User, p2Service service.Part2PracticeSetSer
 	}
 }
 
-// AutoGeneratePart2SetTool 创建自动生成Part2练习集的MCP工具定义
+// AutoGeneratePart2SetTool creates the MCP tool definition for auto-generating Part2 practice sets
 func AutoGeneratePart2SetTool() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "auto_generate_part2_set",
-		Description: "自动生成 Part2 练习集",
+		Description: "Auto-generate Part2 practice set",
 	}
 }
 
-// HandleAutoGeneratePart2Set 处理自动生成Part2练习集的请求
+// HandleAutoGeneratePart2Set handles the request to auto-generate Part2 practice sets
 func HandleAutoGeneratePart2Set(user *model.User, p2Service service.Part2PracticeSetService) func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.AutoGeneratePart2SetParams) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.AutoGeneratePart2SetParams) (*mcp.CallToolResult, any, error) {
-		// 验证参数
+		// Validate parameters
 		if params == nil || params.Count == 0 {
-			return nil, nil, fmt.Errorf("参数错误: count 是必需的")
+			return nil, nil, fmt.Errorf("parameter error: count is required")
 		}
 
 		if params.Count < 10 || params.Count > 30 {
-			return nil, nil, fmt.Errorf("参数错误: count 必须在 10-30 之间")
+			return nil, nil, fmt.Errorf("parameter error: count must be between 10 and 30")
 		}
 
-		// 构建请求
+		// Build request
 		genReq := &service.GeneratePracticeSetRequest{
 			TotalQuestions:    int32(params.Count),
 			ScenarioId:        params.ScenarioID,
@@ -98,25 +98,25 @@ func HandleAutoGeneratePart2Set(user *model.User, p2Service service.Part2Practic
 			Mode:              "sequential",
 		}
 
-		// 调用服务层生成练习集
+		// Call service layer to generate practice set
 		set, items, err := p2Service.AutoGenerateSet(ctx, user.ID, genReq)
 		if err != nil {
-			return nil, nil, fmt.Errorf("生成失败: %v", err)
+			return nil, nil, fmt.Errorf("generation failed: %v", err)
 		}
 
-		// 格式化输出结果
+		// Format output results
 		var b strings.Builder
-		fmt.Fprintf(&b, "✅ 练习集生成成功\n\n")
-		fmt.Fprintf(&b, "练习集ID: %d\n", set.ID)
-		fmt.Fprintf(&b, "题目总数: %d\n", set.TotalQuestions)
+		fmt.Fprintf(&b, "Practice set generated successfully\n\n")
+		fmt.Fprintf(&b, "Set ID: %d\n", set.ID)
+		fmt.Fprintf(&b, "Total Questions: %d\n", set.TotalQuestions)
 		if set.ScenarioId.Valid {
-			fmt.Fprintf(&b, "场景ID: %d\n", set.ScenarioId.Int32)
+			fmt.Fprintf(&b, "Scenario ID: %d\n", set.ScenarioId.Int32)
 		}
 		if set.DifficultyLevelId.Valid {
-			fmt.Fprintf(&b, "难度级别ID: %d\n", set.DifficultyLevelId.Int32)
+			fmt.Fprintf(&b, "Difficulty Level ID: %d\n", set.DifficultyLevelId.Int32)
 		}
-		fmt.Fprintf(&b, "\n已添加 %d 道题目到练习集\n", len(items))
-		fmt.Fprintf(&b, "\n使用 get_part2_set_details 查看题目详情")
+		fmt.Fprintf(&b, "\nAdded %d questions to practice set\n", len(items))
+		fmt.Fprintf(&b, "\nUse get_part2_set_details to view question details")
 
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: b.String()}},
@@ -124,56 +124,54 @@ func HandleAutoGeneratePart2Set(user *model.User, p2Service service.Part2Practic
 	}
 }
 
-// GetPart2SetDetailsTool 创建获取Part2练习集详情的MCP工具定义
+// GetPart2SetDetailsTool creates the MCP tool definition for getting Part2 practice set details
 func GetPart2SetDetailsTool() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "get_part2_set_details",
-		Description: "查看 Part2 练习集明细列表（包含题目详情）",
+		Description: "View Part2 practice set details (including question details)",
 	}
 }
 
-// HandleGetPart2SetDetails 处理获取Part2练习集详情的请求
+// HandleGetPart2SetDetails handles the request to get Part2 practice set details
 func HandleGetPart2SetDetails(user *model.User, p2Service service.Part2PracticeSetService) func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.GetPart2SetDetailsParams) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.GetPart2SetDetailsParams) (*mcp.CallToolResult, any, error) {
-		// 验证参数
+		// Validate parameters
 		if params == nil || params.SetID == 0 {
-			return nil, nil, fmt.Errorf("参数错误: set_id 是必需的")
+			return nil, nil, fmt.Errorf("parameter error: set_id is required")
 		}
 
-		// 获取练习集基本信息
+		// Get practice set basic information
 		set, err := p2Service.GetSetByID(ctx, user.ID, params.SetID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("获取练习集失败: %v", err)
+			return nil, nil, fmt.Errorf("failed to get practice set: %v", err)
 		}
 
-		// 获取练习集题目列表
+		// Get practice set question list
 		questions, err := p2Service.ListSetQuestions(ctx, user.ID, params.SetID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("获取题目列表失败: %v", err)
+			return nil, nil, fmt.Errorf("failed to get question list: %v", err)
 		}
 
-		// 格式化输出结果
+		// Format output results
 		var b strings.Builder
-		fmt.Fprintf(&b, "📋 练习集详情\n\n")
-		fmt.Fprintf(&b, "练习集ID: %d\n", set.ID)
-		fmt.Fprintf(&b, "题目总数: %d\n", set.TotalQuestions)
-		fmt.Fprintf(&b, "已完成: %d\n", set.CompletedCount)
-		fmt.Fprintf(&b, "正确数: %d\n", set.CorrectCount)
-		fmt.Fprintf(&b, "准确率: %.2f%%\n\n", set.Accuracy*100)
+		fmt.Fprintf(&b, "Practice Set Details\n\n")
+		fmt.Fprintf(&b, "Set ID: %d\n", set.ID)
+		fmt.Fprintf(&b, "Total Questions: %d\n", set.TotalQuestions)
+		fmt.Fprintf(&b, "Completed: %d\n", set.CompletedCount)
+		fmt.Fprintf(&b, "Correct: %d\n", set.CorrectCount)
+		fmt.Fprintf(&b, "Accuracy: %.2f%%\n\n", set.Accuracy*100)
 
 		if len(questions) == 0 {
-			fmt.Fprintf(&b, "暂无题目")
+			fmt.Fprintf(&b, "No questions available")
 		} else {
-			fmt.Fprintf(&b, "题目列表:\n")
-			fmt.Fprintf(&b, "─────────────────────────────────────\n\n")
+			fmt.Fprintf(&b, "Question List:\n\n")
 			for i, q := range questions {
-				fmt.Fprintf(&b, "题目 %d (Item ID: %d)\n", i+1, q.ItemID)
-				fmt.Fprintf(&b, "问题: %s\n", q.Question.QuestionText)
+				fmt.Fprintf(&b, "(Item ID: %d) Question %d: %s\n", q.ItemID, i+1, q.Question.QuestionText)
 				fmt.Fprintf(&b, "A. %s\n", q.Question.OptionA)
 				fmt.Fprintf(&b, "B. %s\n", q.Question.OptionB)
 				fmt.Fprintf(&b, "C. %s\n", q.Question.OptionC)
 				if i < len(questions)-1 {
-					fmt.Fprintf(&b, "\n─────────────────────────────────────\n\n")
+					fmt.Fprintf(&b, "\n")
 				}
 			}
 		}
@@ -184,77 +182,77 @@ func HandleGetPart2SetDetails(user *model.User, p2Service service.Part2PracticeS
 	}
 }
 
-// SubmitPart2AnswerTool 创建提交Part2答案的MCP工具定义
+// SubmitPart2AnswerTool creates the MCP tool definition for submitting Part2 answers
 func SubmitPart2AnswerTool() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "submit_part2_answer",
-		Description: "提交 Part2 练习题答案",
+		Description: "Submit Part2 practice answer",
 	}
 }
 
-// HandleSubmitPart2Answer 处理提交Part2答案的请求
+// HandleSubmitPart2Answer handles the request to submit Part2 answers
 func HandleSubmitPart2Answer(user *model.User, p2Service service.Part2PracticeSetService) func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.SubmitPart2AnswerParams) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, params *mcpModel.SubmitPart2AnswerParams) (*mcp.CallToolResult, any, error) {
-		// 验证参数
+		// Validate parameters
 		if params == nil {
-			return nil, nil, fmt.Errorf("参数错误: 缺少必需参数")
+			return nil, nil, fmt.Errorf("parameter error: missing required parameters")
 		}
 		if params.SetID == 0 {
-			return nil, nil, fmt.Errorf("参数错误: set_id 是必需的")
+			return nil, nil, fmt.Errorf("parameter error: set_id is required")
 		}
 		if params.ItemID == 0 {
-			return nil, nil, fmt.Errorf("参数错误: item_id 是必需的")
+			return nil, nil, fmt.Errorf("parameter error: item_id is required")
 		}
 		if params.UserAnswer == "" {
-			return nil, nil, fmt.Errorf("参数错误: user_answer 是必需的")
+			return nil, nil, fmt.Errorf("parameter error: user_answer is required")
 		}
 
-		// 验证答案格式
+		// Validate answer format
 		answer := strings.ToUpper(strings.TrimSpace(params.UserAnswer))
 		if answer != "A" && answer != "B" && answer != "C" {
-			return nil, nil, fmt.Errorf("参数错误: user_answer 必须是 A、B 或 C")
+			return nil, nil, fmt.Errorf("parameter error: user_answer must be A, B, or C")
 		}
 
-		// 获取题目详情以验证答案
+		// Get question details to verify answer
 		itemDetail, err := p2Service.GetItemDetail(ctx, user.ID, params.ItemID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("获取题目失败: %v", err)
+			return nil, nil, fmt.Errorf("failed to get question: %v", err)
 		}
 
-		// 检查题目是否属于指定的练习集
+		// Check if question belongs to the specified practice set
 		if itemDetail.SetID != params.SetID {
-			return nil, nil, fmt.Errorf("题目不属于指定的练习集")
+			return nil, nil, fmt.Errorf("question does not belong to the specified practice set")
 		}
 
-		// 判断答案是否正确
+		// Determine if answer is correct
 		var correctAnswer string
 		if itemDetail.Question.CorrectAnswer.Valid {
 			correctAnswer = strings.ToUpper(strings.TrimSpace(itemDetail.Question.CorrectAnswer.String))
 		}
 		isCorrect := answer == correctAnswer
 
-		// 提交答案
+		// Submit answer
 		submitReq := &service.SubmitPart2AnswerRequest{
 			SelectedAnswer: answer,
 			IsCorrect:      isCorrect,
 		}
 		if err := p2Service.SubmitAnswer(ctx, user.ID, params.ItemID, submitReq); err != nil {
-			return nil, nil, fmt.Errorf("提交答案失败: %v", err)
+			return nil, nil, fmt.Errorf("failed to submit answer: %v", err)
 		}
 
-		// 格式化输出结果
+		// Format output results
 		var b strings.Builder
 		if isCorrect {
-			fmt.Fprintf(&b, "✅ 回答正确！\n\n")
+			fmt.Fprintf(&b, "Correct answer!\n\n")
 		} else {
-			fmt.Fprintf(&b, "❌ 回答错误\n\n")
+			fmt.Fprintf(&b, "Incorrect answer\n\n")
 		}
 
-		fmt.Fprintf(&b, "你的答案: %s\n", answer)
+		fmt.Fprintf(&b, "Your answer: %s\n", answer)
 		if correctAnswer != "" {
-			fmt.Fprintf(&b, "正确答案: %s\n", correctAnswer)
+			fmt.Fprintf(&b, "Correct answer: %s\n", correctAnswer)
 		} else {
-			fmt.Fprintf(&b, "正确答案: (未设置)\n")
+			fmt.Fprintf(&b, "Correct answer: (not set)\n")
 		}
 
 		return &mcp.CallToolResult{

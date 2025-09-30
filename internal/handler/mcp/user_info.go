@@ -11,15 +11,15 @@ import (
 	mcpModel "vibe-coding-starter/internal/model/mcp"
 )
 
-// GetUserInfoTool 创建获取用户信息的MCP工具定义
+// GetUserInfoTool creates the MCP tool definition for getting user information
 func GetUserInfoTool() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "get_user_info",
-		Description: "查看当前用户信息（id与名称）",
+		Description: "Get current user information (ID and name)",
 	}
 }
 
-// HandleGetUserInfo 处理获取用户信息的请求
+// HandleGetUserInfo handles the request to get user information
 func HandleGetUserInfo(user *model.User) func(ctx context.Context, req *mcp.CallToolRequest, _ *mcpModel.GetUserInfoParams) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, _ *mcpModel.GetUserInfoParams) (*mcp.CallToolResult, any, error) {
 		name := user.Nickname
@@ -32,4 +32,3 @@ func HandleGetUserInfo(user *model.User) func(ctx context.Context, req *mcp.Call
 		}, nil, nil
 	}
 }
-
