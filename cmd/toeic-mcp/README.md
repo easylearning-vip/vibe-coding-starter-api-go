@@ -37,9 +37,12 @@ claude mcp add toeic-mcp http://localhost:6275 \
 
 ## 文档
 
-- 📖 [完整配置教程](./CLAUDE_CLI_SETUP.md) - 详细的配置和使用说明
 - 🚀 [快速开始](./QUICKSTART.md) - 5 分钟快速配置
+- 📖 [完整配置教程](./MCP_CONFIGURATION_GUIDE.md) - 详细的配置和使用说明
+- 🔐 [认证配置详解](./AUTHENTICATION.md) - Token 认证机制和安全配置
 - 📝 [Part 2 提示词模板](./part2_prompt.md) - AI 练习提示词
+- 📝 [Part 3 提示词模板](./part3_prompt.md) - AI 练习提示词
+- 📝 [Part 4 提示词模板](./part4_prompt.md) - AI 练习提示词
 
 ## 配置示例
 
@@ -60,8 +63,10 @@ claude mcp add toeic-mcp http://localhost:6275 \
 ```
 
 更多配置示例:
-- [基本配置](./mcp-config-example.json)
-- [环境变量配置](./mcp-config-with-env.json)
+- [基本配置](./mcp-config-example.json) - 使用硬编码 Token
+- [环境变量配置](./mcp-config-with-env.json) - 使用环境变量（推荐）
+- [Bearer Token 配置](./mcp-config-bearer.json) - 使用 Bearer 认证
+- [远程服务器配置](./mcp-config-remote.json) - HTTPS 远程服务器
 
 ## 可用工具
 

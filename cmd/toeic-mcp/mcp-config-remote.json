@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "toeic-mcp": {
+      "type": "streamable-http",
+      "url": "https://your-domain.com/mcp",
+      "headers": {
+        "X-User-Token": "${env:TOEIC_USER_TOKEN}"
+      },
+      "note": "TOEIC Practice Server - Remote server configuration with HTTPS"
+    }
+  }
+}
+

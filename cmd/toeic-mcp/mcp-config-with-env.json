@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "toeic-mcp": {
+      "type": "streamable-http",
+      "url": "http://localhost:6275",
+      "headers": {
+        "X-User-Token": "${env:TOEIC_USER_TOKEN}"
+      },
+      "note": "TOEIC Practice Server - Uses environment variable TOEIC_USER_TOKEN for authentication"
+    }
+  }
+}
+

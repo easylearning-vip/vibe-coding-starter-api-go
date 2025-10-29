@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "toeic-mcp": {
+      "type": "streamable-http",
+      "url": "http://localhost:6275",
+      "headers": {
+        "X-User-Token": "your_token_here"
+      },
+      "note": "TOEIC Practice Server - Replace 'your_token_here' with your actual user token"
+    }
+  }
+}
+

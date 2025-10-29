@@ -212,6 +212,21 @@ func (s *Server) setupRoutes(engine *gin.Engine) {
 					userArticles.PUT("/:id", s.articleHandler.Update)
 					userArticles.DELETE("/:id", s.articleHandler.Delete)
 				}
+
+				// TOEIC 参考数据路由（只读，用于下拉选项等）
+				// Scenario路由（只读）
+				scenarios := protected.Group("/scenarios")
+				{
+					scenarios.GET("", s.scenarioHandler.List)
+					scenarios.GET("/:id", s.scenarioHandler.GetByID)
+				}
+
+				// DifficultyLevel路由（只读）
+				difficultylevels := protected.Group("/difficultylevels")
+				{
+					difficultylevels.GET("", s.difficultylevelHandler.List)
+					difficultylevels.GET("/:id", s.difficultylevelHandler.GetByID)
+				}
 			}
 
 			// 管理员路由
